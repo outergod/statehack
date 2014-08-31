@@ -11,6 +11,9 @@
 (defn derive-entity [tag parent]
   (alter-var-root #'entity-hierarchy derive tag parent))
 
+(defn entity-isa? [e parent]
+  (isa? entity-hierarchy (:type e) parent))
+
 (defn entity [type x y]
   {:pre [(>= x 0) (>= y 0)]}
   {:id (uuid)

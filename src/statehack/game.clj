@@ -4,7 +4,7 @@
             [statehack.ui :as ui]
             [statehack.util :as util]
             [statehack.entity :as entity]
-            [statehack.ui.room :as room]
+            [statehack.entity.room :as room]
             [lanterna.screen :as screen]))
 
 (defn update-viewport [game [x y]]
@@ -44,8 +44,8 @@
       (dialog/message game "Somehow, you can't move here.."))))
 
 (def first-room
-"XXXXXoXXXXX
-X         X
+"XoXXXoXXXXX
+o         X
 X         X
 X         X
 X         X
@@ -66,6 +66,9 @@ XXXXXXXXXXX")
   {:screen scr
    :viewport [0 0]
    :world world})
+
+(comment
+  (game/run scr (game/load-game scr @statehack.game.world/state)))
 
 (defn close-next-door [game]
   (let [state (world/current-world-state game)

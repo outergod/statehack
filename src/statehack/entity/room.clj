@@ -1,7 +1,7 @@
-(ns statehack.ui.room
-  (:require [statehack.util :as util]
-            [statehack.entity :as entity]
+(ns statehack.entity.room
+  (:require [statehack.entity :as entity]
             [statehack.game.world :as world]
+            [statehack.util :as util]
             [clojure.string :as str]))
 
 (doseq [w '(tlcorner trcorner blcorner brcorner hwall vwall
@@ -36,7 +36,7 @@
   [game player (assoc door :open open?)])
 
 (defn close-candidates [game x y]
-  (letfn [(isa-door? [e] (isa? entity/entity-hierarchy (:type e) :door))]
+  (letfn [(isa-door? [e] (entity/entity-isa? e :door))]
     (seq (filter (every-pred isa-door? :open)
                  (world/direct-neighbors (world/current-world-state game) x y)))))
 
