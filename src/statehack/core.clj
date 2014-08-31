@@ -6,12 +6,6 @@
             [statehack.ui.room :as room]
             [lanterna.screen :as screen]))
 
-(defn rect [kind x y]
-  (vec (repeat y (vec (repeat x kind)))))
-
-(defn space [x y]
-  (rect :empty x y))
-
 (def state (atom {}))
 
 (defn update-viewport [game [x y]]
@@ -86,19 +80,27 @@ XXXXXXXXXXX")
 (defn new-game [scr]
   {:screen scr
    :viewport [0 0]
-   :world [{:foundation (space 80 24)
+   :world [{:foundation (ui/space 80 24)
             :player (entity/player 40 18)
             :entities (flatten
                        [(room/extract-room first-room 35 13)])}]})
 
-(defn run [scr]
-  (screen/in-screen scr
-    (loop [input nil game (new-game scr)]
-      (print (prn-str input))
-      (when (not= input :escape)
-        (let [game (transition game input)]
-          (ui/drawing scr (ui/draw-game scr game))
-          (recur (screen/get-key-blocking scr) game))))))
+(defn load-game [scr world]
+  {:screen scr
+   :viewport [0 0]
+   :world world})
+
+(defn run
+  ([scr game]
+     (screen/in-screen scr
+       (loop [input nil game game]
+         (print (prn-str input))
+         (when (not= input :escape)
+           (let [game (transition game input)]
+             (ui/drawing scr (ui/draw-game scr game))
+             (recur (screen/get-key-blocking scr) game))))))
+  ([scr]
+     (run scr (new-game scr))))
 
 (defn -main
   [& args]

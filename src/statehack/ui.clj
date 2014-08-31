@@ -30,6 +30,12 @@
   (let [{:keys [position]} e]
     (update-in canvas (reverse position) (constantly (entity/render e)))))
 
+(defn rect [kind x y]
+  (vec (repeat y (vec (repeat x kind)))))
+
+(defn space [x y]
+  (rect :empty x y))
+
 (defn move [x coll]
   (if (neg? x)
     (concat (repeat (Math/abs x) nil) coll)
