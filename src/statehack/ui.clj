@@ -41,10 +41,14 @@
     (concat (repeat (Math/abs x) nil) coll)
     (drop x coll)))
 
+(defn entity-canvas [entities]
+  (map (partial reduce entity/blit) (vals (group-by :position entities))))
+
 (defn draw-game [scr game]
   (let [{:keys [world viewport]} game
         {:keys [foundation entities player]} (first world)
-        world (reduce blit foundation (cons player entities))
+        world (reduce blit foundation
+                      (entity-canvas (cons player (vals entities))))
         [x y] viewport
         view (map (partial move x) (move y world))]
     (screen/put-sheet scr 0 0 (draw view))

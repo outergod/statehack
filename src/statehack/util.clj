@@ -13,3 +13,6 @@
      (map - x y))
   ([x y & more]
      (reduce matrix-subtract (matrix-subtract x y) more)))
+
+(defn index-by [f coll]
+  (into {} (map (fn [o] [(f o) o]) coll)))

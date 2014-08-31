@@ -37,16 +37,24 @@
 (defn move-player [player x y]
   (assoc-in player [:position] [x y]))
 
+(defn in-bounds? [canvas x y]
+  (and (>= x 0) (>= y 0)
+       (< x (count (first canvas))) (< y (count canvas))))
+
 (defn move-into [game x y]
   (let [state (first (:world game))
-        [x y] (util/matrix-add (get-in state [:player :position]) [x y])
-        scr (:screen game)]
-    (if-let [os (seq (filter #(= (:position %) [x y]) (:entities state)))]
-      (let [[game _ _] (entity/collide game (:player state) (first os))]
-        game)
-      (-> game
-          (update-world-state [:player] move-player x y)
-          center-viewport-player))))
+        [x y] (util/matrix-add (get-in state [:player :position]) [x y])]
+    (if (in-bounds? (:foundation state) x y)
+      (if-let [os (seq (filter #(= (:position %) [x y]) (vals (:entities state))))]
+        (let [[game player object] (entity/collide game (:player state) (first os))]
+          (push-world-state game #(-> %
+                                      (assoc :player player)
+                                      (assoc-in [:entities (:id object)] object))))
+        (-> game
+            (update-world-state [:player] move-player x y)
+            center-viewport-player))
+      (do (println "attempted to move outside game bounds")
+          game))))
 
 (defn transition [game input]
   (case input
@@ -66,7 +74,8 @@
     :enter (do
              (swap! state (constantly (:world game)))
              game)
-    game))
+    (do (println "unmapped key" input)
+        game)))
 
 (def first-room
 "XXXXXoXXXXX
@@ -82,8 +91,9 @@ XXXXXXXXXXX")
    :viewport [0 0]
    :world [{:foundation (ui/space 80 24)
             :player (entity/player 40 18)
-            :entities (flatten
-                       [(room/extract-room first-room 35 13)])}]})
+            :entities (util/index-by :id 
+                        (flatten
+                         [(room/extract-room first-room 35 13)]))}]})
 
 (defn load-game [scr world]
   {:screen scr
@@ -92,6 +102,7 @@ XXXXXXXXXXX")
 
 (defn run
   ([scr game]
+     (take-while identity (repeatedly #(screen/get-key scr)))
      (screen/in-screen scr
        (loop [input nil game game]
          (print (prn-str input))

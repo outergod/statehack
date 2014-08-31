@@ -1,6 +1,8 @@
 (ns statehack.entity
   (:require [statehack.util :as util]))
 
+(defn uuid [] (java.util.UUID/randomUUID))
+
 (defmulti tick :type)
 (defmethod tick :default [_] nil)
 
@@ -11,7 +13,8 @@
 
 (defn entity [type x y]
   {:pre [(>= x 0) (>= y 0)]}
-  {:type type
+  {:id (uuid)
+   :type type
    :position [x y]})
 
 (defn offset [x0 y0]
@@ -30,3 +33,9 @@
   (entity :player x y))
 
 (defmethod render :player [_] :player)
+
+(defn blit-dispatch [x y]
+  (set [(:type x) (:type y)]))
+
+(defmulti blit #'blit-dispatch :hierarchy #'entity-hierarchy)
+(defmethod blit :default [x y] x)

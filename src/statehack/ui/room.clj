@@ -12,6 +12,9 @@
       (defmethod entity/render ~type [_#] ~type)
       (def ~w (partial entity/entity ~type)))))
 
+(defmethod entity/blit #{:player :wall} [& xs]
+  (some #(and (= (:type %) :player) %) xs))
+
 (entity/derive-entity :hdoor :door)
 (entity/derive-entity :vdoor :door)
 
@@ -20,6 +23,9 @@
 
 (defmethod entity/render :door [{:keys [type open] :as door}]
   (if open :open-door type))
+
+(defmethod entity/blit #{:player :door} [& xs]
+  (some #(and (= (:type %) :player) %) xs))
 
 (defn open-door-dispatch [game actor reactor]
   [(:type actor) (:type reactor)])
