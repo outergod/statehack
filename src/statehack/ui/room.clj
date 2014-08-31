@@ -1,6 +1,7 @@
 (ns statehack.ui.room
   (:require [statehack.util :as util]
             [statehack.entity :as entity]
+            [statehack.game.world :as world]
             [clojure.string :as str]))
 
 (doseq [w '(tlcorner trcorner blcorner brcorner hwall vwall
@@ -27,39 +28,25 @@
 (defmethod entity/blit #{:player :door} [& xs]
   (some #(and (= (:type %) :player) %) xs))
 
-(defn open-door-dispatch [game actor reactor]
+(defn toggle-door-dispatch [game actor reactor open]
   [(:type actor) (:type reactor)])
 
-(defmulti open-door #'open-door-dispatch :hierarchy #'entity/entity-hierarchy)
-(defmethod open-door [:player :door] [game player {:keys [open] :as door}]
-  [game player (assoc door :open true)])
+(defmulti toggle-door #'toggle-door-dispatch :hierarchy #'entity/entity-hierarchy)
+(defmethod toggle-door [:player :door] [game player {:keys [open] :as door} open?]
+  [game player (assoc door :open open?)])
+
+(defn close-candidates [game x y]
+  (letfn [(isa-door? [e] (isa? entity/entity-hierarchy (:type e) :door))]
+    (seq (filter (every-pred isa-door? :open)
+                 (world/direct-neighbors (world/current-world-state game) x y)))))
 
 (defmethod entity/collide [:player :wall] [game player wall]
-  (println "player ran into wall")
   [game player wall])
 
 (defmethod entity/collide [:player :door] [game player {:keys [open position] :as door}]
   (if open
     [game (assoc player :position position) door]
-    (open-door game player door)))
-
-(defn room
-  [x y w h]
-  {:pre [(pos? w) (pos? h)]}
-  (let [off (entity/offset x y)]
-    (flatten [(off tlcorner 0 0) (off trcorner (inc w) 0)
-              (off blcorner 0 (inc h)) (off brcorner (inc w) (inc h))
-              (for [x (range 1 (inc w))]
-                [(off hwall x 0) (off hwall x (inc h))])
-              (for [y (range 1 (inc h))]
-                [(off vwall 0 y) (off vwall (inc w) y)])])))
-
-(def neighbors
-  (set (remove #(= % [0 0])
-               (apply concat
-                      (for [y [-1 0 1]]
-                        (for [x [-1 0 1]]
-                          [x y]))))))
+    (toggle-door game player door true)))
 
 (defn extract-room [s x0 y0]
   (let [lines (str/split-lines s)
@@ -74,7 +61,7 @@
                                          \X [hwall vwall]
                                          \O [#(hdoor %1 %2 true) #(vdoor %1 %2 true)]
                                          \o [#(hdoor %1 %2 false) #(vdoor %1 %2 false)])]
-                     ((condp #(every? %2 %1) (set (filter #(-> % (util/matrix-add [x y]) find-wall) neighbors))
+                     ((condp #(every? %2 %1) (set (filter #(-> % (util/matrix-add [x y]) find-wall) world/neighbors))
                         #{[1 0] [-1 0] [0 1] [0 -1]} cross
                         #{[1 0] [-1 0] [0 1]} hdcross
                         #{[1 0] [-1 0] [0 -1]} hucross
