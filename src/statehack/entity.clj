@@ -3,9 +3,6 @@
 
 (defn uuid [] (java.util.UUID/randomUUID))
 
-(defmulti tick :type)
-(defmethod tick :default [_] nil)
-
 (def entity-hierarchy (make-hierarchy))
 
 (defn derive-entity [tag parent]
@@ -14,11 +11,16 @@
 (defn entity-isa? [e parent]
   (isa? entity-hierarchy (:type e) parent))
 
-(defn entity [type x y]
-  {:pre [(>= x 0) (>= y 0)]}
+(defn entity [type]
   {:id (uuid)
-   :type type
-   :position [x y]})
+   :type type})
+
+(defn position [e x y]
+  {:pre [(>= x 0) (>= y 0)]}
+  (assoc e :position [x y]))
+
+(defn player [x y]
+  (-> (entity :player) (position x y)))
 
 (defn offset [x0 y0]
   (fn [entityf x1 y1]
@@ -31,9 +33,6 @@
 
 (defmulti collide #'collide-dispatch :hierarchy #'entity-hierarchy)
 (defmethod collide :default [& args] args)
-
-(defn player [x y]
-  (entity :player x y))
 
 (defmethod render :player [_] :player)
 

@@ -11,7 +11,7 @@
    `(do
       ~(entity/derive-entity type :wall)
       (defmethod entity/render ~type [_#] ~type)
-      (def ~w (partial entity/entity ~type)))))
+      (defn ~w [x# y#] (-> (entity/entity ~type) (entity/position x# y#))))))
 
 (defmethod entity/blit #{:player :wall} [& xs]
   (some #(and (= (:type %) :player) %) xs))
@@ -19,8 +19,8 @@
 (entity/derive-entity :hdoor :door)
 (entity/derive-entity :vdoor :door)
 
-(defn hdoor [x y open?] (into {:open open?} (entity/entity :hdoor x y)))
-(defn vdoor [x y open?] (into {:open open?} (entity/entity :vdoor x y)))
+(defn hdoor [x y open?] (into {:open open?} (-> (entity/entity :hdoor) (entity/position x y))))
+(defn vdoor [x y open?] (into {:open open?} (-> (entity/entity :vdoor) (entity/position x y))))
 
 (defmethod entity/render :door [{:keys [type open] :as door}]
   (if open :open-door type))
