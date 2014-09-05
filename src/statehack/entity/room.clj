@@ -25,7 +25,10 @@
 (defmethod entity/render :door [{:keys [type open] :as door}]
   (if open :open-door type))
 
-(defmethod entity/blit #{:player :door} [& xs]
+(defmethod entity/blit #{:player :hdoor} [& xs]
+  (some #(and (= (:type %) :player) %) xs))
+
+(defmethod entity/blit #{:player :vdoor} [& xs]
   (some #(and (= (:type %) :player) %) xs))
 
 (defn toggle-door-dispatch [game actor reactor open]
