@@ -7,20 +7,25 @@
             [statehack.entity.room :as room]
             [lanterna.screen :as screen]))
 
+(defn state-player [state]
+  (let [{:keys [entities]} state]
+    (-> state :player entities)))
+
 (defn update-viewport [game [x y]]
-  (let [state (-> game :world first)
+  (let [state (world/current-world-state game)
         scr (:screen game)]
     (update-in game [:viewport] #(ui/into-bounds state scr (util/matrix-add % [x y])))))
 
 (defn set-viewport [game [x y]]
-  (let [state (-> game :world first)
+  (let [state (world/current-world-state game)
         foundation (:foundation state)
         scr (:screen game)]
     (update-in game [:viewport] (constantly (ui/into-bounds foundation scr [x y])))))
 
 (defn center-viewport-player [game]
-  (let [scr (:screen game)]
-    (set-viewport game (ui/center scr (-> game :world first :player :position)))))
+  (let [player (-> game game-state state-player)
+        scr (:screen game)]
+    (set-viewport game (ui/center scr (player :position)))))
 
 (defn move-player [player x y]
   (assoc-in player [:position] [x y]))
@@ -30,16 +35,17 @@
        (< x (count (first canvas))) (< y (count canvas))))
 
 (defn move-into [game x y]
-  (let [state (first (:world game))
-        [x y] (util/matrix-add (get-in state [:player :position]) [x y])]
+  (let [state (world/current-world-state game)
+        player (state-player state)
+        [x y] (util/matrix-add (:position player) [x y])]
     (if (in-bounds? (:foundation state) x y)
-      (if-let [os (seq (filter #(= (:position %) [x y]) (vals (:entities state))))]
-        (let [[game player object] (entity/collide game (:player state) (first os))]
+      (if-let [os (seq (filter #(= (:position %) [x y]) (vals (dissoc (:entities state) (:id player)))))]
+        (let [[game player object] (entity/collide game player (first os))]
           (world/push-world-state game #(-> %
-                                            (assoc :player player)
+                                            (assoc-in [:entities (:id player)] player)
                                             (assoc-in [:entities (:id object)] object))))
         (-> game
-            (world/update-world-state [:player] move-player x y)
+            (world/update-world-state [:entities (:id player)] move-player x y)
             center-viewport-player))
       (dialog/message game "Somehow, you can't move here.."))))
 
@@ -53,14 +59,16 @@ X         X
 XXXXXXXXXXX")
 
 (defn new-game [scr]
-  {:screen scr
-   :viewport [0 0]
-   :world [{:mode :world
-            :foundation (ui/space 80 24)
-            :player (entity/player 40 18)
-            :entities (util/index-by :id 
-                        (flatten
-                         [(room/extract-room first-room 35 13)]))}]})
+  (let [player (entity/player 40 18)]
+    {:screen scr
+     :viewport [0 0]
+     :world [{:mode :world
+              :foundation (ui/space 80 24)
+              :player (:id player)
+              :entities (util/index-by :id
+                                       (flatten
+                                        [player
+                                         (room/extract-room first-room 35 13)]))}]}))
 
 (defn load-game [scr world]
   {:screen scr
@@ -72,12 +80,12 @@ XXXXXXXXXXX")
 
 (defn close-next-door [game]
   (let [state (world/current-world-state game)
-        player (:player state)
+        player (state-player state)
         [x y] (:position player)]
     (if-let [candidates (room/close-candidates game x y)]
       (let [[game player door] (room/toggle-door game player (first candidates) false)]
         (world/push-world-state game #(-> %
-                                          (assoc :player player)
+                                          (assoc-in [:entities (:id player)] player)
                                           (assoc-in [:entities (:id door)] door))))
       (dialog/message game "No open door nearby"))))
 

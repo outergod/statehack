@@ -61,11 +61,11 @@
   (let [{:keys [screen world viewport]} game
         {:keys [foundation entities player]} (first world)
         world (reduce blit foundation
-                      (entity-canvas (cons player (vals entities))))
+                      (entity-canvas (vals entities)))
         [x y] viewport
         view (map (partial move x) (move y world))]
     (screen/put-sheet screen 0 0 (draw view))
-    (apply screen/move-cursor screen (util/matrix-subtract (:position player) viewport))))
+    (apply screen/move-cursor screen (util/matrix-subtract (:position (entities player)) viewport))))
 
 (defmethod draw-game :world [game]
   (draw-world game))
