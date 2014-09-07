@@ -1,7 +1,9 @@
 (ns statehack.ui
   (:require [lanterna.screen :as screen]
+            [statehack.game.world :as world]
             [statehack.entity :as entity]
-            [statehack.util :as util]))
+            [statehack.util :as util]
+            [clojure.set :as set]))
 
 (def tiles
   {:player "@"
@@ -24,12 +26,15 @@
    :swall "▢"
    :dialog-indicator "⌐"})
 
+(defmulti render :type :hierarchy #'entity/entity-hierarchy)
+(defmethod render :player [_] :player)
+
 (defn draw [canvas]
   (map #(map tiles %) canvas))
 
 (defn blit [canvas e]
   (let [{:keys [position]} e]
-    (update-in canvas (reverse position) (constantly (entity/render e)))))
+    (update-in canvas (reverse position) (constantly (render e)))))
 
 (defn rect [kind w h]
   (vec (repeat h (vec (repeat w kind)))))
@@ -52,35 +57,45 @@
 (defn entity-canvas [entities]
   (map (partial reduce entity/blit) (vals (group-by :position entities))))
 
-(defn- draw-game-dispatch [game]
+(defn- render-system-dispatch [game]
   (-> game :world first :mode))
 
-(defmulti draw-game #'draw-game-dispatch)
+(defmulti render-system #'render-system-dispatch)
+
+(defmacro drawing [scr & body]
+  `(do
+     (screen/clear ~scr)
+     ~@body
+     (screen/redraw ~scr)))
 
 (defn- draw-world [game]
-  (let [{:keys [screen world viewport]} game
-        {:keys [foundation entities player]} (first world)
+  (let [{:keys [screen viewport]} game
+        {:keys [foundation entities player]} (world/current-world-state game)
+        player (entities player)
+        entities (filter #(set/subset? #{:renderable :position} (set (keys %)))
+                         (vals entities))
         world (reduce blit foundation
-                      (entity-canvas (vals entities)))
+                      (entity-canvas entities))
         [x y] viewport
         view (map (partial move x) (move y world))]
     (screen/put-sheet screen 0 0 (draw view))
-    (apply screen/move-cursor screen (util/matrix-subtract (:position (entities player)) viewport))))
+    (apply screen/move-cursor screen (util/matrix-subtract (:position player) viewport))))
 
-(defmethod draw-game :world [game]
-  (draw-world game))
+(defmethod render-system :world [{:keys [screen] :as game}]
+  (drawing screen (draw-world game)))
 
-(defmethod draw-game :dialog [game]
-  (draw-world game)
-  (let [{:keys [screen world]} game
-        {:keys [messages]} (first world)
-        [w h] (screen/get-size screen)
-        window (window w 5)
-        m (first messages)]
-    (screen/put-sheet screen 0 (- h 5) (draw window))
-    (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
-    (screen/put-string screen 2 (- h 4) m)
-    (screen/move-cursor screen (+ (count m) 2) (- h 4))))
+(defmethod render-system :dialog [{:keys [screen] :as game}]
+  (drawing screen
+    (draw-world game)
+    (let [{:keys [screen world]} game
+          {:keys [messages]} (first world)
+          [w h] (screen/get-size screen)
+          window (window w 5)
+          m (first messages)]
+      (screen/put-sheet screen 0 (- h 5) (draw window))
+      (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
+      (screen/put-string screen 2 (- h 4) m)
+      (screen/move-cursor screen (+ (count m) 2) (- h 4)))))
 
 (defn center [scr [x y]]
   (let [[w h] (screen/get-size scr)]
@@ -99,9 +114,3 @@
                 (>= (+ y sh) fh) (- fh sh)
                 :default y)]
     [x y]))
-
-(defmacro drawing [scr & body]
-  `(do
-     (screen/clear ~scr)
-     ~@body
-     (screen/redraw ~scr)))

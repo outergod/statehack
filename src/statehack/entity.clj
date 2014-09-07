@@ -19,14 +19,15 @@
   {:pre [(>= x 0) (>= y 0)]}
   (assoc e :position [x y]))
 
-(defn player [x y]
-  (-> (entity :player) (position x y)))
+(defn renderable [e]
+  (assoc e :renderable true))
 
 (defn offset [x0 y0]
   (fn [entityf x1 y1]
     (entityf (+ x0 x1) (+ y0 y1))))
 
-(defmulti render :type :hierarchy #'entity-hierarchy)
+(defn player [x y]
+  (-> (entity :player) (position x y) renderable))
 
 (defn collide-dispatch [game actor reactor]
   [(:type actor) (:type reactor)])
@@ -34,10 +35,9 @@
 (defmulti collide #'collide-dispatch :hierarchy #'entity-hierarchy)
 (defmethod collide :default [& args] args)
 
-(defmethod render :player [_] :player)
-
 (defn blit-dispatch [x y]
-  (set [(:type x) (:type y)]))
+  [(:type x) (:type y)])
 
 (defmulti blit #'blit-dispatch :hierarchy #'entity-hierarchy)
 (defmethod blit :default [x y] x)
+

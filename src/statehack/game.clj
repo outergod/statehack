@@ -119,7 +119,7 @@ XXXXXXXXXXX")
          (print (prn-str input))
          (when (not= input :escape)
            (let [game (world/transition game input)]
-             (ui/drawing scr (ui/draw-game game))
+             (ui/render-system game)
              (recur (screen/get-key-blocking scr) game))))))
   ([scr]
      (run scr (new-game scr))))
