@@ -23,7 +23,7 @@
     (update-in game [:viewport] (constantly (ui/into-bounds foundation scr [x y])))))
 
 (defn center-viewport-player [game]
-  (let [player (-> game game-state state-player)
+  (let [player (state-player (world/current-world-state game))
         scr (:screen game)]
     (set-viewport game (ui/center scr (player :position)))))
 
