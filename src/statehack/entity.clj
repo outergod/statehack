@@ -26,9 +26,6 @@
   (fn [entityf x1 y1]
     (entityf (+ x0 x1) (+ y0 y1))))
 
-(defn player [x y]
-  (-> (entity :player) (position x y) renderable))
-
 (defn collide-dispatch [game actor reactor]
   [(:type actor) (:type reactor)])
 
@@ -40,4 +37,3 @@
 
 (defmulti blit #'blit-dispatch :hierarchy #'entity-hierarchy)
 (defmethod blit :default [x y] x)
-

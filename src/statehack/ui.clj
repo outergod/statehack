@@ -58,7 +58,7 @@
   (map (partial reduce entity/blit) (vals (group-by :position entities))))
 
 (defn- render-system-dispatch [game]
-  (-> game :world first :mode))
+  (:mode (world/current-world-state game)))
 
 (defmulti render-system #'render-system-dispatch)
 
@@ -82,7 +82,8 @@
     (apply screen/move-cursor screen (util/matrix-subtract (:position player) viewport))))
 
 (defmethod render-system :world [{:keys [screen] :as game}]
-  (drawing screen (draw-world game)))
+  (drawing screen (draw-world game))
+  game)
 
 (defmethod render-system :dialog [{:keys [screen] :as game}]
   (drawing screen
@@ -95,7 +96,8 @@
       (screen/put-sheet screen 0 (- h 5) (draw window))
       (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
       (screen/put-string screen 2 (- h 4) m)
-      (screen/move-cursor screen (+ (count m) 2) (- h 4)))))
+      (screen/move-cursor screen (+ (count m) 2) (- h 4))))
+  game)
 
 (defn center [scr [x y]]
   (let [[w h] (screen/get-size scr)]
