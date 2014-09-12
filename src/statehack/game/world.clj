@@ -17,11 +17,6 @@
 (defn pop-world-state [game]
   (update-in game [:world] #(if (> (count %) 1) (next %) %)))
 
-(defn- transition-dispatch [game input]
-  (:mode (current-world-state game)))
-
-(defmulti transition #'transition-dispatch)
-
 (def neighbors
   (set (remove #(= % [0 0])
                (apply concat
