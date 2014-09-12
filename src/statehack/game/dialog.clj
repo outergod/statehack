@@ -4,15 +4,18 @@
 
 (defmethod input/input-system :dialog [game input]
   (case input
-    (:enter :space) (if (> (count (:messages (world/current-world-state game))) 1)
-                      (world/update-world-state game [:messages] next)
-                      (world/push-world-state game #(-> % (dissoc :messages) (assoc :mode :world))))
+    (:enter :space) (-> game world/dup-world-state
+                        (world/update-world-state #(let [ms (:messages %)]
+                                                     (if (> (count ms) 1)
+                                                       (assoc % :messages (next ms))
+                                                       (-> % (dissoc :messages) (assoc :mode :world))))))
     (do (println "unmapped key" input)
         game)))
 
 (defn messages [game ms]
   {:pre [(coll? ms)]}
-  (world/push-world-state game #(-> % (assoc :mode :dialog) (assoc :messages ms))))
+  (-> game world/dup-world-state
+      (world/update-world-state #(-> % (assoc :mode :dialog) (assoc :messages ms)))))
 
 (defn message [game s]
   (messages game [s]))

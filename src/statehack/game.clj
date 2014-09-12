@@ -16,12 +16,13 @@ X         X
 XXXXXXXXXXX")
 
 (defn new-game [scr]
-  (let [player (player/player 40 18)]
+  (let [{:keys [id] :as player} (player/player 40 18)]
     {:screen scr
      :viewport [0 0]
      :world [{:mode :world
               :foundation (ui/space 80 24)
-              :player (:id player)
+              :player id
+              :receivers [id]
               :entities (util/index-by :id
                                        (flatten
                                         [player

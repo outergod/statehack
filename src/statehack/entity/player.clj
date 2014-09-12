@@ -44,11 +44,13 @@
     (if (in-bounds? (:foundation state) x y)
       (if-let [os (seq (filter #(= (:position %) [x y]) (vals (dissoc (:entities state) (:id player)))))]
         (let [[game player object] (entity/collide game player (first os))]
-          (world/push-world-state game #(-> %
-                                            (assoc-in [:entities (:id player)] player)
-                                            (assoc-in [:entities (:id object)] object))))
-        (-> game
-            (world/update-world-state [:entities (:id player)] move-player x y)
+          (-> game world/dup-world-state
+              (world/update-world-state
+               #(-> %
+                    (assoc-in [:entities (:id player)] player)
+                    (assoc-in [:entities (:id object)] object)))))
+        (-> game world/dup-world-state
+            (world/update-world-state #(update-in % [:entities (:id player)] move-player x y))
             center-viewport-player))
       (dialog/message game "Somehow, you can't move here.."))))
 
@@ -58,9 +60,11 @@
         [x y] (:position player)]
     (if-let [candidates (room/close-candidates game x y)]
       (let [[game player door] (room/toggle-door game player (first candidates) false)]
-        (world/push-world-state game #(-> %
-                                          (assoc-in [:entities (:id player)] player)
-                                          (assoc-in [:entities (:id door)] door))))
+        (-> game world/dup-world-state
+            (world/update-world-state
+             #(-> %
+                  (assoc-in [:entities (:id player)] player)
+                  (assoc-in [:entities (:id door)] door)))))
       (dialog/message game "No open door nearby"))))
 
 (defmethod input/receive :player [player game input]

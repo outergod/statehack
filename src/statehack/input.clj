@@ -10,6 +10,11 @@
 (defn receiver [e]
   (assoc e :receiver true))
 
+#_(defn push-receiver [game id]
+  (let [state (world/current-world-state game)]
+    (update-in game [:viewport] #(ui/into-bounds state scr (util/matrix-add % [x y]))))
+  (world/update-world-state))
+
 (defn- input-system-dispatch [game input]
   (:mode (world/current-world-state game)))
 
