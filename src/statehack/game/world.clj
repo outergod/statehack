@@ -11,14 +11,6 @@
         state (first world)]
     (assoc game :world (cons state world))))
 
-#_(defn push-world-state [game f]
-  (let [world (:world game)
-        state (first world)]
-    (assoc game :world (cons (f state) world))))
-
-#_(defn update-world-state [game & args]
-  (push-world-state game #(apply update-in % args)))
-
 (defn update-world-state [game f]
   (update-in game [:world] #(cons (f (first %)) %)))
 
