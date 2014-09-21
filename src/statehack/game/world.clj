@@ -12,10 +12,17 @@
     (assoc game :world (cons state world))))
 
 (defn update-world-state [game f]
-  (update-in game [:world] #(cons (f (first %)) %)))
+  (update-in game [:world] (fn [[x & xs]] (cons (f x) xs))))
 
 (defn pop-world-state [game]
-  (update-in game [:world] #(if (> (count %) 1) (next %) %)))
+  (update-in game [:world]
+             (fn [ss]
+               (loop [ss ss init true]
+                 (let [{:keys [mode]} (first ss)]
+                   (if (and (> (count ss) 1)
+                            (or init (not= mode :world)))
+                     (recur (next ss) false)
+                     ss))))))
 
 (def neighbors
   (set (remove #(= % [0 0])
