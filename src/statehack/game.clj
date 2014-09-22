@@ -1,9 +1,9 @@
 (ns statehack.game
-  (:require [statehack.input :as input]
-            [statehack.ui :as ui]
+  (:require [statehack.component.input :as input]
+            [statehack.component.render :as render]
             [statehack.util :as util]
             [statehack.entity.player :as player]
-            [statehack.entity.room :as room]
+            #_[statehack.entity.room :as room]
             [lanterna.screen :as screen]))
 
 (def first-room
@@ -20,13 +20,13 @@ XXXXXXXXXXX")
     {:screen scr
      :viewport [0 0]
      :world [{:mode :world
-              :foundation (ui/space 80 24)
+              :foundation (render/space 80 24)
               :player id
               :receivers [id]
               :entities (util/index-by :id
                                        (flatten
                                         [player
-                                         (room/extract-room first-room 35 13)]))}]}))
+                                         #_(room/extract-room first-room 35 13)]))}]}))
 
 (defn load-game [scr world]
   {:screen scr
@@ -43,7 +43,7 @@ XXXXXXXXXXX")
        (loop [input nil game game]
          (print (prn-str input))
          (when (not= input :escape)
-           (let [game (-> game (input/input-system input) ui/render-system)]
+           (let [game (-> game (input/input-system input) render/render-system)]
              (recur (screen/get-key-blocking scr) game))))))
   ([scr]
      (run scr (new-game scr))))

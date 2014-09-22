@@ -1,7 +1,6 @@
-(ns statehack.ui
+(ns statehack.component.render
   (:require [lanterna.screen :as screen]
             [statehack.game.world :as world]
-            [statehack.entity :as entity]
             [statehack.util :as util]
             [clojure.set :as set]))
 
@@ -26,13 +25,27 @@
    :swall "▢"
    :dialog-indicator "⌐"})
 
-(defmulti render :type :hierarchy #'entity/entity-hierarchy)
+(def render-hierarchy (make-hierarchy))
+
+(defn derive-render [tag parent]
+  (alter-var-root #'render-hierarchy derive tag parent))
+
+(defn renderable [e type]
+  (assoc e :renderable type))
+
+(defmulti render :renderable :hierarchy #'render-hierarchy)
 (defmethod render :player [_] :player)
+
+(defn- blit-dispatch [x y]
+  [(render x) (render y)])
+
+(defmulti blit #'blit-dispatch :hierarchy #'render-hierarchy)
+(defmethod blit :default [x y] x)
 
 (defn draw [canvas]
   (map #(map tiles %) canvas))
 
-(defn blit [canvas e]
+(defn canvas-blit [canvas e]
   (let [{:keys [position]} e]
     (update-in canvas (reverse position) (constantly (render e)))))
 
@@ -55,7 +68,7 @@
     (drop x coll)))
 
 (defn entity-canvas [entities]
-  (map (partial reduce entity/blit) (vals (group-by :position entities))))
+  (map (partial reduce blit) (vals (group-by :position entities))))
 
 (defn- render-system-dispatch [game]
   (:mode (world/current-world-state game)))
@@ -74,7 +87,7 @@
         player (entities player)
         entities (filter #(set/subset? #{:renderable :position} (set (keys %)))
                          (vals entities))
-        world (reduce blit foundation
+        world (reduce canvas-blit foundation
                       (entity-canvas entities))
         [x y] viewport
         view (map (partial move x) (move y world))]

@@ -1,14 +1,16 @@
 (ns statehack.entity.player
   (:require [statehack.entity :as entity]
-            [statehack.entity.room :as room]
-            [statehack.input :as input]
+            #_[statehack.entity.room :as room]
+            [statehack.component.input :as input]
+            [statehack.component.render :as render]
             [statehack.game.world :as world]
             [statehack.game.dialog :as dialog]
-            [statehack.ui :as ui]
             [statehack.util :as util]))
 
 (defn player [x y]
-  (-> (entity/entity :player) (entity/position x y) entity/renderable input/receiver))
+  (-> (entity/entity) (entity/position x y) (render/renderable :player) (input/receiver :player)))
+
+(defmethod render/render :player [_] :player)
 
 (defn state-player [state]
   (let [{:keys [entities]} state]
@@ -17,18 +19,18 @@
 (defn update-viewport [game [x y]]
   (let [state (world/current-world-state game)
         scr (:screen game)]
-    (update-in game [:viewport] #(ui/into-bounds state scr (util/matrix-add % [x y])))))
+    (update-in game [:viewport] #(render/into-bounds state scr (util/matrix-add % [x y])))))
 
 (defn set-viewport [game [x y]]
   (let [state (world/current-world-state game)
         foundation (:foundation state)
         scr (:screen game)]
-    (update-in game [:viewport] (constantly (ui/into-bounds foundation scr [x y])))))
+    (update-in game [:viewport] (constantly (render/into-bounds foundation scr [x y])))))
 
 (defn center-viewport-player [game]
   (let [player (state-player (world/current-world-state game))
         scr (:screen game)]
-    (set-viewport game (ui/center scr (player :position)))))
+    (set-viewport game (render/center scr (player :position)))))
 
 (defn move-player [player x y]
   (assoc-in player [:position] [x y]))
@@ -43,7 +45,7 @@
         [x y] (util/matrix-add (:position player) [x y])]
     (if (in-bounds? (:foundation state) x y)
       (if-let [os (seq (filter #(= (:position %) [x y]) (vals (dissoc (:entities state) (:id player)))))]
-        (let [[game player object] (entity/collide game player (first os))]
+        game #_(let [[game player object] (entity/collide game player (first os))]
           (-> game world/dup-world-state
               (world/update-world-state
                #(-> %
@@ -54,7 +56,7 @@
             center-viewport-player))
       (dialog/message game "Somehow, you can't move here.."))))
 
-(defn close-next-door [game]
+#_(defn close-next-door [game]
   (let [state (world/current-world-state game)
         player (state-player state)
         [x y] (:position player)]
@@ -81,7 +83,7 @@
     \e (move-into game 1 -1)
     \z (move-into game -1 1)
     \c (move-into game 1 1)
-    \C (close-next-door game)
+    ; \C (close-next-door game)
     :backspace (-> game world/pop-world-state center-viewport-player)
     :enter (do
              (swap! world/state (constantly (:world game)))
