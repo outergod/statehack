@@ -1,5 +1,6 @@
 (ns statehack.game.world
   (:require [statehack.util :as util]
+            [statehack.system.input :as input]
             [statehack.entity.dialog :as dialog]))
 
 (def state (atom {}))
@@ -19,21 +20,28 @@
 (defn update-world-state [game f]
   (update-in game [:world] (fn [[x & xs]] (cons (f x) xs))))
 
+(defn update-in-world-state [game [& ks] f]
+  (update-world-state game #(update-in % ks f)))
+
 (defn update-entity [game e f]
-  (update-world-state game #(update-in % [:entities (:id e)] f)))
+  (update-in-world-state game [:entities (:id e)] f))
 
 (defn update-entity-component [game e c f]
-  (update-world-state game #(update-in % [:entities (:id e) c] f)))
+  (update-in-world-state game [:entities (:id e) c] f))
+
+(defn update-entities [game f]
+  (update-in-world-state game [:entities] f))
+
+(defn update-entities-component [game c f]
+  (update-entities game #(into {} (map (fn [[k v]] [k (update-in c f)]) %))))
 
 (defn add-entity [game e]
-  (update-world-state game #(update-in % [:entities]
-                                       (fn [es] (assoc es (:id e) e)))))
+  (update-entities game #(assoc % (:id e) e)))
 
 (defn remove-entity [game e]
-  (update-world-state game #(update-in % [:entities]
-                                       (fn [es] (dissoc es (:id e))))))
+  (update-entities game #(dissoc % (:id e))))
 
-(defn pop-world-state [game]
+#_(defn pop-world-state [game]
   (update-in game [:world]
              (fn [ss]
                (loop [ss ss init true]
@@ -43,12 +51,12 @@
                      (recur (next ss) false)
                      ss))))))
 
+(defn pop-world-state [game]
+  (update-in game [:world] #(if (> (count %) 1) (next %) %)))
+
 (def neighbors
   (set (remove #(= % [0 0])
-               (apply concat
-                      (for [y [-1 0 1]]
-                        (for [x [-1 0 1]]
-                          [x y]))))))
+               (for [x [-1 0 1] y [-1 0 1]] [x y]))))
 
 (defn entities-at [state coords]
   (let [{:keys [entities]} state
@@ -60,7 +68,8 @@
 
 (defn messages [game ms]
   {:pre [(coll? ms)]}
-  (add-entity game (dialog/dialog ms)))
+  (let [d (dialog/dialog ms)]
+    (-> game (add-entity d) (input/push-control d))))
 
 (defn message [game s]
   (messages game [s]))

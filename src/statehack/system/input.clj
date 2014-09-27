@@ -15,12 +15,19 @@
 
 (defmulti receive #'receive-dispatch :hierarchy #'receive-hierarchy)
 
+(defn push-control [game e]
+  (world/update-in-world-state game [:receivers] #(cons (:id e) %)))
+
+(defn pop-control [game]
+  (world/update-in-world-state game [:receivers] next))
+
 (defn system [{:keys [screen] :as game}]
   (loop [input nil game (render/system game)]
     (print (prn-str input))
-    (let [{:keys [entities]} (world/current-world-state game)
-          entities (filter :input (vals entities))
-          {:keys [quit] :as game} (-> (reduce #(receive %2 %1 input) game entities) render/system)]
+    (let [{:keys [receivers entities]} (world/current-world-state game)
+          e (entities (first receivers))
+          {:keys [quit] :as game} (-> (receive e game input) render/system)]
+      (println (map entities receivers))
       (when-not quit (recur (screen/get-key-blocking screen) game)))))
 
 (defmethod receive :player [player game input]
@@ -50,6 +57,6 @@
   (case input
     (:enter :space) (if (> (count (:messages dialog)) 1)
                       (world/update-entity-component game dialog :messages next)
-                      (world/remove-entity game dialog))
+                      (-> game pop-control (world/remove-entity dialog)))
     (do (println "unmapped key" input)
         game)))
