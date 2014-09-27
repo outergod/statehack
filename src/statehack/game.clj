@@ -1,6 +1,6 @@
 (ns statehack.game
-  (:require [statehack.component.input :as input]
-            [statehack.component.render :as render]
+  (:require [statehack.system.input :as input]
+            [statehack.system.render :as render]
             [statehack.util :as util]
             [statehack.entity.player :as player]
             #_[statehack.entity.room :as room]
@@ -37,13 +37,8 @@ XXXXXXXXXXX")
   (game/run scr (game/load-game scr @statehack.game.world/state)))
 
 (defn run
-  ([scr game]
-     (doall (take-while identity (repeatedly #(screen/get-key scr))))
-     (screen/in-screen scr
-       (loop [input nil game game]
-         (print (prn-str input))
-         (when (not= input :escape)
-           (let [game (-> game (input/input-system input) render/render-system)]
-             (recur (screen/get-key-blocking scr) game))))))
-  ([scr]
-     (run scr (new-game scr))))
+  ([screen game]
+     (doall (take-while identity (repeatedly #(screen/get-key screen))))
+     (screen/in-screen screen (input/system game)))
+  ([screen]
+     (run screen (new-game screen))))

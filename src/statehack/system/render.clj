@@ -1,7 +1,8 @@
-(ns statehack.component.render
+(ns statehack.system.render
   (:require [lanterna.screen :as screen]
             [statehack.game.world :as world]
             [statehack.util :as util]
+            [statehack.entity :as entity]
             [clojure.set :as set]))
 
 (def tiles
@@ -29,9 +30,6 @@
 
 (defn derive-render [tag parent]
   (alter-var-root #'render-hierarchy derive tag parent))
-
-(defn renderable [e type]
-  (assoc e :renderable type))
 
 (defmulti render :renderable :hierarchy #'render-hierarchy)
 (defmethod render :player [_] :player)
@@ -70,48 +68,46 @@
 (defn entity-canvas [entities]
   (map (partial reduce blit) (vals (group-by :position entities))))
 
-(defn- render-system-dispatch [game]
-  (:mode (world/current-world-state game)))
-
-(defmulti render-system #'render-system-dispatch)
-
 (defmacro drawing [scr & body]
   `(do
      (screen/clear ~scr)
      ~@body
      (screen/redraw ~scr)))
 
-(defn- draw-world [game]
+(defn- draw-objects [game es]
   (let [{:keys [screen viewport]} game
-        {:keys [foundation entities player]} (world/current-world-state game)
-        player (entities player)
-        entities (filter #(set/subset? #{:renderable :position} (set (keys %)))
-                         (vals entities))
+        {:keys [foundation]} (world/current-world-state game)
+        player (world/world-state-player game)
+        es (entity/filter-capable es :position)
         world (reduce canvas-blit foundation
-                      (entity-canvas entities))
+                      (entity-canvas es))
         [x y] viewport
         view (map (partial move x) (move y world))]
     (screen/put-sheet screen 0 0 (draw view))
     (apply screen/move-cursor screen (util/matrix-subtract (:position player) viewport))))
 
-(defmethod render-system :world [{:keys [screen] :as game}]
-  (drawing screen (draw-world game))
+(defn- draw-interface [game es]
+  (let [{:keys [screen]} game]
+    (when-let [ms (seq (entity/filter-capable es :messages))]
+      (let [{:keys [screen]} game
+            {:keys [messages]} (first ms)
+            [w h] (screen/get-size screen)
+            window (window w 5)
+            m (first messages)]
+        (screen/put-sheet screen 0 (- h 5) (draw window))
+        (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
+        (screen/put-string screen 2 (- h 4) m)
+        (screen/move-cursor screen (+ (count m) 2) (- h 4))))))
+
+(defn system [{:keys [screen] :as game}]
+  (let [{:keys [entities]} (world/current-world-state game)
+        es (entity/filter-capable (vals entities) :renderable)]
+    (drawing screen
+      (draw-objects game es)
+      (draw-interface game es)))
   game)
 
-(defmethod render-system :dialog [{:keys [screen] :as game}]
-  (drawing screen
-    (draw-world game)
-    (let [{:keys [screen world]} game
-          {:keys [messages]} (first world)
-          [w h] (screen/get-size screen)
-          window (window w 5)
-          m (first messages)]
-      (screen/put-sheet screen 0 (- h 5) (draw window))
-      (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
-      (screen/put-string screen 2 (- h 4) m)
-      (screen/move-cursor screen (+ (count m) 2) (- h 4))))
-  game)
-
+; unused
 (defn center [scr [x y]]
   (let [[w h] (screen/get-size scr)]
     [(- x (/ w 2)) (- y (/ h 2))]))
@@ -129,3 +125,7 @@
                 (>= (+ y sh) fh) (- fh sh)
                 :default y)]
     [x y]))
+
+(defn in-bounds? [canvas x y]
+  (and (>= x 0) (>= y 0)
+       (< x (count (first canvas))) (< y (count canvas))))

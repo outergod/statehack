@@ -1,10 +1,15 @@
 (ns statehack.game.world
-  (:require [statehack.util :as util]))
+  (:require [statehack.util :as util]
+            [statehack.entity.dialog :as dialog]))
 
 (def state (atom {}))
 
 (defn current-world-state [game]
   (-> game :world first))
+
+(defn player-entity [game]
+  (let [s (current-world-state game)]
+    ((:entities s) (:player s))))
 
 (defn dup-world-state [game]
   (let [world (:world game)
@@ -13,6 +18,20 @@
 
 (defn update-world-state [game f]
   (update-in game [:world] (fn [[x & xs]] (cons (f x) xs))))
+
+(defn update-entity [game e f]
+  (update-world-state game #(update-in % [:entities (:id e)] f)))
+
+(defn update-entity-component [game e c f]
+  (update-world-state game #(update-in % [:entities (:id e) c] f)))
+
+(defn add-entity [game e]
+  (update-world-state game #(update-in % [:entities]
+                                       (fn [es] (assoc es (:id e) e)))))
+
+(defn remove-entity [game e]
+  (update-world-state game #(update-in % [:entities]
+                                       (fn [es] (dissoc es (:id e))))))
 
 (defn pop-world-state [game]
   (update-in game [:world]
@@ -38,3 +57,10 @@
 
 (defn direct-neighbors [state x y]
   (entities-at state (map (partial util/matrix-add [x y]) neighbors)))
+
+(defn messages [game ms]
+  {:pre [(coll? ms)]}
+  (add-entity game (dialog/dialog ms)))
+
+(defn message [game s]
+  (messages game [s]))
