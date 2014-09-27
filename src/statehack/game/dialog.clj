@@ -1,5 +1,5 @@
 (ns statehack.game.dialog
-  (:require [statehack.input :as input]
+  (:require [statehack.component.input :as input]
             [statehack.game.world :as world]))
 
 (defmethod input/input-system :dialog [game input]

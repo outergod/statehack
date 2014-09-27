@@ -1,6 +1,6 @@
 (ns statehack.entity.room
   (:require [statehack.entity :as entity]
-            [statehack.ui :as ui]
+            [statehack.component.render :as render]
             [statehack.game.world :as world]
             [statehack.util :as util]
             [clojure.string :as str]))
@@ -10,26 +10,25 @@
         :let [type (keyword w)]]
   (eval
    `(do
-      ~(entity/derive-entity type :wall)
-      (defmethod ui/render ~type [_#] ~type)
-      (defn ~w [x# y#] (-> (entity/entity ~type) (entity/position x# y#) entity/renderable)))))
+      (defmethod render/render ~type [_#] ~type)
+      (defn ~w [x# y#] (-> (entity/entity) (entity/position x# y#) (render/renderable ~type))))))
 
-(defmethod entity/blit #{:player :wall} [& xs]
+(defmethod render/blit #{:player :wall} [& xs]
   (some #(and (= (:type %) :player) %) xs))
 
-(entity/derive-entity :hdoor :door)
-(entity/derive-entity :vdoor :door)
+(render/derive-render :hdoor :door)
+(render/derive-render :vdoor :door)
 
-(defn hdoor [x y open?] (into {:open open?} (-> (entity/entity :hdoor) (entity/position x y) entity/renderable)))
-(defn vdoor [x y open?] (into {:open open?} (-> (entity/entity :vdoor) (entity/position x y) entity/renderable)))
+(defn hdoor [x y open?] (into {:open open?} (-> (entity/entity :hdoor) (entity/position x y) (render/renderable :door))))
+(defn vdoor [x y open?] (into {:open open?} (-> (entity/entity :vdoor) (entity/position x y) (render/renderable :door))))
 
-(defmethod ui/render :door [{:keys [type open] :as door}]
+(defmethod render/render :door [{:keys [type open] :as door}]
   (if open :open-door type))
 
-(defmethod entity/blit [:player :door] [& xs]
+(defmethod render/blit [:player :door] [& xs]
   (some #(and (= (:type %) :player) %) xs))
 
-(defmethod entity/blit [:door :player] [& xs]
+(defmethod render/blit [:door :player] [& xs]
   (some #(and (= (:type %) :player) %) xs))
 
 (defn toggle-door-dispatch [game actor reactor open]
