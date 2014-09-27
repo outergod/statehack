@@ -77,7 +77,7 @@
 (defn- draw-objects [game es]
   (let [{:keys [screen viewport]} game
         {:keys [foundation]} (world/current-world-state game)
-        player (world/world-state-player game)
+        player (world/player-entity game)
         es (entity/filter-capable es :position)
         world (reduce canvas-blit foundation
                       (entity-canvas es))
