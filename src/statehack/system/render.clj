@@ -22,6 +22,7 @@
    :cross "┼"
    :vdoor "║"
    :hdoor "═"
+   :door "+"
    :open-door "▒"
    :swall "▢"
    :dialog-indicator "⌐"})
@@ -31,8 +32,11 @@
 (defn derive-render [tag parent]
   (alter-var-root #'render-hierarchy derive tag parent))
 
-(defmulti render :renderable :hierarchy #'render-hierarchy)
-(defmethod render :player [_] :player)
+(defn render-dispatch [e game]
+  (e :renderable))
+
+(defmulti render #'render-dispatch :hierarchy #'render-hierarchy)
+(defmethod render :player [& _] :player)
 
 (defn- blit-dispatch [x y]
   [(render x) (render y)])
@@ -43,9 +47,9 @@
 (defn draw [canvas]
   (map #(map tiles %) canvas))
 
-(defn canvas-blit [canvas e]
+(defn canvas-blit [game canvas e]
   (let [{:keys [position]} e]
-    (update-in canvas (reverse position) (constantly (render e)))))
+    (update-in canvas (reverse position) (constantly (render e game)))))
 
 (defn rect [kind w h]
   (vec (repeat h (vec (repeat w kind)))))
@@ -79,7 +83,7 @@
         {:keys [foundation]} (world/current-world-state game)
         player (world/player-entity game)
         es (entity/filter-capable es :position)
-        world (reduce canvas-blit foundation
+        world (reduce (partial canvas-blit game) foundation
                       (entity-canvas es))
         [x y] viewport
         view (map (partial move x) (move y world))]
@@ -129,3 +133,44 @@
 (defn in-bounds? [canvas x y]
   (and (>= x 0) (>= y 0)
        (< x (count (first canvas))) (< y (count canvas))))
+
+(defn filter-neighbors [e game f]
+  (let [state (world/current-world-state game)
+        [x y] (:position e)]
+    (map #(world/entity-delta % e)
+         (filter f (world/direct-neighbors state x y)))))
+
+(doseq [d [:hdoor :vdoor]]
+  (derive-render d :door))
+
+(doseq [w [:tlcorner :trcorner :blcorner :brcorner :hwall :vwall
+           :hdcross :hucross :vrcross :vlcross :cross :swall]]
+  (derive-render w :wall))
+
+(defmethod render :wall [wall game]
+  (condp set/subset? (set (map #(world/entity-delta % wall) (filter :room (world/entity-neighbors wall game))))
+    #{[1 0] [-1 0] [0 1] [0 -1]} :cross
+    #{[1 0] [-1 0] [0 1]} :hdcross
+    #{[1 0] [-1 0] [0 -1]} :hucross
+    #{[0 -1] [0 1] [1 0]} :vrcross
+    #{[0 -1] [0 1] [-1 0]} :vlcross
+    #{[1 0] [0 1]} :tlcorner
+    #{[-1 0] [0 1]} :trcorner
+    #{[0 -1] [1 0]} :blcorner
+    #{[-1 0] [0 -1]} :brcorner
+    #{[1 0]} :hwall #{[-1 0]} :hwall
+    #{[0 -1]} :vwall #{[0 1]} :vwall
+    :swall))
+
+(defmethod render :door [{:keys [open] :as door} game]
+  (if open :open-door
+      (condp set/subset? (set (map #(world/entity-delta % door) (filter :room (world/entity-neighbors door game))))
+        #{[1 0] [-1 0]} :hdoor
+        #{[0 1] [0 -1]} :vdoor
+        :door)))
+
+(defmethod blit [:player :door] [& xs]
+  :player)
+
+(defmethod blit [:door :player] [& xs]
+  :player)

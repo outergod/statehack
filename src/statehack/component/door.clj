@@ -2,9 +2,6 @@
   (:require [statehack.entity :as entity]
             [statehack.game.world :as world]))
 
-(defn door [e open?]
-  (assoc e :open open?))
-
 (defn toggle-door-dispatch [game actor reactor open]
   [(:type actor) (:type reactor)])
 

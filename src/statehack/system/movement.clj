@@ -1,6 +1,7 @@
 (ns statehack.system.movement
   (:require [statehack.system.render :as render]
             [statehack.system.viewport :as viewport]
+            [statehack.system.dialog :as dialog]
             [statehack.game.world :as world]
             [statehack.util :as util]))
 
@@ -18,14 +19,9 @@
   (let [state (world/current-world-state game)
         [x y] (util/matrix-add (:position e) [x y])]
     (if (render/in-bounds? (:foundation state) x y)
-      (if-let [os (seq (filter #(= (:position %) [x y]) (vals (dissoc (:entities state) (:id e)))))]
-        game #_(let [[game e object] (entity/collide game e (first os))]
-          (-> game world/dup-world-state
-              (world/update-world-state
-               #(-> %
-                    (assoc-in [:entities (:id e)] e)
-                    (assoc-in [:entities (:id object)] object)))))
+      (if (seq (world/entities-at state [x y]))
+        (dialog/message game "You can't, there's an obstacle.")
         (-> game world/dup-world-state
-            (world/update-world-state #(update-in % [:entities (:id e)] update-position x y))
+            (world/update-entity e update-position x y)
             (viewport/center-viewport e)))
-      (world/message game "Somehow, you can't move here.."))))
+      (dialog/message game "Somehow, you can't move here.."))))

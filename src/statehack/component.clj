@@ -3,6 +3,9 @@
 (defn door [open?]
   {:open open?})
 
+(defn room []
+  {:room true})
+
 (defn input [type]
   {:input type})
 

@@ -3,7 +3,7 @@
             [statehack.system.render :as render]
             [statehack.util :as util]
             [statehack.entity.player :as player]
-            #_[statehack.entity.room :as room]
+            [statehack.entity.room :as room]
             [lanterna.screen :as screen]))
 
 (def first-room
@@ -25,7 +25,7 @@ XXXXXXXXXXX")
               :entities (util/index-by :id
                                        (flatten
                                         [player
-                                         #_(room/extract-room first-room 35 13)]))}]}))
+                                         (room/extract-room first-room 35 13)]))}]}))
 
 (defn load-game [scr world]
   {:screen scr

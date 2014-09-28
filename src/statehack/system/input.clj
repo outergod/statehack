@@ -1,5 +1,6 @@
 (ns statehack.system.input
-  (:require [statehack.game.world :as world]
+  (:require [statehack.system.input.receivers :as receivers]
+            [statehack.game.world :as world]
             [statehack.system.render :as render]
             [statehack.system.viewport :as viewport]
             [statehack.system.movement :as movement]
@@ -15,20 +16,15 @@
 
 (defmulti receive #'receive-dispatch :hierarchy #'receive-hierarchy)
 
-(defn push-control [game e]
-  (world/update-in-world-state game [:receivers] #(cons (:id e) %)))
-
-(defn pop-control [game]
-  (world/update-in-world-state game [:receivers] next))
-
 (defn system [{:keys [screen] :as game}]
   (loop [input nil game (render/system game)]
     (print (prn-str input))
     (let [{:keys [receivers entities]} (world/current-world-state game)
           e (entities (first receivers))
           {:keys [quit] :as game} (-> (receive e game input) render/system)]
-      (println (map entities receivers))
       (when-not quit (recur (screen/get-key-blocking screen) game)))))
+
+
 
 (defmethod receive :player [player game input]
   (case input
@@ -57,6 +53,6 @@
   (case input
     (:enter :space) (if (> (count (:messages dialog)) 1)
                       (world/update-entity-component game dialog :messages next)
-                      (-> game pop-control (world/remove-entity dialog)))
+                      (-> game receivers/pop-control (world/remove-entity dialog)))
     (do (println "unmapped key" input)
         game)))
