@@ -34,9 +34,4 @@
             (world/update-entity-component e :position (constantly [x y]))
             (viewport/center-viewport e))
         (reduce #(move-into %1 (world/entity %1 (:id e)) %2) game es))
-      #_(if (seq (world/entities-at state [x y]))
-          (dialog/message game "You can't, there's an obstacle.")
-          (-> game world/dup-world-state
-              (world/update-entity-component e :position (constantly [x y]))
-              (viewport/center-viewport e)))
       (dialog/message game "Somehow, you can't move here.."))))
