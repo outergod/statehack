@@ -32,24 +32,24 @@
 (defn derive-render [tag parent]
   (alter-var-root #'render-hierarchy derive tag parent))
 
-(defn render-dispatch [e game]
+(defn render-dispatch [game e]
   (e :renderable))
 
 (defmulti render #'render-dispatch :hierarchy #'render-hierarchy)
 (defmethod render :player [& _] :player)
 
-(defn- blit-dispatch [x y]
-  [(render x) (render y)])
+(defn- blit-dispatch [e1 e2]
+  [(e1 :renderable) (e2 :renderable)])
 
 (defmulti blit #'blit-dispatch :hierarchy #'render-hierarchy)
-(defmethod blit :default [x y] x)
+(defmethod blit :default [x _] x)
 
 (defn draw [canvas]
   (map #(map tiles %) canvas))
 
 (defn canvas-blit [game canvas e]
   (let [{:keys [position]} e]
-    (update-in canvas (reverse position) (constantly (render e game)))))
+    (update-in canvas (reverse position) (constantly (render game e)))))
 
 (defn rect [kind w h]
   (vec (repeat h (vec (repeat w kind)))))
@@ -147,7 +147,7 @@
            :hdcross :hucross :vrcross :vlcross :cross :swall]]
   (derive-render w :wall))
 
-(defmethod render :wall [wall game]
+(defmethod render :wall [game wall]
   (condp set/subset? (set (map #(world/entity-delta % wall) (filter :room (world/entity-neighbors wall game))))
     #{[1 0] [-1 0] [0 1] [0 -1]} :cross
     #{[1 0] [-1 0] [0 1]} :hdcross
@@ -162,15 +162,15 @@
     #{[0 -1]} :vwall #{[0 1]} :vwall
     :swall))
 
-(defmethod render :door [{:keys [open] :as door} game]
+(defmethod render :door [game {:keys [open] :as door}]
   (if open :open-door
       (condp set/subset? (set (map #(world/entity-delta % door) (filter :room (world/entity-neighbors door game))))
         #{[1 0] [-1 0]} :hdoor
         #{[0 1] [0 -1]} :vdoor
         :door)))
 
-(defmethod blit [:player :door] [& xs]
-  :player)
+(defmethod blit [:player :door] [& es]
+  (first (filter #(= (:renderable %) :player) es)))
 
-(defmethod blit [:door :player] [& xs]
-  :player)
+(defmethod blit [:door :player] [& es]
+  (first (filter #(= (:renderable %) :player) es)))

@@ -10,6 +10,10 @@
   (let [s (current-world-state game)]
     ((:entities s) (:player s))))
 
+(defn entity [game id]
+  (let [s (current-world-state game)]
+    ((:entities s) id)))
+
 (defn dup-world-state [game]
   (let [world (:world game)
         state (first world)]
