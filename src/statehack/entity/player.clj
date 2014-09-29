@@ -5,6 +5,6 @@
 (defn player [x y]
   (entity
    (position x y)
-   (mobile :player)
+   (mobile :humanoid)
    (renderable :player)
    (input :player)))

@@ -60,18 +60,21 @@
   (set (remove #(= % [0 0])
                (for [x [-1 0 1] y [-1 0 1]] [x y]))))
 
-(defn entities-at [state & coords]
-  (let [{:keys [entities]} state
+(defn entities-at [game & coords]
+  (let [state (current-world-state game)
+        {:keys [entities]} state
         coords (set coords)]
     (filter #(coords (:position %)) (vals entities))))
 
-(defn direct-neighbors [state x y]
-  (apply entities-at state (map (partial util/matrix-add [x y]) neighbors)))
+(defn direct-neighbors [game [x y]]
+  (apply entities-at game (map (partial util/matrix-add [x y]) neighbors)))
 
-(defn entity-neighbors [e game]
-  (let [state (current-world-state game)
-        [x y] (:position e)]
-    (direct-neighbors state x y)))
+(defn entity-neighbors [game e]
+  (direct-neighbors game (:position e)))
 
 (defn entity-delta [e1 e2]
   (util/matrix-subtract (:position e1) (:position e2)))
+
+; unused
+(defn filter-neighbors [game e f]
+  (map #(entity-delta % e) (filter f (direct-neighbors game (:position e)))))

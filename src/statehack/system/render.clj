@@ -130,15 +130,9 @@
                 :default y)]
     [x y]))
 
-(defn in-bounds? [canvas x y]
+(defn in-bounds? [canvas [x y]]
   (and (>= x 0) (>= y 0)
        (< x (count (first canvas))) (< y (count canvas))))
-
-(defn filter-neighbors [e game f]
-  (let [state (world/current-world-state game)
-        [x y] (:position e)]
-    (map #(world/entity-delta % e)
-         (filter f (world/direct-neighbors state x y)))))
 
 (doseq [d [:hdoor :vdoor]]
   (derive-render d :door))
@@ -148,7 +142,7 @@
   (derive-render w :wall))
 
 (defmethod render :wall [game wall]
-  (condp set/subset? (set (map #(world/entity-delta % wall) (filter :room (world/entity-neighbors wall game))))
+  (condp set/subset? (set (map #(world/entity-delta % wall) (filter :room (world/entity-neighbors game wall))))
     #{[1 0] [-1 0] [0 1] [0 -1]} :cross
     #{[1 0] [-1 0] [0 1]} :hdcross
     #{[1 0] [-1 0] [0 -1]} :hucross
@@ -164,7 +158,7 @@
 
 (defmethod render :door [game {:keys [open] :as door}]
   (if open :open-door
-      (condp set/subset? (set (map #(world/entity-delta % door) (filter :room (world/entity-neighbors door game))))
+      (condp set/subset? (set (map #(world/entity-delta % door) (filter :room (world/entity-neighbors game door))))
         #{[1 0] [-1 0]} :hdoor
         #{[0 1] [0 -1]} :vdoor
         :door)))
