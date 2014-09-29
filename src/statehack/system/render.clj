@@ -82,17 +82,16 @@
   (let [{:keys [screen viewport]} game
         {:keys [foundation]} (world/current-world-state game)
         player (world/player-entity game)
-        es (entity/filter-capable es :position)
+        es (entity/filter-capable [:position :renderable] (vals es))
         world (reduce (partial canvas-blit game) foundation
                       (entity-canvas es))
         [x y] viewport
         view (map (partial move x) (move y world))]
-    (screen/put-sheet screen 0 0 (draw view))
-    (apply screen/move-cursor screen (util/matrix-subtract (:position player) viewport))))
+    (screen/put-sheet screen 0 0 (draw view))))
 
 (defn- draw-interface [game es]
   (let [{:keys [screen]} game]
-    (when-let [ms (seq (entity/filter-capable es :messages))]
+    (when-let [ms (seq (entity/filter-capable [:messages :renderable] (vals es)))]
       (let [{:keys [screen]} game
             {:keys [messages]} (first ms)
             [w h] (screen/get-size screen)
@@ -100,15 +99,27 @@
             m (first messages)]
         (screen/put-sheet screen 0 (- h 5) (draw window))
         (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
-        (screen/put-string screen 2 (- h 4) m)
-        (screen/move-cursor screen (+ (count m) 2) (- h 4))))))
+        (screen/put-string screen 2 (- h 4) m)))))
+
+; TODO
+(defn draw-cursor [game es]
+  (let [cursor (first (entity/filter-capable [:cursor] (vals es)))
+        {:keys [screen viewport]} game
+        {:keys [position cursor]} cursor
+        {:keys [follow]} cursor
+        [_ h] (screen/get-size screen)
+        e (es follow)
+        pos (cond (and follow (:messages e)) [(+ (count (first (:messages e))) 2) (- h 4)]
+                  follow (:position e)
+                  :default position)]
+    (apply screen/move-cursor screen (util/matrix-subtract pos viewport))))
 
 (defn system [{:keys [screen] :as game}]
-  (let [{:keys [entities]} (world/current-world-state game)
-        es (entity/filter-capable (vals entities) :renderable)]
+  (let [{:keys [entities]} (world/current-world-state game)]
     (drawing screen
-      (draw-objects game es)
-      (draw-interface game es)))
+      (draw-objects game entities)
+      (draw-interface game entities)
+      (draw-cursor game entities)))
   game)
 
 ; unused

@@ -8,14 +8,16 @@
   (entity
    (c/renderable :wall)
    (c/position x y)
-   (c/room)))
+   (c/room)
+   (c/obstacle)))
 
 (defn door [x y open?]
   (entity
    (c/renderable :door)
    (c/position x y)
    (c/door open?)
-   (c/room)))
+   (c/room)
+   (c/obstacle)))
 
 (defn extract-room [s x0 y0]
    (let [lines (str/split-lines s)

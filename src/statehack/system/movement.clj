@@ -15,15 +15,25 @@
 (defmulti available-moves #'available-moves-dispatch :hierarchy #'move-hierarchy)
 (defmethod available-moves :default [& _] nil)
 
+(defn move [game e [x y]]
+  (world/update-entity-component game e :position util/matrix-add [x y]))
+
+(defn obstacles [game es]
+  (->> es (entity/filter-capable [:obstacle]) (remove :open)))
+
+(defn inbound-moves [game e]
+  (let [f (:foundation (world/current-world-state game))]
+    (set (filter #(render/in-bounds? f (util/matrix-add (:position e) %))
+                 world/neighbors))))
+
 (defmethod available-moves :humanoid [game e]
-  (let [es (remove :open (world/entity-neighbors game e))
+  (let [es (obstacles game (world/entity-neighbors game e))
         ds (set (map #(world/entity-delta % e) es))]
     (into {} (map (fn [pos] [pos #(move % e pos)])
-                  (set/difference world/neighbors ds)))))
+                  (set/difference (inbound-moves game e) ds)))))
 
-(defn move [game e [x y]]
-  (let [f (:foundation (world/current-world-state game))
-        [x y] (util/matrix-add (:position e) [x y])]
-   (if (render/in-bounds? f [x y])
-     (world/update-entity-component game e :position (constantly [x y]))
-     (dialog/message game "Somehow, you can't move here.."))))
+(defn unavailable-moves [game e]
+  (let [os (obstacles game (world/entity-neighbors game e))
+        cs (set/difference world/neighbors (inbound-moves game e))]
+    (merge (into {} (map (fn [o] [(world/entity-delta o e) #(dialog/message % "There's an obstacle in the way")]) os))
+           (into {} (map (fn [c] [c #(dialog/message % "Somehow, you can't move here...")]) cs)))))

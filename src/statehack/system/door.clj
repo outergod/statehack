@@ -11,3 +11,12 @@
                          (not (:open %)))
                    (world/entity-neighbors game e))]
     (into {} (map (fn [door] [(world/entity-delta door e) #(open-door % door)]) es))))
+
+(defn close-door [game e]
+  (world/update-entity-component game e :open (constantly false)))
+
+(defn available-close [game e]
+  (let [es (filter #(and (entity/capable? % :open)
+                         (:open %))
+                   (world/entity-neighbors game e))]
+    (into {} (map (fn [door] [(world/entity-delta door e) #(close-door % door)]) es))))

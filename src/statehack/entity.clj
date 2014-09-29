@@ -9,5 +9,5 @@
 (defn capable? [e & cs]
   (set/subset? (set cs) (set (keys e))))
 
-(defn filter-capable [es & cs]
+(defn filter-capable [[& cs] es]
   (filter #(apply capable? % cs) es))

@@ -3,6 +3,7 @@
             [statehack.system.render :as render]
             [statehack.util :as util]
             [statehack.entity.player :as player]
+            [statehack.entity.cursor :as cursor]
             [statehack.entity.room :as room]
             [lanterna.screen :as screen]))
 
@@ -25,6 +26,7 @@ XXXXXXXXXXX")
               :entities (util/index-by :id
                                        (flatten
                                         [player
+                                         (cursor/cursor 0 0 {:follow id})
                                          (room/extract-room first-room 35 13)]))}]}))
 
 (defn load-game [scr world]

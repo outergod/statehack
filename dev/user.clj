@@ -1,4 +1,5 @@
 (ns user
+  (:refer-clojure)
   (:require [lanterna.screen :as screen]
             [statehack.game :as game]
             [statehack.entity :as entity]

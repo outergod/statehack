@@ -37,10 +37,11 @@
 
 (defn action [game player [x y]]
   (let [moves (apply merge (map #(% game player)
-                                [door/available-open movement/available-moves]))]
+                                (reverse [door/available-open movement/available-moves])))
+        non-move ((movement/unavailable-moves game player) [x y])]
     (if-let [m (moves [x y])]
       (-> game world/dup-world-state m)
-      game)))
+      (non-move game))))
 
 (defmethod receive :player [game player input]
   (case input

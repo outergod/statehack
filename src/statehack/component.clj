@@ -1,5 +1,8 @@
 (ns statehack.component)
 
+(defn obstacle []
+  {:obstacle true})
+
 (defn door [open?]
   {:open open?})
 
@@ -22,3 +25,6 @@
 (defn messages [ms]
   {:pre [(coll? ms)]}
   {:messages ms})
+
+(defn cursor [mode]
+  {:cursor mode})
