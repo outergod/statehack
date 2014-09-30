@@ -3,6 +3,7 @@
             [statehack.system.render :as render]
             [statehack.util :as util]
             [statehack.entity.player :as player]
+            [statehack.entity.bot :as bot]
             [statehack.entity.cursor :as cursor]
             [statehack.entity.room :as room]
             [lanterna.screen :as screen]))
@@ -27,7 +28,8 @@ XXXXXXXXXXX")
                                        (flatten
                                         [player
                                          (cursor/cursor)
-                                         (room/extract-room first-room 35 13)]))}]}))
+                                         (room/extract-room first-room 35 13)
+                                         (bot/bot 40 10)]))}]}))
 
 (defn load-game [scr world]
   {:screen scr

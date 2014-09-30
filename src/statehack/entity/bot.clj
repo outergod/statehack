@@ -1,11 +1,11 @@
-(ns statehack.entity.player
+(ns statehack.entity.bot
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn player [x y]
+(defn bot [x y]
   (entity
    (c/position x y)
    (c/mobile :humanoid)
    (c/renderable :humanoid)
-   (c/input :player)
+   (c/input :ai)
    (c/obstacle)))

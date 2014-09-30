@@ -6,7 +6,7 @@
             [clojure.set :as set]))
 
 (def tiles
-  {:player "@"
+  {:humanoid "@"
    :nihil " "
    :empty "·"
    :hwall "─"
@@ -36,7 +36,7 @@
   (e :renderable))
 
 (defmulti render #'render-dispatch :hierarchy #'render-hierarchy)
-(defmethod render :player [& _] :player)
+(defmethod render :humanoid [& _] :humanoid)
 
 (defn- blit-dispatch [e1 e2]
   [(e1 :renderable) (e2 :renderable)])
@@ -183,8 +183,8 @@
         #{[0 1] [0 -1]} :vdoor
         :door)))
 
-(defmethod blit [:player :door] [& es]
-  (first (filter #(= (:renderable %) :player) es)))
+(defmethod blit [:humanoid :door] [& es]
+  (first (filter #(= (:renderable %) :humanoid) es)))
 
-(defmethod blit [:door :player] [& es]
-  (first (filter #(= (:renderable %) :player) es)))
+(defmethod blit [:door :humanoid] [& es]
+  (first (filter #(= (:renderable %) :humanoid) es)))
