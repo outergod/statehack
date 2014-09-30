@@ -22,7 +22,7 @@
     (print (prn-str input))
     (let [{:keys [receivers entities]} (world/current-world-state game)
           e (entities (first receivers))
-          {:keys [quit] :as game} (-> (receive game e input) render/system)]
+          {:keys [quit] :as game} (-> (receive game e input) movement/system render/system)]
       (when-not quit (recur (screen/get-key-blocking screen) game)))))
 
 (def player-moves

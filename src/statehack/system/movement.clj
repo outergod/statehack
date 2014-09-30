@@ -37,3 +37,16 @@
         cs (set/difference world/neighbors (inbound-moves game e))]
     (merge (into {} (map (fn [o] [(world/entity-delta o e) #(dialog/message % "There's an obstacle in the way")]) os))
            (into {} (map (fn [c] [c #(dialog/message % "Somehow, you can't move here...")]) cs)))))
+
+(defn system [game]
+  (let [{:keys [entities receivers]} (world/current-world-state game)
+        es (entity/filter-capable [:mobile] (vals entities))]
+    (reduce #(case (:mobile %2)
+               :cursor (let [e (entities (first receivers))
+                             [x y] (if (entity/capable? e :messages)
+                                     (render/message-cursor-position %1 e)
+                                     (:position e))]
+                         (world/update-entity-component %1 %2 :position (constantly [x y])))
+               %1)
+            game es)))
+

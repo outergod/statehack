@@ -2,8 +2,8 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn cursor [x y mode]
+(defn cursor []
   (entity
-   (c/position x y)
-   (c/cursor mode)
+   (c/position 0 0)
+   (c/mobile :cursor)
    (c/input :cursor)))

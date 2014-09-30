@@ -26,7 +26,7 @@ XXXXXXXXXXX")
               :entities (util/index-by :id
                                        (flatten
                                         [player
-                                         (cursor/cursor 0 0 {:follow id})
+                                         (cursor/cursor)
                                          (room/extract-room first-room 35 13)]))}]}))
 
 (defn load-game [scr world]

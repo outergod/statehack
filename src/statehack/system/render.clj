@@ -101,8 +101,7 @@
         (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
         (screen/put-string screen 2 (- h 4) m)))))
 
-; TODO
-(defn draw-cursor [game es]
+#_(defn draw-cursor [game es]
   (let [cursor (first (entity/filter-capable [:cursor] (vals es)))
         {:keys [screen viewport]} game
         {:keys [position cursor]} cursor
@@ -113,6 +112,16 @@
                   follow (:position e)
                   :default position)]
     (apply screen/move-cursor screen (util/matrix-subtract pos viewport))))
+
+(defn message-cursor-position [game e]
+  (let [[_ h] (screen/get-size (:screen game))]
+    [(+ (count (first (:messages e))) 2) (- h 4)]))
+
+(defn draw-cursor [game es]
+  (let [cursor (first (filter #(= (:mobile %) :cursor) (vals es)))
+        {:keys [screen viewport]} game
+        {:keys [position]} cursor]
+    (apply screen/move-cursor screen (util/matrix-subtract position viewport))))
 
 (defn system [{:keys [screen] :as game}]
   (let [{:keys [entities]} (world/current-world-state game)]

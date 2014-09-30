@@ -25,6 +25,3 @@
 (defn messages [ms]
   {:pre [(coll? ms)]}
   {:messages ms})
-
-(defn cursor [mode]
-  {:cursor mode})
