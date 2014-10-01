@@ -22,7 +22,6 @@ XXXXXXXXXXX")
     {:screen scr
      :viewport [0 0]
      :world [{:foundation (render/space 80 24)
-              :player id
               :receivers [id]
               :entities (util/index-by :id
                                        (flatten
