@@ -2,6 +2,7 @@
   (:require [statehack.entity :as entity]
             [statehack.entity.selector :as selector]
             [statehack.system.dialog :as dialog]
+            [statehack.system.defer :as defer]
             [statehack.system.input.receivers :as receivers]
             [statehack.game.world :as world]
             [clojure.set :as set]))
@@ -24,9 +25,10 @@
                    (world/entity-neighbors game e))]
     (into {} (map (fn [door] [(world/entity-delta door e) #(close-door % door)]) es))))
 
-(defn close-selector [game e]
-  (if-let [es (seq (filter #(and (entity/capable? % :open) (:open %))
-                           (world/entity-neighbors game e)))]
-    (let [e (selector/selector (map :id es))]
-      (-> game (world/add-entity e) (receivers/push-control e)))
-    (dialog/message game "No open door nearby.")))
+(defn close [game e]
+  (let [es (filter #(and (entity/capable? % :open) (:open %))
+                   (world/entity-neighbors game e))]
+    (case (count es)
+      0 (dialog/message game "No open door nearby.")
+      1 (close-door game (first es))
+      (defer/defer game es close-door))))

@@ -5,6 +5,7 @@
             [statehack.system.viewport :as viewport]
             [statehack.system.movement :as movement]
             [statehack.system.door :as door]
+            [statehack.system.defer :as defer]
             [lanterna.screen :as screen]))
 
 (def receive-hierarchy (make-hierarchy))
@@ -64,7 +65,7 @@
     \e (action game player :up-right)
     \z (action game player :down-left)
     \c (action game player :down-right)
-    \C (door/close-selector game player)
+    \C (door/close game player)
     :backspace (-> game world/pop-world-state (viewport/center-viewport player))
     :enter (do
              (swap! world/state (constantly (:world game)))
@@ -80,6 +81,8 @@
     :left (viewport game :left)
     :right (viewport game :right)
     :tab (movement/move-next game selector)
+    (:enter :space) (defer/fulfill game selector)
+    :escape (assoc game :quit true)
     (do (println "unmapped key" input)
         game)))
 

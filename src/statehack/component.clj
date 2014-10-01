@@ -26,3 +26,6 @@
 (defn messages [ms]
   {:pre [(coll? ms)]}
   {:messages ms})
+
+(defn deferred [action]
+  {:deferred action})

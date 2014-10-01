@@ -1,6 +1,7 @@
 (ns statehack.system
   (:require [clojure.set :as set]
-            [statehack.entity :as entity]))
+            [statehack.entity :as entity]
+            [statehack.game.world :as world]))
 
 (def behavior-systems {})
 (def component-behaviors {})
@@ -37,7 +38,13 @@
 
 (defn trigger [game c e]
   (reduce (fn [game cb]
-            (println "Triggering behavior" cb "for component" c "in entity" (:id e))
             (let [{:keys [reaction components]} (behavior-systems cb)]
-              (reaction game e c (map e components))))
+              (if (apply entity/capable? e components)
+                (do (println "Triggering behavior" cb "for component" c "in entity" (:id e))
+                    (reaction game e c (map e components)))
+                game)))
           game (component-behaviors c)))
+
+(defn broadcast [game c]
+  (let [es (vals (:entities (world/current-world-state game)))]
+    (reduce #(trigger %1 c %2) game (entity/filter-capable [c] es))))

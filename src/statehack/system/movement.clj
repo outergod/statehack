@@ -34,9 +34,12 @@
 
 (defn move-next [game sel]
   (let [{:keys [targets]} (:mobile sel)
-        es (concat (rest targets) [(first targets)])
-        e (first es)]
-    (world/update-entity-component game sel :mobile assoc :targets es)))
+        es (:entities (world/current-world-state game))
+        targets (concat (rest targets) [(first targets)])
+        e (es (first targets))]
+    (-> game
+        (world/update-entity-component sel :mobile assoc :targets targets)
+        (world/update-entity-component sel :position (constantly (:position e))))))
 
 (defn unavailable-moves [game e]
   (let [os (obstacles game (world/entity-neighbors game e))
@@ -53,8 +56,5 @@
                                      (render/message-cursor-position %1 e)
                                      (:position e))]
                          (world/update-entity-component %1 %2 :position (constantly [x y])))
-               :selector (let [{:keys [targets]} (:mobile %2)
-                               e (entities (first targets))]
-                           (world/update-entity-component %1 %2 :position (constantly (:position e))))
                %1)
             game es)))

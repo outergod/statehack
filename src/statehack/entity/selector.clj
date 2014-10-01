@@ -2,8 +2,9 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn selector [targets]
+(defn selector [[x y] action targets]
   (entity
-   (c/position 0 0)
+   (c/position x y)
    (c/mobile :selector :targets targets)
-   (c/input :selector)))
+   (c/input :selector)
+   (c/deferred action)))
