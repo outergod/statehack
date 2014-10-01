@@ -10,7 +10,7 @@
 (def move-hierarchy (make-hierarchy))
 
 (defn- available-moves-dispatch [game e]
-  (:mobile e))
+  (-> e :mobile :type))
 
 (defmulti available-moves #'available-moves-dispatch :hierarchy #'move-hierarchy)
 (defmethod available-moves :default [& _] nil)
@@ -32,6 +32,12 @@
     (into {} (map (fn [pos] [pos #(move % e pos)])
                   (set/difference (inbound-moves game e) ds)))))
 
+(defn move-next [game sel]
+  (let [{:keys [targets]} (:mobile sel)
+        es (concat (rest targets) [(first targets)])
+        e (first es)]
+    (world/update-entity-component game sel :mobile assoc :targets es)))
+
 (defn unavailable-moves [game e]
   (let [os (obstacles game (world/entity-neighbors game e))
         cs (set/difference world/neighbors (inbound-moves game e))]
@@ -41,12 +47,14 @@
 (defn system [game]
   (let [{:keys [entities receivers]} (world/current-world-state game)
         es (entity/filter-capable [:mobile] (vals entities))]
-    (reduce #(case (:mobile %2)
+    (reduce #(case (-> %2 :mobile :type)
                :cursor (let [e (entities (first receivers))
                              [x y] (if (entity/capable? e :messages)
                                      (render/message-cursor-position %1 e)
                                      (:position e))]
                          (world/update-entity-component %1 %2 :position (constantly [x y])))
+               :selector (let [{:keys [targets]} (:mobile %2)
+                               e (entities (first targets))]
+                           (world/update-entity-component %1 %2 :position (constantly (:position e))))
                %1)
             game es)))
-

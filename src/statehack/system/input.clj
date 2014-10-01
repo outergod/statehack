@@ -17,11 +17,14 @@
 
 (defmulti receive #'receive-dispatch :hierarchy #'receive-hierarchy)
 
+(defn receiver [state]
+  (let [{:keys [receivers entities]} state]
+    (entities (first receivers))))
+
 (defn system [{:keys [screen] :as game}]
   (loop [input nil game (render/system game)]
     (print (prn-str input))
-    (let [{:keys [receivers entities]} (world/current-world-state game)
-          e (entities (first receivers))
+    (let [e (receiver (world/current-world-state game))
           {:keys [quit] :as game} (-> (receive game e input) movement/system render/system)]
       (when-not quit (recur (screen/get-key-blocking screen) game)))))
 
@@ -35,34 +38,48 @@
    :down-left [-1 1]
    :down-right [1 1]})
 
-(defn action [game player [x y]]
-  (let [moves (apply merge (map #(% game player)
+(defn action [game player dir]
+  (let [[x y] (player-moves dir)
+        moves (apply merge (map #(% game player)
                                 (reverse [door/available-open movement/available-moves])))
         non-move ((movement/unavailable-moves game player) [x y])]
     (if-let [m (moves [x y])]
       (-> game world/dup-world-state m)
       (non-move game))))
 
+(defn viewport [game dir]
+  (viewport/update-viewport game (player-moves dir)))
+
 (defmethod receive :player [game player input]
   (case input
-    :up (viewport/update-viewport game [0 -1])
-    :down (viewport/update-viewport game [0 1])
-    :left (viewport/update-viewport game [-1 0])
-    :right (viewport/update-viewport game [1 0])
-    \w (action game player [0 -1])
-    \s (action game player [0 1])
-    \a (action game player [-1 0])
-    \d (action game player [1 0])
-    \q (action game player [-1 -1])
-    \e (action game player [1 -1])
-    \z (action game player [-1 1])
-    \c (action game player [1 1])
-    ; \C (close-next-door game)
+    :up (viewport game :up)
+    :down (viewport game :down)
+    :left (viewport game :left)
+    :right (viewport game :right)
+    \w (action game player :up)
+    \s (action game player :down)
+    \a (action game player :left)
+    \d (action game player :right)
+    \q (action game player :up-left)
+    \e (action game player :up-right)
+    \z (action game player :down-left)
+    \c (action game player :down-right)
+    \C (door/close-selector game player)
     :backspace (-> game world/pop-world-state (viewport/center-viewport player))
     :enter (do
              (swap! world/state (constantly (:world game)))
              game)
     :escape (assoc game :quit true)
+    (do (println "unmapped key" input)
+        game)))
+
+(defmethod receive :selector [game selector input]
+  (case input
+    :up (viewport game :up)
+    :down (viewport game :down)
+    :left (viewport game :left)
+    :right (viewport game :right)
+    :tab (movement/move-next game selector)
     (do (println "unmapped key" input)
         game)))
 

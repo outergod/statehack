@@ -5,5 +5,4 @@
 (defn cursor []
   (entity
    (c/position 0 0)
-   (c/mobile :cursor)
-   (c/input :cursor)))
+   (c/mobile :cursor)))

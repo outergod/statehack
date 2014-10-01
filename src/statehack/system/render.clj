@@ -101,34 +101,24 @@
         (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
         (screen/put-string screen 2 (- h 4) m)))))
 
-#_(defn draw-cursor [game es]
-  (let [cursor (first (entity/filter-capable [:cursor] (vals es)))
-        {:keys [screen viewport]} game
-        {:keys [position cursor]} cursor
-        {:keys [follow]} cursor
-        [_ h] (screen/get-size screen)
-        e (es follow)
-        pos (cond (and follow (:messages e)) [(+ (count (first (:messages e))) 2) (- h 4)]
-                  follow (:position e)
-                  :default position)]
-    (apply screen/move-cursor screen (util/matrix-subtract pos viewport))))
-
 (defn message-cursor-position [game e]
   (let [[_ h] (screen/get-size (:screen game))]
     [(+ (count (first (:messages e))) 2) (- h 4)]))
 
 (defn draw-cursor [game es]
-  (let [cursor (first (filter #(= (:mobile %) :cursor) (vals es)))
+  (let [cursor (first (filter #(= (-> % :mobile :type) :cursor) (vals es)))
         {:keys [screen viewport]} game
         {:keys [position]} cursor]
     (apply screen/move-cursor screen (util/matrix-subtract position viewport))))
 
 (defn system [{:keys [screen] :as game}]
-  (let [{:keys [entities]} (world/current-world-state game)]
-    (drawing screen
-      (draw-objects game entities)
-      (draw-interface game entities)
-      (draw-cursor game entities)))
+  (let [{:keys [entities] :as state} (world/current-world-state game)]
+    (try (drawing screen
+           (draw-objects game entities)
+           (draw-interface game entities)
+           (draw-cursor game entities))
+         (catch Exception e
+           (throw (ex-info "Exception in rendering" {:state state} e)))))
   game)
 
 ; unused

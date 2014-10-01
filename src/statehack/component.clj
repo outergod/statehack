@@ -12,8 +12,9 @@
 (defn input [type]
   {:input type})
 
-(defn mobile [type]
-  {:mobile type})
+(defn mobile [type & opts]
+  {:mobile (merge (apply hash-map opts)
+                  {:type type})})
 
 (defn position [x y]
   {:pre [(>= x 0) (>= y 0)]}
