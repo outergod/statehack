@@ -4,7 +4,7 @@
             [statehack.system :as system]
             [statehack.game :as game]
             [statehack.entity :as entity]
-            [statehack.game.world :as world]
+            [statehack.system.world :as world]
             [statehack.system.input :as input]
             [statehack.system.movement :as movement]
             [statehack.system.door :as door]

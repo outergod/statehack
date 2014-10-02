@@ -2,10 +2,11 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn bot [x y]
+(defn bot [x y hp]
   (entity
    (c/position x y)
    (c/mobile :humanoid)
    (c/renderable :humanoid)
-   (c/input :ai)
-   (c/obstacle)))
+   (c/input :ai-hostile)
+   (c/obstacle)
+   (c/vulnerable hp)))

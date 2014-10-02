@@ -1,7 +1,7 @@
 (ns statehack.system
   (:require [clojure.set :as set]
             [statehack.entity :as entity]
-            [statehack.game.world :as world]))
+            [statehack.system.world :as world]))
 
 (def behavior-systems {})
 (def component-behaviors {})

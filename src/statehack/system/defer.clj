@@ -1,6 +1,6 @@
 (ns statehack.system.defer
   (:require [statehack.entity.selector :as selector]
-            [statehack.game.world :as world]
+            [statehack.system.world :as world]
             [statehack.system.input.receivers :as receivers]))
 
 (defn defer [game es action]
@@ -12,3 +12,6 @@
         es (:entities (world/current-world-state game))
         t (es (first (:targets mobile)))]
     (-> game (world/remove-entity e) receivers/pop-control (deferred t))))
+
+(defn abort [game e]
+  (-> game (world/remove-entity e) receivers/pop-control))

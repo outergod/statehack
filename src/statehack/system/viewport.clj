@@ -1,12 +1,13 @@
 (ns statehack.system.viewport
   (:require [statehack.system.render :as render]
-            [statehack.game.world :as world]
+            [statehack.system.world :as world]
             [statehack.util :as util]))
 
 (defn update-viewport [game [x y]]
   (let [state (world/current-world-state game)
+        foundation (:foundation state)
         screen (:screen game)]
-    (update-in game [:viewport] #(render/into-bounds state screen (util/matrix-add % [x y])))))
+    (update-in game [:viewport] #(render/into-bounds foundation screen (util/matrix-add % [x y])))))
 
 (defn set-viewport [game [x y]]
   (let [state (world/current-world-state game)

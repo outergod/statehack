@@ -1,8 +1,10 @@
 (ns statehack.system.render
   (:require [lanterna.screen :as screen]
-            [statehack.game.world :as world]
+            [statehack.system.world :as world]
             [statehack.util :as util]
             [statehack.entity :as entity]
+            [statehack.system.dialog :as dialog]
+            [statehack.system.status :as status]
             [clojure.set :as set]))
 
 (def tiles
@@ -82,7 +84,7 @@
   (let [{:keys [screen viewport]} game
         {:keys [foundation]} (world/current-world-state game)
         player (world/player-entity game)
-        es (entity/filter-capable [:position :renderable] (vals es))
+        es (entity/filter-capable [:position :renderable] es)
         world (reduce (partial canvas-blit game) foundation
                       (entity-canvas es))
         [x y] viewport
@@ -90,38 +92,40 @@
     (screen/put-sheet screen 0 0 (draw view))))
 
 (defn- draw-interface [game es]
-  (let [{:keys [screen]} game]
-    (when-let [ms (seq (entity/filter-capable [:messages :renderable] (vals es)))]
-      (let [{:keys [screen]} game
-            {:keys [messages]} (first ms)
-            [w h] (screen/get-size screen)
-            window (window w 5)
-            m (first messages)]
-        (screen/put-sheet screen 0 (- h 5) (draw window))
-        (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
-        (screen/put-string screen 2 (- h 4) m)))))
+  (let [{:keys [screen]} game
+        [w h] (screen/get-size screen)]
+    (doseq [e (entity/filter-capable [:renderable] es)]
+      (case (:renderable e)
+        :dialog (let [window (window w 5)]
+                  (screen/put-sheet screen 0 (- h 5) (draw window))
+                  (screen/put-string screen 1 (- h 4) (tiles :dialog-indicator))
+                  (screen/put-string screen 2 (- h 4) (dialog/current e)))
+        :status (do
+                  (screen/put-sheet screen 0 0 (draw (rect :nihil w 1)))
+                  (screen/put-string screen 1 0 (status/text game e)))
+        true))))
 
 (defn message-cursor-position [game e]
   (let [[_ h] (screen/get-size (:screen game))]
     [(+ (count (first (:messages e))) 2) (- h 4)]))
 
 (defn draw-cursor [game es]
-  (let [cursor (first (filter #(= (-> % :mobile :type) :cursor) (vals es)))
+  (let [cursor (first (filter #(= (-> % :mobile :type) :cursor) es))
         {:keys [screen viewport]} game
         {:keys [position]} cursor]
     (apply screen/move-cursor screen (util/matrix-subtract position viewport))))
 
 (defn system [{:keys [screen] :as game}]
-  (let [{:keys [entities] :as state} (world/current-world-state game)]
+  (let [{:keys [entities] :as state} (world/current-world-state game)
+        es (vals entities)]
     (try (drawing screen
-           (draw-objects game entities)
-           (draw-interface game entities)
-           (draw-cursor game entities))
+           (draw-objects game es)
+           (draw-interface game es)
+           (draw-cursor game es))
          (catch Exception e
            (throw (ex-info "Exception in rendering" {:state state} e)))))
   game)
 
-; unused
 (defn center [scr [x y]]
   (let [[w h] (screen/get-size scr)]
     [(- x (/ w 2)) (- y (/ h 2))]))

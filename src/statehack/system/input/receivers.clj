@@ -1,5 +1,5 @@
 (ns statehack.system.input.receivers
-  (:require [statehack.game.world :as world]))
+  (:require [statehack.system.world :as world]))
 
 (defn push-control [game e]
   (world/update-in-world-state game [:receivers] #(cons (:id e) %)))

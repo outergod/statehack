@@ -1,5 +1,21 @@
 (ns statehack.component)
 
+(defn player []
+  {:player true})
+
+(defn named [s]
+  {:name s})
+
+(defn vulnerable [hp]
+  {:pre [(pos? hp)]}
+  {:hp {:current hp
+        :max hp}})
+
+(defn adaptive [xp lvl]
+  {:pre [(>= xp 0) (>= lvl 0)]}
+  {:adaptive {:xp xp
+              :level lvl}})
+
 (defn obstacle []
   {:obstacle true})
 

@@ -1,7 +1,12 @@
-(ns statehack.game.world
-  (:require [statehack.util :as util]))
+(ns statehack.system.world
+  (:require [statehack.util :as util]
+            [statehack.entity :as entity]))
 
-(def state (atom {}))
+(def store (atom {}))
+
+(defn save [game]
+  (swap! store (constantly (:world game)))
+  game)
 
 (defn current-world-state [game]
   (-> game :world first))
@@ -43,16 +48,6 @@
 (defn remove-entity [game e]
   (update-entities game #(dissoc % (:id e))))
 
-#_(defn pop-world-state [game]
-  (update-in game [:world]
-             (fn [ss]
-               (loop [ss ss init true]
-                 (let [{:keys [mode]} (first ss)]
-                   (if (and (> (count ss) 1)
-                            (or init (not= mode :world)))
-                     (recur (next ss) false)
-                     ss))))))
-
 (defn pop-world-state [game]
   (update-in game [:world] #(if (> (count %) 1) (next %) %)))
 
@@ -72,9 +67,14 @@
 (defn entity-neighbors [game e]
   (direct-neighbors game (:position e)))
 
+(defn capable-entities [game & cs]
+  (entity/filter-capable cs (vals (:entities game))))
+
+(defn singular-entity [game & cs]
+  (let [es (entity/filter-capable cs (vals (:entities (current-world-state game))))]
+    (if (= (count es) 1)
+      (first es)
+      (throw (ex-info (format "Found %d entities satisfying %s, expected exactly one" (count es) cs) {})))))
+
 (defn entity-delta [e1 e2]
   (util/matrix-subtract (:position e1) (:position e2)))
-
-; unused
-(defn filter-neighbors [game e f]
-  (map #(entity-delta % e) (filter f (direct-neighbors game (:position e)))))

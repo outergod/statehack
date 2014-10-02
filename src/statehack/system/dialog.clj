@@ -1,7 +1,7 @@
 (ns statehack.system.dialog
   (:require [statehack.entity.dialog :as dialog]
             [statehack.system.input.receivers :as receivers]
-            [statehack.game.world :as world]))
+            [statehack.system.world :as world]))
 
 (defn messages [game ms]
   {:pre [(coll? ms)]}
@@ -10,3 +10,6 @@
 
 (defn message [game s]
   (messages game [s]))
+
+(defn current [e]
+  (first (:messages e)))

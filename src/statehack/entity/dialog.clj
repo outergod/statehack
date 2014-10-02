@@ -1,9 +1,9 @@
 (ns statehack.entity.dialog
   (:require [statehack.entity :refer :all]
-            [statehack.component :refer :all]))
+            [statehack.component :as c]))
 
 (defn dialog [ms]
   (entity
-   (renderable :dialog)
-   (input :dialog)
-   (messages ms)))
+   (c/renderable :dialog)
+   (c/input :dialog)
+   (c/messages ms)))
