@@ -5,9 +5,11 @@
 (defn player [name x y hp]
   (entity
    (c/player)
-   (c/named name)
-   (c/adaptive 0 0)
    (c/position x y)
+   (c/named name)
+   (c/race :human)
+   (c/adaptive 0 0)
+   (c/skillset {:martial-arts 1})
    (c/mobile :humanoid)
    (c/renderable :humanoid)
    (c/input :player)

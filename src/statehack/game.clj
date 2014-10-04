@@ -7,11 +7,12 @@
             [statehack.entity.bot :as bot]
             [statehack.entity.cursor :as cursor]
             [statehack.entity.room :as room]
+            [statehack.system.ai :as ai]
             [lanterna.screen :as screen]))
 
 (def first-room
-"XOXXXoXXXXX
-O         X
+"XXXXXoXXXXX
+X         X
 X         X
 X         X
 X         X
@@ -45,10 +46,9 @@ XXXXXXXXXXX")
      (doall (take-while identity (repeatedly #(screen/get-key screen))))
      (screen/in-screen screen
        (loop [input nil game (render/system game)]
-         (let [{:keys [quit time] :as game} (-> game (input/player-turn input) render/system)]
+         (let [[game {:keys [quit time]}] (-> game (input/player-turn input) render/system (util/separate :quit :time))]
            (when-not quit
-             (let [game (if time game game)]
-               (recur (screen/get-key-blocking screen)
-                      (dissoc game :quit :time))))))))
+             (let [game (if time (-> game ai/system render/system) game)]
+               (recur (screen/get-key-blocking screen) game)))))))
   ([screen]
      (run screen (new-game screen))))

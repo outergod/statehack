@@ -5,8 +5,9 @@
 (defn bot [x y hp]
   (entity
    (c/position x y)
+   (c/race :human)
    (c/mobile :humanoid)
    (c/renderable :humanoid)
-   (c/input :ai-hostile)
    (c/obstacle)
-   (c/vulnerable hp)))
+   (c/vulnerable hp)
+   (c/ai :hostile)))

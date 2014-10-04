@@ -16,6 +16,10 @@
   {:adaptive {:xp xp
               :level lvl}})
 
+(defn skillset [skills]
+  {:pre [(map? skills) (every? keyword? (keys skills)) (every? pos? (vals skills))]}
+  {:skillset skills})
+
 (defn obstacle []
   {:obstacle true})
 
@@ -45,3 +49,9 @@
 
 (defn deferred [action]
   {:deferred action})
+
+(defn race [type]
+  {:race type})
+
+(defn ai [type]
+  {:ai {:type type}})

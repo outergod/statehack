@@ -27,7 +27,11 @@
    :door "+"
    :open-door "▒"
    :swall "▢"
-   :dialog-indicator "⌐"})
+   :dialog-indicator "⌐"
+   :spell-up "⁀"
+   :spell-down "‿"
+   :spell-left "("
+   :spell-right ")"})
 
 (def render-hierarchy (make-hierarchy))
 
@@ -83,7 +87,6 @@
 (defn- draw-objects [game es]
   (let [{:keys [screen viewport]} game
         {:keys [foundation]} (world/current-world-state game)
-        player (world/player-entity game)
         es (entity/filter-capable [:position :renderable] es)
         world (reduce (partial canvas-blit game) foundation
                       (entity-canvas es))
@@ -156,7 +159,7 @@
   (derive-render w :wall))
 
 (defmethod render :wall [game wall]
-  (condp set/subset? (set (map #(world/entity-delta % wall) (filter :room (world/entity-neighbors game wall))))
+  (condp set/subset? (set (map #(world/entity-delta % wall) (entity/filter-capable [:room] (world/entity-neighbors game wall))))
     #{[1 0] [-1 0] [0 1] [0 -1]} :cross
     #{[1 0] [-1 0] [0 1]} :hdcross
     #{[1 0] [-1 0] [0 -1]} :hucross
@@ -172,7 +175,7 @@
 
 (defmethod render :door [game {:keys [open] :as door}]
   (if open :open-door
-      (condp set/subset? (set (map #(world/entity-delta % door) (filter :room (world/entity-neighbors game door))))
+      (condp set/subset? (set (map #(world/entity-delta % door) (entity/filter-capable [:room] (world/entity-neighbors game door))))
         #{[1 0] [-1 0]} :hdoor
         #{[0 1] [0 -1]} :vdoor
         :door)))

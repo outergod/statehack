@@ -5,6 +5,7 @@
             [statehack.system.viewport :as viewport]
             [statehack.system.movement :as movement]
             [statehack.system.door :as door]
+            [statehack.system.combat :as combat]
             [statehack.system.defer :as defer]
             [statehack.system.time :as time]
             [lanterna.screen :as screen]))
@@ -40,7 +41,7 @@
 (defn action [game player dir]
   (let [[x y] (player-moves dir)
         moves (apply merge (map #(% game player)
-                                (reverse [door/available-open movement/available-moves])))
+                                (reverse [combat/available-melee door/available-open movement/available-moves])))
         non-move ((movement/unavailable-moves game player) [x y])]
     (if-let [m (moves [x y])]
       (-> game world/dup-world-state m (viewport/center-viewport player) time/pass-time)

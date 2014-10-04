@@ -11,13 +11,11 @@
 (defn current-world-state [game]
   (-> game :world first))
 
-(defn player-entity [game]
-  (let [s (current-world-state game)]
-    ((:entities s) (:player s))))
+(defn entities [game]
+  (:entities (current-world-state game)))
 
 (defn entity [game id]
-  (let [s (current-world-state game)]
-    ((:entities s) id)))
+  ((entities game) id))
 
 (defn dup-world-state [game]
   (let [world (:world game)
@@ -34,7 +32,8 @@
   (apply update-in-world-state game [:entities (:id e)] f args))
 
 (defn update-entity-component [game e c f & args]
-  (apply update-in-world-state game [:entities (:id e) c] f args))
+  (let [c (if (sequential? c) c [c])]
+    (apply update-in-world-state game (concat [:entities (:id e)] c) f args)))
 
 (defn update-entities [game f & args]
   (apply update-in-world-state game [:entities] f args))
@@ -68,7 +67,7 @@
   (direct-neighbors game (:position e)))
 
 (defn capable-entities [game & cs]
-  (entity/filter-capable cs (vals (:entities game))))
+  (entity/filter-capable cs (vals (entities game))))
 
 (defn singular-entity [game & cs]
   (let [es (entity/filter-capable cs (vals (:entities (current-world-state game))))]
