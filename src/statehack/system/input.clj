@@ -7,8 +7,7 @@
             [statehack.system.door :as door]
             [statehack.system.combat :as combat]
             [statehack.system.defer :as defer]
-            [statehack.system.time :as time]
-            [lanterna.screen :as screen]))
+            [statehack.system.time :as time]))
 
 (def receive-hierarchy (make-hierarchy))
 
@@ -51,11 +50,11 @@
   (viewport/update-viewport game (player-moves dir)))
 
 (defmethod receive :player [game player input]
-  (case input
-    :up (viewport game :up)
-    :down (viewport game :down)
-    :left (viewport game :left)
-    :right (viewport game :right)
+  (case (:key input)
+    :arrow-up (viewport game :up)
+    :arrow-down (viewport game :down)
+    :arrow-left (viewport game :left)
+    :arrow-right (viewport game :right)
     \w (action game player :up)
     \s (action game player :down)
     \a (action game player :left)
@@ -71,18 +70,18 @@
     game))
 
 (defmethod receive :selector [game selector input]
-  (case input
-    :up (viewport game :up)
-    :down (viewport game :down)
-    :left (viewport game :left)
-    :right (viewport game :right)
+  (case (:key input)
+    :arrow-up (viewport game :up)
+    :arrow-down (viewport game :down)
+    :arrow-left (viewport game :left)
+    :arrow-right (viewport game :right)
     :tab (movement/move-next game selector)
     (:enter \ ) (defer/fulfill game selector)
     :escape (defer/abort game selector)
     game))
 
 (defmethod receive :dialog [game dialog input]
-  (case input
+  (case (:key input)
     (:enter \ ) (if (> (count (:messages dialog)) 1)
                   (world/update-entity-component game dialog :messages next)
                   (-> game receivers/pop-control (world/remove-entity dialog)))

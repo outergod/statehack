@@ -16,5 +16,4 @@
     (update-in game [:viewport] (constantly (render/into-bounds foundation screen [x y])))))
 
 (defn center-viewport [game e]
-  (let [screen (:screen game)]
-    (set-viewport game (render/center screen (e :position)))))
+  (set-viewport game (render/center (:graphics game) (e :position))))
