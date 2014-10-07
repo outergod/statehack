@@ -1,7 +1,6 @@
 (ns statehack.system.input
   (:require [statehack.system.input.receivers :as receivers]
             [statehack.system.world :as world]
-            [statehack.system.render :as render]
             [statehack.system.viewport :as viewport]
             [statehack.system.movement :as movement]
             [statehack.system.door :as door]

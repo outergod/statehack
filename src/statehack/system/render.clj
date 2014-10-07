@@ -46,29 +46,33 @@
 (defmethod render :humanoid [& _] {:tile :humanoid :color 7})
 
 (defn- blit-dispatch [e1 e2]
-  [(get-in e1 [:renderable :tile]) (get-in e2 [:renderable :tile])])
+  [(:renderable e1) (:renderable e2)])
 
 (defmulti blit #'blit-dispatch :hierarchy #'render-hierarchy)
 (defmethod blit :default [x _] x)
 
 (defn draw [canvas]
-  (map #(map (fn [{:keys [tile color]}] [(tiles tile) color]) %) canvas))
+  (mapv #(mapv (fn [{:keys [tile color char]}]
+                 [(if tile (tiles tile) (str char)) color]) %)
+        canvas))
+
+(defn canvas-update [canvas [x y] f]
+  (update-in canvas [y x] f))
 
 (defn entity-blit [game canvas e]
   (let [{:keys [position]} e]
-    (update-in canvas (reverse position) (constantly (render game e)))))
+    (canvas-update canvas position (constantly (render game e)))))
 
-(defn canvas-blit [canvas-1 canvas-2 x0 y0]
+(defn splice [offset f target source]
+  {:pre [(>= offset 0)]}
+  (let [[pre target] (split-at offset target)
+        [target post] (split-at (count source) target)]
+    (vec (concat pre (map f target source) post))))
+
+(defn canvas-blit [target source x0 y0]
   {:pre [(>= x0 0) (>= y0 0)]}
-  (let [[pre canvas-2] (split-at y0 canvas-2)
-        [canvas-2 post] (split-at (count canvas-1) canvas-2)]
-    (concat
-     pre
-     (map (fn [row-1 row-2]
-            (let [[pre row-2] (split-at x0 row-2)]
-              (concat pre (map #(or %1 %2) row-1 row-2))))
-          canvas-1 canvas-2)
-     post)))
+  (splice y0 (partial splice x0 #(or %2 %1))
+          target source))
 
 (defn rect [kind c w h]
   (vec (repeat h (vec (repeat w {:tile kind :color c})))))
@@ -78,11 +82,11 @@
 
 (defn window [c w h]
   {:pre [(pos? w) (pos? h)]}
-  (map #(map (fn [tile] {:tile tile :color 7}) %)
-       (apply concat
-              [[(flatten [:tlcorner (repeat (- w 2) :hwall) :trcorner])]
-               (repeat (- h 2) (flatten [:vwall (repeat (- w 2) :nihil) :vwall]))
-               [(flatten [:blcorner (repeat (- w 2) :hwall) :brcorner])]])))
+  (mapv #(mapv (fn [tile] {:tile tile :color c}) %)
+        (apply concat
+               [[(flatten [:tlcorner (repeat (- w 2) :hwall) :trcorner])]
+                (repeat (- h 2) (flatten [:vwall (repeat (- w 2) :nihil) :vwall]))
+                [(flatten [:blcorner (repeat (- w 2) :hwall) :brcorner])]])))
 
 (defn move [x coll]
   (if (neg? x)
@@ -91,11 +95,6 @@
 
 (defn entity-canvas [entities]
   (map (partial reduce blit) (vals (group-by :position entities))))
-
-(defmacro drawing [screen & body]
-  `(do
-     ~@body
-     (screen/refresh ~screen)))
 
 (def enumeration (iterate inc 0))
 
@@ -107,7 +106,7 @@
   ([graphics canvas]
      (put-canvas graphics canvas 0 0)))
 
-(defn- draw-objects [game es]
+(defn- draw-objects [game es canvas]
   (let [{:keys [graphics viewport]} game
         {:keys [foundation]} (world/current-world-state game)
         es (entity/filter-capable [:position :renderable] es)
@@ -115,25 +114,27 @@
                       (entity-canvas es))
         [x y] viewport
         view (map (partial move x) (move y world))]
-    (put-canvas graphics (draw view))))
+    (canvas-blit canvas view 0 1)))
 
-(defn- draw-interface [game es]
+(defn tilify-string [s c]
+  [(mapv (fn [chr] {:char chr :color c}) s)])
+
+(defn- draw-interface [game es canvas]
   (let [{:keys [graphics]} game
         [w h] (graphics/size graphics)]
-    (doseq [e (entity/filter-capable [:renderable] es)]
-      (case (:renderable e)
-        :dialog (let [window (window 7 w 5)]
-                  (put-canvas graphics (draw window) 0 (- h 5))
-                  (graphics/put graphics (tiles :dialog-indicator) 1 (- h 4))
-                  (graphics/put graphics (dialog/current e) 2 (- h 4)))
-        :status (do
-                  (put-canvas graphics (draw (rect :nihil 0 w 1)))
-                  (graphics/put graphics (status/text game e) 1 0))
-        true))))
-
-(defn message-cursor-position [game e]
-  (let [[_ h] (screen/size (:screen game))]
-    [(+ (count (first (:messages e))) 2) (- h 4)]))
+    (reduce
+     (fn [canvas e]
+       (case (:renderable e)
+         :dialog
+         (-> canvas
+             (canvas-blit (window 7 w 5) 0 (- h 5))
+             (canvas-update [1 (- h 4)] (constantly {:tile :dialog-indicator :color 7}))
+             (canvas-blit (tilify-string (dialog/current e) 7) 2 (- h 4)))
+         :status (-> canvas
+                     (canvas-blit (rect :nihil 0 w 1) 0 0)
+                     (canvas-blit (tilify-string (status/text game e) 7) 1 0))
+         canvas))
+       canvas (entity/filter-capable [:renderable] es))))
 
 (defn draw-cursor [game es]
   (let [cursor (first (filter #(= (-> % :mobile :type) :cursor) es))
@@ -141,15 +142,17 @@
         {:keys [position]} cursor]
     (apply screen/move-cursor screen (util/matrix-subtract position viewport))))
 
-(defn system [{:keys [screen] :as game}]
+(defn system [{:keys [screen graphics] :as game}]
   (let [{:keys [entities] :as state} (world/current-world-state game)
-        es (vals entities)]
-    (try (drawing screen
-           (draw-objects game es)
-           (draw-interface game es)
-           (draw-cursor game es))
-         (catch Exception e
-           (throw (ex-info "Exception in rendering" {:state state} e)))))
+        es (vals entities)
+        [w h] (graphics/size graphics)
+        canvas (rect :nihil 0 w h)]
+    (try
+      (->> canvas (draw-objects game es) (draw-interface game es) draw (put-canvas graphics))
+      (draw-cursor game es)
+      (screen/refresh screen)
+      (catch Exception e
+        (throw (ex-info "Exception in rendering" {:state state} e)))))
   game)
 
 (defn center [graphics [x y]]
@@ -173,6 +176,15 @@
 (defn in-bounds? [canvas [x y]]
   (and (>= x 0) (>= y 0)
        (< x (count (first canvas))) (< y (count canvas))))
+
+(defn entity-cursor-position [e]
+  (let [{:keys [position]} e
+        [x y] position]
+    [x (inc y)])) ; status bar offset
+
+(defn message-cursor-position [game e]
+  (let [[_ h] (screen/size (:screen game))]
+    [(+ (count (first (:messages e))) 2) (- h 4)]))
 
 (doseq [d [:hdoor :vdoor]]
   (derive-render d :door))
@@ -206,7 +218,7 @@
    :color 15})
 
 (defmethod blit [:humanoid :door] [& es]
-  (first (filter #(= (get-in % [:renderable :type]) :humanoid) es)))
+  (first (filter #(= (:renderable %) :humanoid) es)))
 
 (defmethod blit [:door :humanoid] [& es]
-  (first (filter #(= (get-in % [:renderable :type]) :humanoid) es)))
+  (first (filter #(= (:renderable %) :humanoid) es)))

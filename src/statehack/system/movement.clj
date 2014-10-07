@@ -53,5 +53,5 @@
         e (first (filter #(= (get-in % [:mobile :type]) :cursor) (vals entities)))
         [x y] (if (entity/capable? r :messages)
                 (render/message-cursor-position game r)
-                (:position r))]
+                (render/entity-cursor-position r))]
     (world/update-entity-component game e :position (constantly [x y]))))
