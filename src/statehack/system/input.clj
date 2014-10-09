@@ -6,25 +6,8 @@
             [statehack.system.door :as door]
             [statehack.system.combat :as combat]
             [statehack.system.defer :as defer]
-            [statehack.system.time :as time]))
-
-(def receive-hierarchy (make-hierarchy))
-
-(defn derive-receive [tag parent]
-  (alter-var-root #'receive-hierarchy derive tag parent))
-
-(defn- receive-dispatch [game e input]
-  (:input e))
-
-(defmulti receive #'receive-dispatch :hierarchy #'receive-hierarchy)
-
-(defn receiver [state]
-  (let [{:keys [receivers entities]} state]
-    (entities (first receivers))))
-
-(defn player-turn [game input]
-  (let [e (receiver (world/current-world-state game))]
-    (-> (receive game e input) movement/update-cursor)))
+            [statehack.system.time :as time]
+            [statehack.util :as util]))
 
 (def player-moves
   {:up [0 -1]
@@ -36,17 +19,32 @@
    :down-left [-1 1]
    :down-right [1 1]})
 
+(def receive-hierarchy (make-hierarchy))
+
+(defn derive-receive [tag parent]
+  (alter-var-root #'receive-hierarchy derive tag parent))
+
+(defn- receive-dispatch [game e input]
+  (:input e))
+
+(defmulti receive #'receive-dispatch :hierarchy #'receive-hierarchy)
+
+(defn player-turn [game input]
+  (let [e (receivers/current game)]
+    (-> (receive game e input) movement/update-cursor)))
+
 (defn action [game player dir]
   (let [[x y] (player-moves dir)
         moves (apply merge (map #(% game player)
                                 (reverse [combat/available-melee door/available-open movement/available-moves])))
-        non-move ((movement/unavailable-moves game player) [x y])]
+        non-move ((movement/unavailable-moves game player) [x y])
+        center #(viewport/center-viewport % (world/entity % (:id player)))]
     (if-let [m (moves [x y])]
-      (-> game world/dup-world-state m (viewport/center-viewport player) time/pass-time)
+      (-> game world/dup-world-state m center time/pass-time)
       (non-move game))))
 
 (defn viewport [game dir]
-  (viewport/update-viewport game (player-moves dir)))
+  (viewport/update-viewport game (partial util/matrix-add (player-moves dir))))
 
 (defmethod receive :player [game player input]
   (case (:key input)

@@ -3,17 +3,11 @@
             [statehack.system.world :as world]
             [statehack.util :as util]))
 
-(defn update-viewport [game [x y]]
+(defn update-viewport [game f]
   (let [state (world/current-world-state game)
         foundation (:foundation state)
-        screen (:screen game)]
-    (update-in game [:viewport] #(render/into-bounds foundation screen (util/matrix-add % [x y])))))
-
-(defn set-viewport [game [x y]]
-  (let [state (world/current-world-state game)
-        foundation (:foundation state)
-        screen (:screen game)]
-    (update-in game [:viewport] (constantly (render/into-bounds foundation screen [x y])))))
+        {:keys [graphics]} game]
+    (update-in game [:viewport] #(render/into-bounds graphics :world foundation (f %)))))
 
 (defn center-viewport [game e]
-  (set-viewport game (render/center (:graphics game) (e :position))))
+  (update-viewport game (constantly (render/center-on (:graphics game) (e :position)))))

@@ -1,9 +1,9 @@
 (ns statehack.system.movement
   (:require [statehack.entity :as entity]
             [statehack.system.render :as render]
-            [statehack.system.viewport :as viewport]
             [statehack.system.dialog :as dialog]
             [statehack.system.world :as world]
+            [statehack.system.input.receivers :as receivers]
             [statehack.util :as util]
             [clojure.set :as set]))
 
@@ -49,9 +49,9 @@
 
 (defn update-cursor [game]
   (let [{:keys [entities receivers]} (world/current-world-state game)
-        r (entities (first receivers))
+        r (receivers/current game)
         e (first (filter #(= (get-in % [:mobile :type]) :cursor) (vals entities)))
         [x y] (if (entity/capable? r :messages)
-                (render/message-cursor-position game r)
-                (render/entity-cursor-position r))]
+                [(+ (count (first (:messages r))) 2) 1]
+                (:position r))]
     (world/update-entity-component game e :position (constantly [x y]))))

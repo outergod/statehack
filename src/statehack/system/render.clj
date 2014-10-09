@@ -6,6 +6,7 @@
             [statehack.entity :as entity]
             [statehack.system.dialog :as dialog]
             [statehack.system.status :as status]
+            [statehack.system.input.receivers :as receivers]
             [clojure.set :as set]))
 
 (def tiles
@@ -33,6 +34,29 @@
    :spell-down "‿"
    :spell-left "("
    :spell-right ")"})
+
+(def layout
+  {:sizes
+   {:status 1
+    :world :rest
+    :messages 5}
+   :order [:status :world :messages]})
+
+(defn size [graphics section]
+  (let [[w h] (graphics/size graphics)
+        {:keys [sizes]} layout
+        fixed (reduce + (filter integer? (vals sizes)))
+        s (sizes section)]
+    [w
+     (if (= s :rest)
+       (- h fixed)
+       s)]))
+
+(defn position [graphics section]
+  (let [{:keys [sizes order]} layout
+        pre (take-while (partial not= section) order)
+        height (comp second (partial size graphics))]
+    [0 (reduce + (map height pre))]))
 
 (def render-hierarchy (make-hierarchy))
 
@@ -88,11 +112,6 @@
                 (repeat (- h 2) (flatten [:vwall (repeat (- w 2) :nihil) :vwall]))
                 [(flatten [:blcorner (repeat (- w 2) :hwall) :brcorner])]])))
 
-(defn move [x coll]
-  (if (neg? x)
-    (concat (repeat (Math/abs x) nil) coll)
-    (drop x coll)))
-
 (defn entity-canvas [entities]
   (map (partial reduce blit) (vals (group-by :position entities))))
 
@@ -106,15 +125,17 @@
   ([graphics canvas]
      (put-canvas graphics canvas 0 0)))
 
-(defn- draw-objects [game es canvas]
+(defn- draw-world [game es canvas]
   (let [{:keys [graphics viewport]} game
         {:keys [foundation]} (world/current-world-state game)
         es (entity/filter-capable [:position :renderable] es)
         world (reduce (partial entity-blit game) foundation
                       (entity-canvas es))
         [x y] viewport
-        view (map (partial move x) (move y world))]
-    (canvas-blit canvas view 0 1)))
+        [w h] (size graphics :world)
+        view (subvec (mapv #(subvec % x (+ x w)) world) y (+ y h))
+        [x0 y0] (position graphics :world)]
+    (canvas-blit canvas view x0 y0)))
 
 (defn tilify-string [s c]
   [(mapv (fn [chr] {:char chr :color c}) s)])
@@ -136,11 +157,20 @@
          canvas))
        canvas (entity/filter-capable [:renderable] es))))
 
+(defn receiver-section [game]
+  (if (entity/capable? (receivers/current game) :messages)
+    :messages :world))
+
 (defn draw-cursor [game es]
   (let [cursor (first (filter #(= (-> % :mobile :type) :cursor) es))
-        {:keys [screen viewport]} game
-        {:keys [position]} cursor]
-    (apply screen/move-cursor screen (util/matrix-subtract position viewport))))
+        {:keys [screen graphics viewport]} game
+        section (receiver-section game)
+        [x y] (util/matrix-add (position graphics section)
+                               (:position cursor))
+        [x y] (if (= section :world)
+                (util/matrix-subtract [x y] viewport)
+                [x y])]
+    (screen/move-cursor screen x y)))
 
 (defn system [{:keys [screen graphics] :as game}]
   (let [{:keys [entities] :as state} (world/current-world-state game)
@@ -148,19 +178,19 @@
         [w h] (graphics/size graphics)
         canvas (rect :nihil 0 w h)]
     (try
-      (->> canvas (draw-objects game es) (draw-interface game es) draw (put-canvas graphics))
+      (->> canvas (draw-world game es) (draw-interface game es) draw (put-canvas graphics))
       (draw-cursor game es)
       (screen/refresh screen)
       (catch Exception e
         (throw (ex-info "Exception in rendering" {:state state} e)))))
   game)
 
-(defn center [graphics [x y]]
-  (let [[w h] (graphics/size graphics)]
-    [(- x (/ w 2)) (- y (/ h 2))]))
+(defn center-on [graphics [x y]]
+  (let [[w h] (size graphics :world)]
+    [(- x (int (/ w 2))) (- y (int (/ h 2)))]))
 
-(defn into-bounds [canvas scr [x y]]
-  (let [[sw sh] (screen/size scr)
+(defn into-bounds [graphics section canvas [x y]]
+  (let [[sw sh] (size graphics section)
         fw (count (first canvas))
         fh (count canvas)
         x (cond (or (< x 0)
@@ -176,15 +206,6 @@
 (defn in-bounds? [canvas [x y]]
   (and (>= x 0) (>= y 0)
        (< x (count (first canvas))) (< y (count canvas))))
-
-(defn entity-cursor-position [e]
-  (let [{:keys [position]} e
-        [x y] position]
-    [x (inc y)])) ; status bar offset
-
-(defn message-cursor-position [game e]
-  (let [[_ h] (screen/size (:screen game))]
-    [(+ (count (first (:messages e))) 2) (- h 4)]))
 
 (doseq [d [:hdoor :vdoor]]
   (derive-render d :door))
