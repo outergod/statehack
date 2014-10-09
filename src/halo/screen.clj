@@ -23,10 +23,13 @@
      (try ~@body
           (finally (stop screen#)))))
 
+(defn- extract-size
+  [^TerminalSize size]
+  [(.getColumns size) (.getRows size)])
+
 (defn size
   [^TerminalScreen screen]
-  (let [^TerminalSize size (.getTerminalSize screen)]
-    [(.getColumns size) (.getRows size)]))
+  (extract-size (.getTerminalSize screen)))
 
 (defn refresh
   [^DefaultScreen screen]
@@ -51,3 +54,8 @@
 (defn text-graphics
   [^AbstractScreen screen]
   (.newTextGraphics screen))
+
+(defn probe-resize
+  [^Screen screen]
+  (when-let [size (.doResizeIfNecessary screen)]
+    (extract-size size)))

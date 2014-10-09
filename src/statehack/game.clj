@@ -52,6 +52,7 @@ XXXXXXXXXXX")
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
      (screen/in-screen screen
        (loop [input nil game (render/system game)]
+         (screen/probe-resize screen)
          (let [[game {:keys [quit time]}] (-> game (input/player-turn input) render/system (util/separate :quit :time))]
            (when-not quit
              (let [game (if time (-> game ai/system render/system) game)]
