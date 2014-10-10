@@ -73,11 +73,5 @@
 (defn capable-entities [game & cs]
   (entity/filter-capable cs (vals (entities game))))
 
-(defn singular-entity [game & cs]
-  (let [es (entity/filter-capable cs (vals (:entities (state game))))]
-    (if (= (count es) 1)
-      (first es)
-      (throw (ex-info (format "Found %d entities satisfying %s, expected exactly one" (count es) cs) {})))))
-
 (defn entity-delta [e1 e2]
   (util/matrix-subtract (:position e1) (:position e2)))

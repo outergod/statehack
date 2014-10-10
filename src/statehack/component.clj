@@ -1,7 +1,7 @@
 (ns statehack.component)
 
-(defn player []
-  {:player true})
+(defn unique [type]
+  {:unique type})
 
 (defn named [s]
   {:name s})

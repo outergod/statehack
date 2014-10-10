@@ -3,6 +3,7 @@
             [statehack.system.render :as render]
             [statehack.system.dialog :as dialog]
             [statehack.system.world :as world]
+            [statehack.system.unique :as unique]
             [statehack.system.input.receivers :as receivers]
             [statehack.util :as util]
             [clojure.set :as set]))
@@ -50,7 +51,7 @@
 (defn update-cursor [game]
   (let [{:keys [entities receivers]} (world/state game)
         r (receivers/current game)
-        e (first (filter #(= (get-in % [:mobile :type]) :cursor) (vals entities)))
+        e (unique/unique-entity game :cursor)
         [x y] (if (entity/capable? r :messages)
                 [(+ (count (first (:messages r))) 2) 1]
                 (:position r))]

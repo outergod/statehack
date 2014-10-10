@@ -10,6 +10,7 @@
             [statehack.entity.room :as room]
             [statehack.system.ai :as ai]
             [statehack.system.viewport :as viewport]
+            [statehack.system.unique :as unique]
             [halo.screen :as screen]))
 
 (def first-room
@@ -41,7 +42,7 @@ XXXXXXXXXXX")
   (let [game {:screen screen
               :graphics (screen/text-graphics screen)
               :world world}
-        player (world/singular-entity game :player)]
+        player (unique/unique-entity game :player)]
     (viewport/center-viewport game player)))
 
 (comment

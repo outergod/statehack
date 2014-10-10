@@ -3,6 +3,7 @@
             [statehack.entity :as entity]
             [statehack.system.name :as name]
             [statehack.system.world :as world]
+            [statehack.system.unique :as unique]
             [statehack.system.dialog :as dialog]))
 
 (defn player-status [e]
@@ -12,7 +13,7 @@
     (cl-format nil (str "~a | HP: ~" hp-order "d/~d | XP: ~d | Level: ~d") (name/name e) current max (:xp adaptive) (:level adaptive))))
 
 (defn text [game e]
-  (let [p (world/singular-entity game :player)]
+  (let [p (unique/unique-entity game :player)]
     (if (entity/capable? e :messages)
       (dialog/current e)
       (player-status p))))
