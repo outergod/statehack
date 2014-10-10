@@ -134,7 +134,10 @@
     [(int (max (/ (- w cw) 2) 0))
      (int (max (/ (- h ch) 2) 0))]))
 
-(defn fit-in [canvas x0 y0 w h]
+(defn fit-in
+  "Cut and/or center `canvas` into an area of width `w` and height `h`
+  after moving it by offset `[x0 y0]`."
+  [canvas x0 y0 w h]
   (let [base (rect :nihil 0 w h)
         cw (count (first canvas))
         ch (count canvas)]
@@ -142,6 +145,14 @@
                                           canvas)
                                     y0 (min (+ y0 h) ch))
            (center-offset canvas [w h]))))
+
+(defn visible?
+  "Is `[x y]` within the visible area of the world section?"
+  [game [x y]]
+  (let [{:keys [graphics viewport]} game
+        [x1 y1] viewport
+        [x2 y2] (util/matrix-add viewport (size graphics :world))]
+    (and (<= x1 x (dec x2)) (<= y1 y (dec y2)))))
 
 (defn- draw-world [game es canvas]
   (let [{:keys [graphics viewport]} game
@@ -183,14 +194,16 @@
   (let [cursor (first (filter #(= (-> % :mobile :type) :cursor) es))
         {:keys [screen graphics viewport]} game
         {:keys [foundation]} (world/current-world-state game)
+        cursor-position (:position cursor)
         section (receiver-section game)
-        [x y] (util/matrix-add (position graphics section)
-                               (:position cursor))
-        [x y] (if (= section :world)
-                (util/matrix-add (util/matrix-subtract [x y] viewport)
-                                 (center-offset foundation (size graphics :world)))
-                [x y])]
-    (screen/move-cursor screen x y)))
+        [x y] (util/matrix-add (position graphics section) cursor-position)]
+    (if (= section :world)
+      (let [[x y] (util/matrix-add (util/matrix-subtract [x y] viewport)
+                                   (center-offset foundation (size graphics :world)))]
+        (if (visible? game cursor-position)
+          (screen/move-cursor screen x y)
+          (screen/hide-cursor screen)))
+      (screen/move-cursor screen x y))))
 
 (defn system [{:keys [screen graphics] :as game}]
   (let [{:keys [entities] :as state} (world/current-world-state game)
