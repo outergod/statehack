@@ -9,7 +9,7 @@
 
 (defn fulfill [game e]
   (let [{:keys [deferred mobile]} e
-        es (:entities (world/current-world-state game))
+        es (:entities (world/state game))
         t (es (first (:targets mobile)))]
     (-> game (world/remove-entity e) receivers/pop-control (deferred t))))
 

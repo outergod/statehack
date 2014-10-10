@@ -46,5 +46,5 @@
           game (component-behaviors c)))
 
 (defn broadcast [game c]
-  (let [es (vals (:entities (world/current-world-state game)))]
+  (let [es (vals (:entities (world/state game)))]
     (reduce #(trigger %1 c %2) game (entity/filter-capable [c] es))))

@@ -156,7 +156,7 @@
 
 (defn- draw-world [game es canvas]
   (let [{:keys [graphics viewport]} game
-        {:keys [foundation]} (world/current-world-state game)
+        {:keys [foundation]} (world/state game)
         es (entity/filter-capable [:position :renderable] es)
         world (reduce (partial entity-blit game) foundation
                       (entity-canvas es))
@@ -193,7 +193,7 @@
 (defn draw-cursor [game es]
   (let [cursor (first (filter #(= (-> % :mobile :type) :cursor) es))
         {:keys [screen graphics viewport]} game
-        {:keys [foundation]} (world/current-world-state game)
+        {:keys [foundation]} (world/state game)
         cursor-position (:position cursor)
         section (receiver-section game)
         [x y] (util/matrix-add (position graphics section) cursor-position)]
@@ -206,7 +206,7 @@
       (screen/move-cursor screen x y))))
 
 (defn system [{:keys [screen graphics] :as game}]
-  (let [{:keys [entities] :as state} (world/current-world-state game)
+  (let [{:keys [entities] :as state} (world/state game)
         es (vals entities)
         [w h] (graphics/size graphics)
         canvas (rect :nihil 0 w h)]

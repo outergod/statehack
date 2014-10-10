@@ -4,7 +4,7 @@
             [statehack.util :as util]))
 
 (defn update-viewport [game f]
-  (let [state (world/current-world-state game)
+  (let [state (world/state game)
         foundation (:foundation state)
         {:keys [graphics]} game]
     (update-in game [:viewport] #(render/into-bounds graphics :world foundation (f %)))))

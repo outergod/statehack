@@ -22,7 +22,7 @@
   (->> es (entity/filter-capable [:obstacle]) (remove :open)))
 
 (defn inbound-moves [game e]
-  (let [f (:foundation (world/current-world-state game))]
+  (let [f (:foundation (world/state game))]
     (set (filter #(render/in-bounds? f (util/matrix-add (:position e) %))
                  world/neighbors))))
 
@@ -34,7 +34,7 @@
 
 (defn move-next [game sel]
   (let [{:keys [targets]} (:mobile sel)
-        es (:entities (world/current-world-state game))
+        es (:entities (world/state game))
         targets (concat (rest targets) [(first targets)])
         e (es (first targets))]
     (-> game
@@ -48,7 +48,7 @@
            (into {} (map (fn [c] [c #(dialog/message % "Somehow, you can't move here...")]) cs)))))
 
 (defn update-cursor [game]
-  (let [{:keys [entities receivers]} (world/current-world-state game)
+  (let [{:keys [entities receivers]} (world/state game)
         r (receivers/current game)
         e (first (filter #(= (get-in % [:mobile :type]) :cursor) (vals entities)))
         [x y] (if (entity/capable? r :messages)

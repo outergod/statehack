@@ -8,15 +8,15 @@
   (swap! store (constantly (:world game)))
   game)
 
-(defn current-world-state [game]
+(defn state [game]
   (-> game :world first))
 
 (defn size [game]
-  (let [{:keys [foundation]} (current-world-state game)]
+  (let [{:keys [foundation]} (state game)]
     [(count (first foundation)) (count foundation)]))
 
 (defn entities [game]
-  (:entities (current-world-state game)))
+  (:entities (state game)))
 
 (defn entity [game id]
   ((entities game) id))
@@ -59,7 +59,7 @@
                (for [x [-1 0 1] y [-1 0 1]] [x y]))))
 
 (defn entities-at [game & coords]
-  (let [state (current-world-state game)
+  (let [state (state game)
         {:keys [entities]} state
         coords (set coords)]
     (filter #(coords (:position %)) (vals entities))))
@@ -74,7 +74,7 @@
   (entity/filter-capable cs (vals (entities game))))
 
 (defn singular-entity [game & cs]
-  (let [es (entity/filter-capable cs (vals (:entities (current-world-state game))))]
+  (let [es (entity/filter-capable cs (vals (:entities (state game))))]
     (if (= (count es) 1)
       (first es)
       (throw (ex-info (format "Found %d entities satisfying %s, expected exactly one" (count es) cs) {})))))

@@ -2,7 +2,7 @@
   (:require [statehack.system.world :as world]))
 
 (defn current [game]
-  (let [{:keys [entities receivers]} (world/current-world-state game)]
+  (let [{:keys [entities receivers]} (world/state game)]
     (entities (first receivers))))
 
 (defn push-control [game e]
