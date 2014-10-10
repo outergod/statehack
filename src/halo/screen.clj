@@ -2,7 +2,7 @@
   (:require [halo.terminal :as terminal]
             [halo.util :as util])
   (:import [com.googlecode.lanterna TerminalSize TerminalPosition]
-           [com.googlecode.lanterna.screen DefaultScreen AbstractScreen Screen TerminalScreen]
+           [com.googlecode.lanterna.screen DefaultScreen Screen]
            [com.googlecode.lanterna.graphics TextGraphics]))
 
 (defn screen [& opts]
@@ -28,23 +28,27 @@
   [(.getColumns size) (.getRows size)])
 
 (defn size
-  [^TerminalScreen screen]
+  [^Screen screen]
   (extract-size (.getTerminalSize screen)))
 
 (defn refresh
-  [^DefaultScreen screen]
+  [^Screen screen]
   (.refresh screen))
 
 (defn move-cursor
-  [^DefaultScreen screen x y]
+  [^Screen screen x y]
   (.setCursorPosition screen (TerminalPosition. x y)))
 
+(defn hide-cursor
+  [^Screen screen]
+  (.setCursorPosition screen nil))
+
 (defn clear
-  [^DefaultScreen screen]
+  [^Screen screen]
   (.clear screen))
 
 (defn read-input
-  [^TerminalScreen screen]
+  [^Screen screen]
   (util/translate-stroke (.readInput screen)))
 
 (defn read-input-blocking
@@ -52,7 +56,7 @@
   (util/wait-for #(read-input screen)))
 
 (defn text-graphics
-  [^AbstractScreen screen]
+  [^Screen screen]
   (.newTextGraphics screen))
 
 (defn probe-resize
