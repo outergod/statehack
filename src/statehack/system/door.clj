@@ -30,6 +30,6 @@
   (let [es (filter #(and (entity/capable? % :open) (:open %))
                    (world/entity-neighbors game e))]
     (case (count es)
-      0 (messages/dialog game "No open door nearby.")
+      0 (messages/log game "No open door nearby.")
       1 (close-door game (first es))
       (defer/defer game es close-door))))

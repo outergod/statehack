@@ -45,7 +45,7 @@
 (defn unavailable-moves [game e]
   (let [os (obstacles (world/entity-neighbors game e))
         cs (set/difference world/neighbors (inbound-moves game e))]
-    (merge (into {} (map (fn [o] [(world/entity-delta o e) #(messages/log % "There's an obstacle in the way")]) os))
+    (merge (into {} (map (fn [o] [(world/entity-delta o e) #(messages/log % "There's an obstacle in the way.")]) os))
            (into {} (map (fn [c] [c #(messages/log % "Somehow, you can't move here...")]) cs)))))
 
 (defn update-cursor [game]
