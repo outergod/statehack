@@ -14,6 +14,7 @@
             [statehack.system.unique :as unique]
             [statehack.system.messages :as messages]
             [statehack.system.combat :as combat]
+            [statehack.system.transition :as transition]
             [halo.screen :as screen]))
 
 (def first-room
@@ -63,9 +64,9 @@ XXXXXXXXXXX")
      (screen/in-screen screen
        (loop [input nil game (render/system game)]
          (screen/probe-resize screen)
-         (let [[game {:keys [quit time]}] (-> game (input/player-turn input) render/system (util/separate :quit :time))]
+         (let [[game {:keys [quit time]}] (-> game (input/player-turn input) transition/system render/system (util/separate :quit :time))]
            (when-not quit
-             (let [game (if time (-> game ai/system render/system) game)
+             (let [game (if time (-> game ai/system transition/system render/system) game)
                    player (unique/unique-entity game :player)]
                (if (combat/dead? player)
                  (game-over game)

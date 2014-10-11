@@ -82,9 +82,6 @@
 (defn play [name]
   (-> name sounds ready-sound play-sound))
 
-#_(defn event [game name]
-  (assoc-in game [:events] #(play name)))
-
 (comment
   (let [t (sound/hz->mseconds 10)]
     (with-open [up (sound/sound :gatling-wind-up)

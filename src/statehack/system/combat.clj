@@ -3,7 +3,7 @@
             [statehack.entity :as entity]
             [statehack.system.name :as name]
             [statehack.system.world :as world]
-            [statehack.system.sound :as sound]
+            [statehack.system.transition :as transition]
             [statehack.system.messages :as messages]))
 
 (defn target-hp [e]
@@ -20,8 +20,9 @@
 
 (defn damage [game attacker skill target]
   (let [hp (- (target-hp target) skill)
-        game (messages/log game (cl-format nil "~a attacks ~a, causing ~d damage" (name/name attacker) (name/name target) skill))]
-    (sound/play :punch-02)
+        game (-> game
+                 (transition/transition #(transition/punch))
+                 (messages/log (cl-format nil "~a attacks ~a, causing ~d damage" (name/name attacker) (name/name target) skill)))]
     (if (pos? hp)
       (world/update-entity-component game target [:hp :current] - skill)
       (-> game
