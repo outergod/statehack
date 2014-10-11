@@ -1,7 +1,7 @@
 (ns statehack.system.movement
   (:require [statehack.entity :as entity]
             [statehack.system.render :as render]
-            [statehack.system.dialog :as dialog]
+            [statehack.system.messages :as messages]
             [statehack.system.world :as world]
             [statehack.system.unique :as unique]
             [statehack.system.input.receivers :as receivers]
@@ -45,8 +45,8 @@
 (defn unavailable-moves [game e]
   (let [os (obstacles (world/entity-neighbors game e))
         cs (set/difference world/neighbors (inbound-moves game e))]
-    (merge (into {} (map (fn [o] [(world/entity-delta o e) #(dialog/message % "There's an obstacle in the way")]) os))
-           (into {} (map (fn [c] [c #(dialog/message % "Somehow, you can't move here...")]) cs)))))
+    (merge (into {} (map (fn [o] [(world/entity-delta o e) #(messages/log % "There's an obstacle in the way")]) os))
+           (into {} (map (fn [c] [c #(messages/log % "Somehow, you can't move here...")]) cs)))))
 
 (defn update-cursor [game]
   (let [{:keys [entities receivers]} (world/state game)

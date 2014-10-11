@@ -7,6 +7,7 @@
             [statehack.system.combat :as combat]
             [statehack.system.defer :as defer]
             [statehack.system.time :as time]
+            [statehack.system.messages :as messages]
             [statehack.util :as util]))
 
 (def player-moves
@@ -80,6 +81,6 @@
 (defmethod receive :dialog [game dialog input]
   (case (:key input)
     (:enter \ ) (if (> (count (:messages dialog)) 1)
-                  (world/update-entity-component game dialog :messages next)
+                  (messages/pop dialog)
                   (-> game receivers/pop-control (world/remove-entity dialog)))
     game))

@@ -4,7 +4,7 @@
             [statehack.system.name :as name]
             [statehack.system.world :as world]
             [statehack.system.unique :as unique]
-            [statehack.system.dialog :as dialog]))
+            [statehack.system.messages :as messages]))
 
 (defn player-status [e]
   (let [{:keys [adaptive hp]} e
@@ -15,5 +15,5 @@
 (defn text [game e]
   (let [p (unique/unique-entity game :player)]
     (if (entity/capable? e :messages)
-      (dialog/current e)
+      (messages/current e)
       (player-status p))))

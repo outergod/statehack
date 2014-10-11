@@ -8,6 +8,7 @@
             [statehack.entity.bot :as bot]
             [statehack.entity.cursor :as cursor]
             [statehack.entity.room :as room]
+            [statehack.entity.log :as log]
             [statehack.system.ai :as ai]
             [statehack.system.viewport :as viewport]
             [statehack.system.unique :as unique]
@@ -27,13 +28,14 @@ XXXXXXXXXXX")
     (viewport/center-viewport
      {:screen screen
       :graphics (screen/text-graphics screen)
-      :world [{:foundation #_(render/space 7 80 24) (render/space 7 500 500)
+      :world [{:foundation #_(render/space 7 [80 24]) (render/space 7 [500 500])
                :receivers [id]
                :entities (util/index-by :id
                                         (flatten
                                          [player
                                           (status/status-bar)
                                           (cursor/cursor)
+                                          (log/log)
                                           (room/extract-room first-room 35 13)
                                           (bot/bot 40 10 5)]))}]}
      player)))

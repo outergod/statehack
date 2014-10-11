@@ -4,9 +4,10 @@
             [statehack.system.world :as world]
             [statehack.util :as util]
             [statehack.entity :as entity]
-            [statehack.system.dialog :as dialog]
+            [statehack.system.messages :as messages]
             [statehack.system.status :as status]
             [statehack.system.input.receivers :as receivers]
+            [statehack.system.unique :as unique]
             [clojure.set :as set]))
 
 (def tiles
@@ -58,6 +59,12 @@
         height (comp second (partial size graphics))]
     [0 (reduce + (map height pre))]))
 
+(defn proportions [graphics]
+  (let [sections (:order layout)]
+    (into {} (map (fn [s] [s {:size (size graphics s)
+                              :position (position graphics s)}])
+                  sections))))
+
 (def render-hierarchy (make-hierarchy))
 
 (defn derive-render [tag parent]
@@ -93,18 +100,18 @@
         [target post] (split-at (count source) target)]
     (vec (concat pre (map f target source) post))))
 
-(defn canvas-blit [target source x0 y0]
+(defn canvas-blit [target source [x0 y0]]
   {:pre [(>= x0 0) (>= y0 0)]}
   (splice y0 (partial splice x0 #(or %2 %1))
           target source))
 
-(defn rect [kind c w h]
+(defn rect [kind c [w h]]
   (vec (repeat h (vec (repeat w {:tile kind :color c})))))
 
-(defn space [c w h]
-  (rect :empty c w h))
+(defn space [c [w h]]
+  (rect :empty c [w h]))
 
-(defn window [c w h]
+(defn window [c [w h]]
   {:pre [(pos? w) (pos? h)]}
   (mapv #(mapv (fn [tile] {:tile tile :color c}) %)
         (apply concat
@@ -115,12 +122,10 @@
 (defn entity-canvas [entities]
   (map (partial reduce blit) (vals (group-by :position entities))))
 
-(def enumeration (iterate inc 0))
-
 (defn put-canvas
   ([graphics canvas x0 y0]
-     (doseq [[row y] (map list canvas enumeration)
-             [[s c] x] (map list row enumeration)]
+     (doseq [[y row] (util/enumerate canvas)
+             [x [s c]] (util/enumerate row)]
        (graphics/put graphics s (+ x x0) (+ y y0) :color c)))
   ([graphics canvas]
      (put-canvas graphics canvas 0 0)))
@@ -137,14 +142,14 @@
 (defn fit-in
   "Cut and/or center `canvas` into an area of width `w` and height `h`
   after moving it by offset `[x0 y0]`."
-  [canvas x0 y0 w h]
-  (let [base (rect :nihil 0 w h)
+  [canvas [x0 y0] [w h]]
+  (let [base (rect :nihil 0 [w h])
         cw (count (first canvas))
         ch (count canvas)]
-    (apply canvas-blit base (subvec (mapv #(subvec % x0 (min (+ x0 w) cw))
-                                          canvas)
-                                    y0 (min (+ y0 h) ch))
-           (center-offset canvas [w h]))))
+    (canvas-blit base (subvec (mapv #(subvec % x0 (min (+ x0 w) cw))
+                                    canvas)
+                              y0 (min (+ y0 h) ch))
+                 (center-offset canvas [w h]))))
 
 (defn visible?
   "Is `[x y]` within the visible area of the world section?"
@@ -162,27 +167,39 @@
                       (entity-canvas es))
         [x y] viewport
         [w h] (size graphics :world)
-        view (fit-in world x y w h)
+        view (fit-in world [x y] [w h])
         [x0 y0] (position graphics :world)]
-    (canvas-blit canvas view x0 y0)))
+    (canvas-blit canvas view [x0 y0])))
 
 (defn tilify-string [s c]
   [(mapv (fn [chr] {:char chr :color c}) s)])
 
+(defn- draw-status [game canvas e [x y]]
+  (canvas-blit canvas (tilify-string (status/text game e) 7) (util/matrix-add [x y] [1 0])))
+
+(defn- draw-log [canvas e [x y]]
+  (reduce (fn [canvas [n m]]
+            (canvas-blit canvas (tilify-string m 7) (util/matrix-add [x y] [1 n])))
+          canvas (enumerate (messages/recent e 5) #_(take 5 (:messages e)))))
+
+(defn- draw-dialog [canvas e [x y] [w h]]
+  (-> canvas
+      (canvas-blit (window 7 [w h]) [x y])
+      (canvas-update (util/matrix-add [x y] [1 1]) (constantly {:tile :dialog-indicator :color 7}))
+      (canvas-blit (tilify-string (messages/current e) 7) (util/matrix-add [x y] [2 1]))))
+
 (defn- draw-interface [game es canvas]
   (let [{:keys [graphics]} game
-        [w h] (graphics/size graphics)]
+        {:keys [status world messages]} (proportions graphics)
+        dialog-visible? (unique/unique-entity game :dialog)]
     (reduce
      (fn [canvas e]
        (case (:renderable e)
-         :dialog
-         (-> canvas
-             (canvas-blit (window 7 w 5) 0 (- h 5))
-             (canvas-update [1 (- h 4)] (constantly {:tile :dialog-indicator :color 7}))
-             (canvas-blit (tilify-string (dialog/current e) 7) 2 (- h 4)))
-         :status (-> canvas
-                     (canvas-blit (rect :nihil 0 w 1) 0 0)
-                     (canvas-blit (tilify-string (status/text game e) 7) 1 0))
+         :status (draw-status game canvas e (:position status))
+         :log (if dialog-visible?
+                canvas
+                (draw-log canvas e (:position messages)))
+         :dialog (draw-dialog canvas e (:position messages) (:size messages))
          canvas))
        canvas (entity/filter-capable [:renderable] es))))
 
@@ -209,7 +226,7 @@
   (let [{:keys [entities] :as state} (world/state game)
         es (vals entities)
         [w h] (graphics/size graphics)
-        canvas (rect :nihil 0 w h)]
+        canvas (rect :nihil 0 [w h])]
     (try
       (->> canvas (draw-world game es) (draw-interface game es) draw (put-canvas graphics))
       (draw-cursor game es)

@@ -43,8 +43,8 @@
 (defn renderable [type]
   {:renderable type})
 
-(defn messages [ms]
-  {:pre [(coll? ms)]}
+(defn messages [& ms]
+  {:pre [(every? string? ms)]}
   {:messages ms})
 
 (defn deferred [action]
