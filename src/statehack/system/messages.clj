@@ -12,23 +12,24 @@
 (defn current [e]
   (first (:messages e)))
 
-(defn recent [e n]
-  {:pre [(pos? n)]}
-  (letfn [(format [[s n]]
-            (cl-format false "~a~:[~; [repeated ~d times]~]" s (> n 1) n))]
-    (map format
-         (reverse
-          (reduce (fn [[[last n] & acc] current]
-                    (cond (= current last) (conj acc [last (inc n)])
-                          last (conj acc [last n] [current 1])
-                          :default [[current 1]]))
-                  nil (take n (:messages e)))))))
+(defn update [game e f]
+  (world/update-entity-component game e :messages f))
 
 (defn pop [game e]
-  (world/update-entity-component game e :messages next))
+  (update game e next))
 
 (defn push [game e & ms]
-  (world/update-entity-component game e :messages (partial concat ms)))
+  (update game e (partial concat ms)))
 
 (defn log [game s]
-  (push game (unique/unique-entity game :log) s))
+  (let [e (unique/unique-entity game :log)
+        [last n] (current e)]
+    (if (= s last)
+      (update game e (fn [[_ & ms]] (conj ms [last (inc n)])))
+      (push game e [s 1]))))
+
+(defn recent [e n]
+  {:pre [(pos? n)]}
+  (map (fn [[s n]]
+         (cl-format false "~a~:[~; [repeated ~d times]~]" s (> n 1) n))
+       (take n (:messages e))))

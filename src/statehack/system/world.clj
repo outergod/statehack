@@ -35,6 +35,9 @@
 (defn update-entity [game e f & args]
   (apply update-in-world-state game [:entities (:id e)] f args))
 
+(defn remove-entity-component [game e c & cs]
+  (update-in-world-state game [:entities (:id e)] #(apply dissoc % c cs)))
+
 (defn update-entity-component [game e c f & args]
   (let [c (if (sequential? c) c [c])]
     (apply update-in-world-state game (concat [:entities (:id e)] c) f args)))

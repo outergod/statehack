@@ -11,6 +11,9 @@
   {:hp {:current hp
         :max hp}})
 
+(defn alive [alive?]
+  {:alive alive?})
+
 (defn adaptive [xp lvl]
   {:pre [(>= xp 0) (>= lvl 0)]}
   {:adaptive {:xp xp

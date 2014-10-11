@@ -4,6 +4,7 @@
 
 (defn bot [x y hp]
   (entity
+   (c/alive true)
    (c/position x y)
    (c/race :human)
    (c/mobile :humanoid)

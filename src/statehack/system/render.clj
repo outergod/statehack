@@ -12,6 +12,7 @@
 
 (def tiles
   {:humanoid "@"
+   :corpse "%"
    :nihil " "
    :empty "·"
    :hwall "─"
@@ -74,13 +75,23 @@
   (e :renderable))
 
 (defmulti render #'render-dispatch :hierarchy #'render-hierarchy)
-(defmethod render :humanoid [& _] {:tile :humanoid :color 7})
 
-(defn- blit-dispatch [e1 e2]
-  [(:renderable e1) (:renderable e2)])
+(def ^{:doc "Precedence of blit operations"} blit-order {})
 
-(defmulti blit #'blit-dispatch :hierarchy #'render-hierarchy)
-(defmethod blit :default [x _] x)
+(defn blit-precedence
+  "Define precedence of renderable `r1` over `r2`"
+  [r1 r2]
+  (alter-var-root #'blit-order assoc #{r1 r2} r1))
+
+(defn blit
+  "Evaluate to the entity with higher blit order"
+  [e1 e2]
+  (let [[r1 r2] (map :renderable [e1 e2])
+        rs (blit-order #{r1 r2})]
+    (condp = rs ; case does never match; why??
+      r1 e1
+      r2 e2
+      (throw (ex-info "Blit order of entities undefined" {:entities [e1 e2]})))))
 
 (defn draw [canvas]
   (mapv #(mapv (fn [{:keys [tile color char]}]
@@ -257,6 +268,9 @@
   (and (>= x 0) (>= y 0)
        (< x (count (first canvas))) (< y (count canvas))))
 
+(defmethod render :humanoid [& _] {:tile :humanoid :color 7})
+(defmethod render :corpse [& _] {:tile :corpse :color 88})
+
 (doseq [d [:hdoor :vdoor]]
   (derive-render d :door))
 
@@ -288,8 +302,6 @@
                :door))
    :color 15})
 
-(defmethod blit [:humanoid :door] [& es]
-  (first (filter #(= (:renderable %) :humanoid) es)))
-
-(defmethod blit [:door :humanoid] [& es]
-  (first (filter #(= (:renderable %) :humanoid) es)))
+(blit-precedence :humanoid :door)
+(blit-precedence :humanoid :corpse)
+(blit-precedence :corpse :door)

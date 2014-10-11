@@ -12,6 +12,8 @@
             [statehack.system.ai :as ai]
             [statehack.system.viewport :as viewport]
             [statehack.system.unique :as unique]
+            [statehack.system.messages :as messages]
+            [statehack.system.combat :as combat]
             [halo.screen :as screen]))
 
 (def first-room
@@ -50,6 +52,11 @@ XXXXXXXXXXX")
 (comment
   (game/run scr (game/load-game scr @statehack.system.world/state)))
 
+(defn game-over [game]
+  (let [{:keys [screen]} game]
+    (-> game (messages/log "Game Over. Whatever that means..") render/system)
+    (screen/read-input-blocking screen)))
+
 (defn run
   ([screen game]
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
@@ -58,7 +65,10 @@ XXXXXXXXXXX")
          (screen/probe-resize screen)
          (let [[game {:keys [quit time]}] (-> game (input/player-turn input) render/system (util/separate :quit :time))]
            (when-not quit
-             (let [game (if time (-> game ai/system render/system) game)]
-               (recur (screen/read-input-blocking screen) game)))))))
+             (let [game (if time (-> game ai/system render/system) game)
+                   player (unique/unique-entity game :player)]
+               (if (combat/dead? player)
+                 (game-over game)
+                 (recur (screen/read-input-blocking screen) game))))))))
   ([screen]
      (run screen (new-game screen))))

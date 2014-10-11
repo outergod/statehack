@@ -5,6 +5,7 @@
 (defn player [name x y hp]
   (entity
    (c/unique :player)
+   (c/alive true)
    (c/position x y)
    (c/named name)
    (c/race :human)
