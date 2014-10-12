@@ -191,7 +191,7 @@
 (defn- draw-log [canvas e [x y]]
   (reduce (fn [canvas [n m]]
             (canvas-blit canvas (tilify-string m 7) (util/matrix-add [x y] [1 n])))
-          canvas (enumerate (messages/recent e 5) #_(take 5 (:messages e)))))
+          canvas (util/enumerate (messages/recent e 5))))
 
 (defn- draw-dialog [canvas e [x y] [w h]]
   (-> canvas
