@@ -1,4 +1,5 @@
 (ns statehack.system.messages
+  (:refer-clojure :exclude [pop])
   (:require [statehack.entity.dialog :as dialog]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.world :as world]

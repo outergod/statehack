@@ -1,4 +1,5 @@
 (ns statehack.system.name
+  (:refer-clojure :exclude [name])
   (:require [statehack.entity :as entity]))
 
 (def race-names
