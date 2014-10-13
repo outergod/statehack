@@ -11,6 +11,7 @@
             [statehack.system.sound :as sound]
             [statehack.system.render :as render]
             [statehack.util :as util]
+            [clj-audio.core :as audio]
             [clojure.stacktrace :refer :all]
             [clojure.pprint :refer :all]
             [clojure.reflect :as reflect])
