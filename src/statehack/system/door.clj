@@ -6,10 +6,13 @@
             [statehack.system.input.receivers :as receivers]
             [statehack.system.world :as world]
             [statehack.system.time :as time]
+            [statehack.system.transition :as transition]
             [clojure.set :as set]))
 
 (defn open-door [game e]
-  (world/update-entity-component game e :open (constantly true)))
+  (-> game
+      (world/update-entity-component e :open (constantly true))
+      (transition/transition transition/door)))
 
 (defn available-open [game e]
   (let [es (filter #(and (entity/capable? % :open)
@@ -18,7 +21,7 @@
     (into {} (map (fn [door] [(world/entity-delta door e) #(open-door % door)]) es))))
 
 (defn close-door [game e]
-  (-> game (world/update-entity e assoc :open false) time/pass-time))
+  (-> game (world/update-entity e assoc :open false) (transition/transition transition/door) time/pass-time))
 
 (defn available-close [game e]
   (let [es (filter #(and (entity/capable? % :open)

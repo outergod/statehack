@@ -7,7 +7,6 @@
             [statehack.entity.status-bar :as status]
             [statehack.entity.bot :as bot]
             [statehack.entity.cursor :as cursor]
-            [statehack.entity.room :as room]
             [statehack.entity.log :as log]
             [statehack.system.ai :as ai]
             [statehack.system.viewport :as viewport]
@@ -15,19 +14,11 @@
             [statehack.system.messages :as messages]
             [statehack.system.combat :as combat]
             [statehack.system.transition :as transition]
+            [statehack.system.levels :as levels]
             [halo.screen :as screen]))
 
-(def first-room
-"XXXXXoXXXXX
-X         X
-X         X
-X         X
-X         X
-X         X
-XXXXXXXXXXX")
-
 (defn new-game [screen]
-  (let [{:keys [id] :as player} (player/player "Malefeitor" 40 18 10)]
+  (let [{:keys [id] :as player} (player/player "Malefeitor" [11 7] 10)]
     (viewport/center-viewport
      {:screen screen
       :graphics (screen/text-graphics screen)
@@ -39,7 +30,7 @@ XXXXXXXXXXX")
                                           (status/status-bar)
                                           (cursor/cursor)
                                           (log/log)
-                                          (room/extract-room first-room 35 13)
+                                          (levels/load "level-0" [0 0])
                                           (bot/bot 40 10 5)]))}]}
      player)))
 

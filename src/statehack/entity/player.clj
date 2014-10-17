@@ -2,7 +2,7 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn player [name x y hp]
+(defn player [name [x y] hp]
   (entity
    (c/unique :player)
    (c/alive true)
