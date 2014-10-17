@@ -13,7 +13,8 @@
   (-> game
       (world/remove-entity-component e :mobile :obstacle :ai)
       (world/update-entity-component e :alive (constantly false))
-      (world/update-entity-component e :renderable (constantly :corpse))))
+      (world/update-entity-component e :renderable (constantly :corpse))
+      (transition/transition #(transition/die))))
 
 (defn dead? [e]
   (not (:alive e)))
