@@ -10,6 +10,7 @@
             [statehack.system.door :as door]
             [statehack.system.sound :as sound]
             [statehack.system.render :as render]
+            [statehack.system.render.algebra :as algebra]
             [statehack.system.levels :as levels]
             [statehack.util :as util]
             [clj-audio.core :as audio]
@@ -23,6 +24,7 @@
                                 (:members (reflect/reflect o :ancestors true)))))))
 
 (def screen (screen/screen))
+(def graphics (screen/text-graphics screen))
 
 (def crash-state (atom {}))
 

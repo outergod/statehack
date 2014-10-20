@@ -8,6 +8,7 @@
             [statehack.system.status :as status]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.unique :as unique]
+            [statehack.system.render.algebra :as algebra]
             [clojure.set :as set]))
 
 (def tiles
