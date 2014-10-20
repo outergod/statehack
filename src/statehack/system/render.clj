@@ -1,4 +1,5 @@
 (ns statehack.system.render
+  "Rendering facility"
   (:require [halo.screen :as screen]
             [halo.graphics :as graphics]
             [statehack.system.world :as world]
@@ -12,6 +13,7 @@
             [clojure.set :as set]))
 
 (def tiles
+  "Mapping of tile keywords to characters"
   {:humanoid "@"
    :corpse "%"
    :nihil " "
@@ -39,13 +41,16 @@
    :spell-right ")"})
 
 (def layout
+  "Screen layout"
   {:sizes
    {:status 1
     :world :rest
     :messages 5}
    :order [:status :world :messages]})
 
-(defn size [graphics section]
+(defn size
+  "Width and height of a screen `section`"
+  [graphics section]
   (let [[w h] (graphics/size graphics)
         {:keys [sizes]} layout
         fixed (reduce + (filter integer? (vals sizes)))
@@ -55,30 +60,42 @@
        (- h fixed)
        s)]))
 
-(defn position [graphics section]
+(defn position
+  "Offset of a screen `section`"
+  [graphics section]
   (let [{:keys [sizes order]} layout
         pre (take-while (partial not= section) order)
         height (comp second (partial size graphics))]
     [0 (reduce + (map height pre))]))
 
-(defn proportions [graphics]
+(defn proportions
+  "Proportions (size and position) of the whole layout"
+  [graphics]
   (let [sections (:order layout)]
     (into {} (map (fn [s] [s {:size (size graphics s)
                               :position (position graphics s)}])
                   sections))))
 
-(def render-hierarchy (make-hierarchy))
+(def render-hierarchy "Hierarchy for `render`" (make-hierarchy))
 
-(defn derive-render [tag parent]
+(defn derive-render
+  "Derive for `render-hierarchy`"
+  [tag parent]
   (alter-var-root #'render-hierarchy derive tag parent))
 
-(defn render-dispatch [game e]
+(defn render-dispatch
+  "Dispatch for `render`"
+  [game e]
   (e :renderable))
 
-(defmulti render #'render-dispatch :hierarchy #'render-hierarchy)
+(defmulti render
+  "Determine tile and color for rendering entity `e`"
+  {:arglists '([game e])}
+  #'render-dispatch :hierarchy #'render-hierarchy)
+
 (defmethod render :default [_ x] (:renderable x))
 
-(def ^{:doc "Precedence of blit operations"} blit-order {})
+(def blit-order "Precedence of blit operations" {})
 
 (defn blit-precedence
   "Define precedence of renderable `r1` over `r2`"
@@ -95,36 +112,54 @@
       r2 e2
       (throw (ex-info "Blit order of entities undefined" {:entities [e1 e2]})))))
 
-(defn draw [canvas]
+(defn draw
+  "Transform two-dimensional `canvas` from tile/color mapping to
+  character/color vectors."
+  [canvas]
   (mapv #(mapv (fn [{:keys [tile color char]}]
                  [(if tile (tiles tile) (str char)) color]) %)
         canvas))
 
-(defn canvas-update [canvas [x y] f]
+(defn canvas-update
+  "Update tile at coordinates [x y] in `canvas` with `f`."
+  [canvas [x y] f]
   (update-in canvas [y x] f))
 
-(defn entity-blit [game canvas e]
+(defn entity-blit
+  "Blit entity `e` onto `canvas`."
+  [game canvas e]
   (let [{:keys [position]} e]
     (canvas-update canvas position (constantly (render game e)))))
 
-(defn splice [offset f target source]
+(defn splice
+  "Splice `source` into `target` at `offset` using blit operation `f`."
+  [offset f target source]
   {:pre [(>= offset 0)]}
   (let [[pre target] (split-at offset target)
         [target post] (split-at (count source) target)]
     (vec (concat pre (map f target source) post))))
 
-(defn canvas-blit [target source [x0 y0]]
+(defn canvas-blit
+  "Blit `source` canvas onto `target` at coordinates `[x0 y0]`."
+  [target source [x0 y0]]
   {:pre [(>= x0 0) (>= y0 0)]}
   (splice y0 (partial splice x0 #(or %2 %1))
           target source))
 
-(defn rect [kind c [w h]]
+(defn rect
+  "Generate monotonous rectancle of proportions `[w h]` with tiles of
+  `kind` and color `c`."
+  [kind c [w h]]
   (vec (repeat h (vec (repeat w {:tile kind :color c})))))
 
-(defn space [c [w h]]
+(defn space
+  "Create empty space rectangle of proportions `[w h]` with color `c`."
+  [c [w h]]
   (rect :empty c [w h]))
 
-(defn window [c [w h]]
+(defn window
+  "Create a visual window of proportions `[w h]` with border color `c`."
+  [c [w h]]
   {:pre [(pos? w) (pos? h)]}
   (mapv #(mapv (fn [tile] {:tile tile :color c}) %)
         (apply concat
@@ -132,10 +167,13 @@
                 (repeat (- h 2) (flatten [:vwall (repeat (- w 2) :nihil) :vwall]))
                 [(flatten [:blcorner (repeat (- w 2) :hwall) :brcorner])]])))
 
-(defn entity-canvas [entities]
+(defn entity-canvas
+  "Transform collection of `entities` into a canvas based on their positions."
+  [entities]
   (map (partial reduce blit) (vals (group-by :position entities))))
 
 (defn put-canvas
+  "Write `canvas` at coordinates `[x0 y0]`."
   ([graphics canvas x0 y0]
      (doseq [[y row] (util/enumerate canvas)
              [x [s c]] (util/enumerate row)]
@@ -172,7 +210,9 @@
         [x2 y2] (util/matrix-add viewport (size graphics :world))]
     (and (<= x1 x (dec x2)) (<= y1 y (dec y2)))))
 
-(defn- draw-world [game es canvas]
+(defn- draw-world
+  "Draw all renderable entities in `es` onto `canvas`."
+  [game es canvas]
   (let [{:keys [graphics viewport]} game
         {:keys [foundation]} (world/state game)
         es (entity/filter-capable [:position :renderable] es)
@@ -184,24 +224,38 @@
         [x0 y0] (position graphics :world)]
     (canvas-blit canvas view [x0 y0])))
 
-(defn tilify-string [s c]
+(defn tilify-string
+  "Make per-character tiles from string `s` using color `c`."
+  [s c]
   [(mapv (fn [chr] {:char chr :color c}) s)])
 
-(defn- draw-status [game canvas e [x y]]
+(defn- draw-status
+  "Draw the status portion of the interface using status-capable entity `e` and
+  `canvas` at coordinates `[x y]`."
+  [game canvas e [x y]]
   (canvas-blit canvas (tilify-string (status/text game e) 7) (util/matrix-add [x y] [1 0])))
 
-(defn- draw-log [canvas e [x y]]
+(defn- draw-log
+  "Draw the log portion of the interface using log-capable entity `e` and
+  `canvas` at coordinates `[x y]`."
+  [canvas e [x y]]
   (reduce (fn [canvas [n m]]
             (canvas-blit canvas (tilify-string m 7) (util/matrix-add [x y] [1 n])))
           canvas (util/enumerate (messages/recent e 5))))
 
-(defn- draw-dialog [canvas e [x y] [w h]]
+(defn- draw-dialog
+  "Draw the dialog portion of the interface using dialog-capable entity
+  `e` at coordinates `[x y]`, proportions `[w h]`."
+  [canvas e [x y] [w h]]
   (-> canvas
       (canvas-blit (window 7 [w h]) [x y])
       (canvas-update (util/matrix-add [x y] [1 1]) (constantly {:tile :dialog-indicator :color 7}))
       (canvas-blit (tilify-string (messages/current e) 7) (util/matrix-add [x y] [2 1]))))
 
-(defn- draw-interface [game es canvas]
+(defn- draw-interface
+  "Draw the interface portion of the screen onto `canvas` using
+  applicable renderables from `es`."
+  [game es canvas]
   (let [{:keys [graphics]} game
         {:keys [status world messages]} (proportions graphics)
         dialog-visible? (unique/unique-entity game :dialog)]
@@ -216,12 +270,16 @@
          canvas))
        canvas (entity/filter-capable [:renderable] es))))
 
-(defn receiver-section [game]
+(defn receiver-section
+  "Which section corresponds to the current receiver in `game`?"
+  [game]
   (if (entity/capable? (receivers/current game) :messages)
     :messages :world))
 
-(defn draw-cursor [game es]
-  (let [cursor (first (filter #(= (-> % :mobile :type) :cursor) es))
+(defn draw-cursor
+  "Draw the cursor-capable entity in `es`."
+  [game es]
+  (let [cursor (unique/unique-entity game :cursor)
         {:keys [screen graphics viewport]} game
         {:keys [foundation]} (world/state game)
         cursor-position (:position cursor)
@@ -235,7 +293,9 @@
           (screen/hide-cursor screen)))
       (screen/move-cursor screen x y))))
 
-(defn system [{:keys [screen graphics] :as game}]
+(defn system
+  "Draw the whole UI."
+  [{:keys [screen graphics] :as game}]
   (let [{:keys [entities] :as state} (world/state game)
         es (vals entities)
         [w h] (graphics/size graphics)
@@ -248,11 +308,17 @@
         (throw (ex-info "Exception in rendering" {:state state} e)))))
   game)
 
-(defn center-on [graphics [x y]]
+(defn center-on
+  "Determine the offset coordinates requires to center the world area
+  on `[x y]`."
+  [graphics [x y]]
   (let [[w h] (size graphics :world)]
     [(- x (int (/ w 2))) (- y (int (/ h 2)))]))
 
-(defn into-bounds [graphics section canvas [x y]]
+(defn into-bounds
+  "Snap back `[x y]` into the visible screen area of `section` given
+  drawable `canvas`, if necessary."
+  [graphics section canvas [x y]]
   (let [[sw sh] (size graphics section)
         fw (count (first canvas))
         fh (count canvas)
@@ -266,7 +332,9 @@
                 :default y)]
     [x y]))
 
-(defn in-bounds? [canvas [x y]]
+(defn in-bounds?
+  "Is `[x y]` within the bounds of drawable `canvas`?"
+  [canvas [x y]]
   (and (>= x 0) (>= y 0)
        (< x (count (first canvas))) (< y (count canvas))))
 
@@ -309,12 +377,11 @@
    :color 15})
 
 (defmethod render :door [game {:keys [open] :as door}]
-  {:tile (if open :open-door
-             (condp set/subset? (set (map #(world/entity-delta % door) (entity/filter-capable [:room] (world/entity-neighbors game door))))
-               #{[1 0] [-1 0]} :hdoor
-               #{[0 1] [0 -1]} :vdoor
-               :door))
-   :color 15})
+  {:tile (condp set/subset? (set (map #(world/entity-delta % door) (entity/filter-capable [:room] (world/entity-neighbors game door))))
+           #{[1 0] [-1 0]} :hdoor
+           #{[0 1] [0 -1]} :vdoor
+           :door)
+   :color (if open 8 15)})
 
 (blit-precedence :humanoid :door)
 (blit-precedence :humanoid :corpse)
