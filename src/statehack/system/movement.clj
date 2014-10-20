@@ -5,6 +5,7 @@
             [statehack.system.world :as world]
             [statehack.system.unique :as unique]
             [statehack.system.input.receivers :as receivers]
+            [statehack.system.obstacle :as obstacle]
             [statehack.util :as util]
             [clojure.set :as set]))
 
@@ -19,16 +20,13 @@
 (defn move [game e [x y]]
   (world/update-entity-component game e :position util/matrix-add [x y]))
 
-(defn obstacles [es]
-  (->> es (entity/filter-capable [:obstacle]) (remove :open)))
-
 (defn inbound-moves [game e]
   (let [f (:foundation (world/state game))]
     (set (filter #(render/in-bounds? f (util/matrix-add (:position e) %))
                  world/neighbors))))
 
 (defmethod available-moves :humanoid [game e]
-  (let [es (obstacles (world/entity-neighbors game e))
+  (let [es (obstacle/filter-obstacles (world/entity-neighbors game e))
         ds (set (map #(world/entity-delta % e) es))]
     (into {} (map (fn [pos] [pos #(move % e pos)])
                   (set/difference (inbound-moves game e) ds)))))
@@ -43,7 +41,7 @@
         (world/update-entity-component sel :position (constantly (:position e))))))
 
 (defn unavailable-moves [game e]
-  (let [os (obstacles (world/entity-neighbors game e))
+  (let [os (obstacle/filter-obstacles (world/entity-neighbors game e))
         cs (set/difference world/neighbors (inbound-moves game e))]
     (merge (into {} (map (fn [o] [(world/entity-delta o e) #(messages/log % "There's an obstacle in the way.")]) os))
            (into {} (map (fn [c] [c #(messages/log % "Somehow, you can't move here...")]) cs)))))

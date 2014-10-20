@@ -23,8 +23,9 @@
   {:pre [(map? skills) (every? keyword? (keys skills)) (every? pos? (vals skills))]}
   {:skillset skills})
 
-(defn obstacle []
-  {:obstacle true})
+(defn obstacle
+  ([type] {:obstacle type})
+  ([] (obstacle true)))
 
 (defn door [open?]
   {:open open?})

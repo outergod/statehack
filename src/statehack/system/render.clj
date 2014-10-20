@@ -10,6 +10,7 @@
             [statehack.system.input.receivers :as receivers]
             [statehack.system.unique :as unique]
             [statehack.system.render.algebra :as algebra]
+            [statehack.system.obstacle :as obstacle]
             [clojure.set :as set]))
 
 (def tiles
@@ -215,7 +216,7 @@
   {:pre [(:sight e)]}
   (let [[x y] (:position e)
         r (-> e :sight :distance)
-        ps (set (map :position (entity/filter-capable [:position :obstacle] es)))]
+        ps (set (map :position (obstacle/filter-obstacles (entity/filter-capable [:position] es))))]
     (conj (set (mapcat (partial util/take-while-including (complement ps))
                        (algebra/visible-lines [x y] r)))
           [x y])))

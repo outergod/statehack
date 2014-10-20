@@ -21,7 +21,7 @@
     (into {} (map (fn [door] [(world/entity-delta door e) #(open-door % door)]) es))))
 
 (defn close-door [game e]
-  (-> game (world/update-entity e assoc :open false) (transition/transition transition/door) time/pass-time))
+  (-> game (world/update-entity-component e :open (constantly false)) (transition/transition transition/door) time/pass-time))
 
 (defn available-close [game e]
   (let [es (filter #(and (entity/capable? % :open)

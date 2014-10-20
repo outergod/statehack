@@ -21,4 +21,4 @@
    (c/position x y)
    (c/door open?)
    (c/room)
-   (c/obstacle)))
+   (c/obstacle :door)))
