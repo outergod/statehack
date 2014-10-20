@@ -18,7 +18,7 @@
             [halo.screen :as screen]))
 
 (defn new-game [screen]
-  (let [{:keys [id] :as player} (player/player "Malefeitor" [11 7] 10)]
+  (let [{:keys [id] :as player} (player/player "Malefeitor" [12 7] 10)]
     (viewport/center-viewport
      {:screen screen
       :graphics (screen/text-graphics screen)
