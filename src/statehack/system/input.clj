@@ -54,7 +54,7 @@
     :arrow-left (viewport game :left)
     :arrow-right (viewport game :right)
     \w (action game player :up)
-    \s (action game player :down)
+    \x (action game player :down)
     \a (action game player :left)
     \d (action game player :right)
     \q (action game player :up-left)
