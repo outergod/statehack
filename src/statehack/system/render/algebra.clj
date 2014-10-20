@@ -48,7 +48,7 @@
   (let [turn (* Math/PI 2)
         segments (* 2 (Math/ceil (* r turn)))]
     (for [rad (range 0 turn (/ turn segments))]
-      (for [r (range 0 (+ r 0.5) 0.5)]
+      (for [r (range 1 (+ r 0.5) 0.5)]
         (util/matrix-add [x0 y0]
                          [(Math/round (* r (Math/cos rad)))
                           (Math/round (* r (Math/sin rad)))])))))
@@ -104,18 +104,19 @@
 
 (comment
   ; Useful for playing around
-  (defn test-algebra [coll]
+  (defn test-algebra [coll [x0 y0]]
     (screen/in-screen screen
       (loop [targets (cycle coll)]
         (let [[name coords] (first targets)]
           (screen/clear screen)
           (graphics/put graphics (str name) 0 0)
+          (graphics/put graphics "@" x0 y0)
           (doseq [[x y] coords]
             (graphics/put graphics "x" x y))
           (screen/refresh screen)
           (when (not= (:key (screen/read-input-blocking screen)) :escape)
             (recur (next targets)))))))
 
-  (test-algebra (partition 2 (interleave (iterate inc 0) (algebra/visible-lines [40 12] 8))))
+  (test-algebra (partition 2 (interleave (iterate inc 0) (algebra/visible-lines [40 12] 8))) [40 12])
 
-  (test-algebra [["radius" (algebra/visible-radius [40 12] 8)] ["area" (algebra/visible-area [40 12] 8)]]))
+  (test-algebra [["radius" (algebra/visible-radius [40 12] 8)] ["area" (algebra/visible-area [40 12] 8)]] [40 12]))

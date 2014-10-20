@@ -18,20 +18,22 @@
             [halo.screen :as screen]))
 
 (defn new-game [screen]
-  (let [{:keys [id] :as player} (player/player "Malefeitor" [12 7] 10)]
+  (let [level (levels/load "level-0")
+        [w h] (levels/dimensions level)
+        {:keys [id] :as player} (player/player "Malefeitor" [12 7] 10)]
     (viewport/center-viewport
      {:screen screen
       :graphics (screen/text-graphics screen)
-      :world [{:foundation #_(render/space 7 [80 24]) (render/space 7 [500 500])
+      :world [{:foundation (render/space 7 [w h])
                :receivers [id]
                :entities (util/index-by :id
-                                        (flatten
+                                        (concat
                                          [player
                                           (status/status-bar)
                                           (cursor/cursor)
                                           (log/log)
-                                          (levels/load "level-0" [0 0])
-                                          (bot/bot 40 10 5)]))}]}
+                                          (bot/bot [4 9] 5)]
+                                         level))}]}
      player)))
 
 (defn load-game [screen world]

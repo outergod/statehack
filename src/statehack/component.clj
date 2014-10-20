@@ -58,3 +58,10 @@
 
 (defn ai [type]
   {:ai {:type type}})
+
+(defn sight [type distance]
+  {:sight {:type type
+           :distance distance}})
+
+(defn memory [level map]
+  {:memory {:map []}})

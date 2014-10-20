@@ -30,3 +30,11 @@
   started from 0."
   [coll]
   (map list enumeration coll))
+
+(defn take-while-including
+  "Like `take-while`, but includes the element not fulfilling the predicate."
+  [pred coll]
+  (lazy-seq
+   (when-let [s (seq coll)]
+     (let [c (first s)]
+       (cons c (when (pred c) (take-while-including pred (rest s))))))))

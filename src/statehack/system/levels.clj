@@ -1,8 +1,8 @@
 (ns statehack.system.levels
   (:refer-clojure :exclude [load])
-  (:require [statehack.entity.room :as room]
-            [statehack.util :as util]
+  (:require [statehack.entity :as entity]
             [statehack.entity.room :as room]
+            [statehack.util :as util]
             [clojure.string :as str]
             [clojure.java.io :as io]))
 
@@ -25,5 +25,10 @@
                       \o (room/door x1 y1 false)
                       \e (room/solid x1 y1)))))))))
 
-(defn load [name [x0 y0]]
-  (extract (slurp (load-resource name)) [x0 y0]))
+(defn load [name]
+  (extract (slurp (load-resource name)) [0 0]))
+
+(defn dimensions [level]
+  (let [ps (map :position (entity/filter-capable [:position] level))]
+    [(inc (apply max (map first ps)))
+     (inc (apply max (map second ps)))]))

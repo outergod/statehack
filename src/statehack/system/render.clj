@@ -32,7 +32,6 @@
    :vdoor "║"
    :hdoor "═"
    :door "+"
-   :open-door "▒"
    :swall "▢"
    :dialog-indicator "⌐"
    :spell-up "⁀"
@@ -210,14 +209,38 @@
         [x2 y2] (util/matrix-add viewport (size graphics :world))]
     (and (<= x1 x (dec x2)) (<= y1 y (dec y2)))))
 
+(defn visible-mask
+  "Visible coordinates for sighted entity `e`."
+  [e es]
+  {:pre [(:sight e)]}
+  (let [[x y] (:position e)
+        r (-> e :sight :distance)
+        ps (set (map :position (entity/filter-capable [:position :obstacle] es)))]
+    (conj (set (mapcat (partial util/take-while-including (complement ps))
+                       (algebra/visible-lines [x y] r)))
+          [x y])))
+
+(defn mask-canvas
+  "Apply `mask` to `canvas`, making everything outside the mask invisible"
+  [canvas mask]
+  (mapv (fn [y row]
+          (mapv (fn [x tile]
+                  (if (mask [x y])
+                    tile
+                    {:tile :nihil :color 0}))
+                util/enumeration row))
+        util/enumeration canvas))
+
 (defn- draw-world
   "Draw all renderable entities in `es` onto `canvas`."
   [game es canvas]
   (let [{:keys [graphics viewport]} game
         {:keys [foundation]} (world/state game)
+        mask (visible-mask (unique/unique-entity game :player) es)
         es (entity/filter-capable [:position :renderable] es)
-        world (reduce (partial entity-blit game) foundation
-                      (entity-canvas es))
+        world (mask-canvas (reduce (partial entity-blit game) foundation
+                                   (entity-canvas es))
+                           mask)
         [x y] viewport
         [w h] (size graphics :world)
         view (fit-in world [x y] [w h])

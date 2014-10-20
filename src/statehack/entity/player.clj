@@ -15,4 +15,5 @@
    (c/renderable :humanoid)
    (c/input :player)
    (c/obstacle)
-   (c/vulnerable hp)))
+   (c/vulnerable hp)
+   (c/sight :eyes 10)))

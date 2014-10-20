@@ -2,7 +2,7 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn bot [x y hp]
+(defn bot [[x y] hp]
   (entity
    (c/alive true)
    (c/position x y)
