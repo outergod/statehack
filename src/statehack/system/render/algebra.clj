@@ -43,15 +43,16 @@
 
 (defn visible-lines
   "Collection of all possible lines from `[x0 y0]` to a circle around
-  that point with radius `r` with precision 0.5. Duplicates not removed."
+  that point with radius `r`. Duplicates are not removed."
   [[x0 y0] r]
   (let [turn (* Math/PI 2)
-        segments (* 2 (Math/ceil (* r turn)))]
+        segments (Math/ceil (* r r turn))]
     (for [rad (range 0 turn (/ turn segments))]
-      (for [r (range 1 (+ r 0.5) 0.5)]
-        (util/matrix-add [x0 y0]
-                         [(Math/round (* r (Math/cos rad)))
-                          (Math/round (* r (Math/sin rad)))])))))
+      (distinct
+       (for [r (range 1 (inc r))]
+         (util/matrix-add [x0 y0]
+                          [(Math/round (* r (Math/cos rad)))
+                           (Math/round (* r (Math/sin rad)))]))))))
 
 (defn- octant-projection
   "Determine parameters for a projection of a bresenham line from
