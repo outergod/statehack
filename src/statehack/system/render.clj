@@ -9,8 +9,7 @@
             [statehack.system.status :as status]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.unique :as unique]
-            [statehack.system.render.algebra :as algebra]
-            [statehack.system.obstacle :as obstacle]
+            [statehack.system.sight :as sight]
             [clojure.set :as set]))
 
 (def tiles
@@ -210,17 +209,6 @@
         [x2 y2] (util/matrix-add viewport (size graphics :world))]
     (and (<= x1 x (dec x2)) (<= y1 y (dec y2)))))
 
-(defn visible-mask
-  "Visible coordinates for sighted entity `e`."
-  [e es]
-  {:pre [(:sight e)]}
-  (let [[x y] (:position e)
-        r (-> e :sight :distance)
-        ps (set (map :position (obstacle/filter-obstacles (entity/filter-capable [:position] es))))]
-    (conj (set (mapcat (partial util/take-while-including (complement ps))
-                       (algebra/visible-lines [x y] r)))
-          [x y])))
-
 (defn mask-canvas
   "Apply `mask` to `canvas`, making everything outside the mask invisible"
   [canvas mask]
@@ -237,7 +225,7 @@
   [game es canvas]
   (let [{:keys [graphics viewport]} game
         {:keys [foundation]} (world/state game)
-        mask (visible-mask (unique/unique-entity game :player) es)
+        mask (sight/visible-mask game (unique/unique-entity game :player))
         es (entity/filter-capable [:position :renderable] es)
         world (mask-canvas (reduce (partial entity-blit game) foundation
                                    (entity-canvas es))

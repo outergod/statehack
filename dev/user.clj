@@ -10,7 +10,7 @@
             [statehack.system.door :as door]
             [statehack.system.sound :as sound]
             [statehack.system.render :as render]
-            [statehack.system.render.algebra :as algebra]
+            [statehack.algebra :as algebra]
             [statehack.system.levels :as levels]
             [statehack.util :as util]
             [clj-audio.core :as audio]

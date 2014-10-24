@@ -1,4 +1,4 @@
-(ns statehack.system.render.algebra
+(ns statehack.algebra
   "Algebraic algorithms for rasterized, linear planes"
   (:require [statehack.util :as util]))
 
