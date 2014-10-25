@@ -14,9 +14,11 @@
             [statehack.system.levels :as levels]
             [statehack.util :as util]
             [clj-audio.core :as audio]
+            [clj-audio.sampled :as sampled]
             [clojure.stacktrace :refer :all]
             [clojure.pprint :refer :all]
-            [clojure.reflect :as reflect])
+            [clojure.reflect :as reflect]
+            [clojure.java.io :as io])
   (:import [clojure.lang IExceptionInfo]))
 
 (defn publics [o]
