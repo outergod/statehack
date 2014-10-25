@@ -3,13 +3,14 @@
   (:require [halo.screen :as screen]
             [halo.graphics :as graphics]
             [statehack.system.world :as world]
-            [statehack.util :as util]
-            [statehack.entity :as entity]
             [statehack.system.messages :as messages]
             [statehack.system.status :as status]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.unique :as unique]
             [statehack.system.sight :as sight]
+            [statehack.system.levels :as levels]
+            [statehack.util :as util]
+            [statehack.entity :as entity]
             [clojure.set :as set]))
 
 (def tiles
@@ -181,25 +182,23 @@
      (put-canvas graphics canvas 0 0)))
 
 (defn center-offset
-  "Calculate the offset needed to center `canvas` into a region of
-  width `w` and height `h`."
-  [canvas [w h]]
-  (let [cw (count (first canvas))
-        ch (count canvas)]
-    [(int (max (/ (- w cw) 2) 0))
-     (int (max (/ (- h ch) 2) 0))]))
+  "Calculate the offset needed to center `[w1 h1]` into a region of
+  width `w2` and height `h2`."
+  [[w1 h1] [w2 h2]]
+  [(int (max (/ (- w2 w1) 2) 0))
+   (int (max (/ (- h2 h1) 2) 0))])
 
 (defn fit-in
-  "Cut and/or center `canvas` into an area of width `w` and height `h`
-  after moving it by offset `[x0 y0]`."
-  [canvas [x0 y0] [w h]]
+  "Cut and/or center `canvas` into an area of width `w` and height
+  `h` after moving it by offset `[x0 y0]`."
+  [canvas [w h] [x0 y0]]
   (let [base (rect :nihil 0 [w h])
         cw (count (first canvas))
         ch (count canvas)]
     (canvas-blit base (subvec (mapv #(subvec % x0 (min (+ x0 w) cw))
                                     canvas)
                               y0 (min (+ y0 h) ch))
-                 (center-offset canvas [w h]))))
+                 (center-offset [cw ch] [w h]))))
 
 (defn visible?
   "Is `[x y]` within the visible area of the world section?"
@@ -222,17 +221,17 @@
 
 (defn- draw-world
   "Draw all renderable entities in `es` onto `canvas`."
-  [game es canvas]
+  [game e es canvas]
   (let [{:keys [graphics viewport]} game
-        {:keys [foundation]} (world/state game)
-        mask (sight/visible-mask game (unique/unique-entity game :player))
+        foundation (space 7 (:foundation (levels/entity-floor game e)))
+        mask (sight/visible-mask game e)
         es (entity/filter-capable [:position :renderable] es)
         world (mask-canvas (reduce (partial entity-blit game) foundation
                                    (entity-canvas es))
                            mask)
         [x y] viewport
         [w h] (size graphics :world)
-        view (fit-in world [x y] [w h])
+        view (fit-in world [w h] [x y])
         [x0 y0] (position graphics :world)]
     (canvas-blit canvas view [x0 y0])))
 
@@ -290,16 +289,16 @@
 
 (defn draw-cursor
   "Draw the cursor-capable entity in `es`."
-  [game es]
+  [game e es]
   (let [cursor (unique/unique-entity game :cursor)
         {:keys [screen graphics viewport]} game
-        {:keys [foundation]} (world/state game)
+        [w h] (:foundation (levels/entity-floor game e))
         cursor-position (:position cursor)
         section (receiver-section game)
         [x y] (util/matrix-add (position graphics section) cursor-position)]
     (if (= section :world)
       (let [[x y] (util/matrix-add (util/matrix-subtract [x y] viewport)
-                                   (center-offset foundation (size graphics :world)))]
+                                   (center-offset [w h] (size graphics :world)))]
         (if (visible? game cursor-position)
           (screen/move-cursor screen x y)
           (screen/hide-cursor screen)))
@@ -310,11 +309,12 @@
   [{:keys [screen graphics] :as game}]
   (let [{:keys [entities] :as state} (world/state game)
         es (vals entities)
+        e (unique/unique-entity game :player)
         [w h] (graphics/size graphics)
         canvas (rect :nihil 0 [w h])]
     (try
-      (->> canvas (draw-world game es) (draw-interface game es) draw (put-canvas graphics))
-      (draw-cursor game es)
+      (->> canvas (draw-world game e es) (draw-interface game es) draw (put-canvas graphics))
+      (draw-cursor game e es)
       (screen/refresh screen)
       (catch Exception e
         (throw (ex-info "Exception in rendering" {:state state} e)))))
@@ -329,26 +329,18 @@
 
 (defn into-bounds
   "Snap back `[x y]` into the visible screen area of `section` given
-  drawable `canvas`, if necessary."
-  [graphics section canvas [x y]]
+  a foundation of size `[w h]`, if necessary."
+  [graphics section [w h] [x y]]
   (let [[sw sh] (size graphics section)
-        fw (count (first canvas))
-        fh (count canvas)
         x (cond (or (< x 0)
-                    (<= fw sw)) 0
-                (>= (+ x sw) fw) (- fw sw)
+                    (<= w sw)) 0
+                (>= (+ x sw) w) (- w sw)
                 :default x)
         y (cond (or (< y 0)
-                    (<= fh sh)) 0
-                (>= (+ y sh) fh) (- fh sh)
+                    (<= h sh)) 0
+                (>= (+ y sh) h) (- h sh)
                 :default y)]
     [x y]))
-
-(defn in-bounds?
-  "Is `[x y]` within the bounds of drawable `canvas`?"
-  [canvas [x y]]
-  (and (>= x 0) (>= y 0)
-       (< x (count (first canvas))) (< y (count canvas))))
 
 (defmethod render :humanoid [& _] {:tile :humanoid :color 7})
 (defmethod render :corpse [& _] {:tile :corpse :color 88})

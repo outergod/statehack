@@ -11,10 +11,6 @@
 (defn state [game]
   (-> game :world first))
 
-(defn size [game]
-  (let [{:keys [foundation]} (state game)]
-    [(count (first foundation)) (count foundation)]))
-
 (defn entities [game]
   (:entities (state game)))
 

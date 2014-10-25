@@ -6,6 +6,7 @@
             [statehack.system.unique :as unique]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.obstacle :as obstacle]
+            [statehack.system.levels :as levels]
             [statehack.util :as util]
             [clojure.set :as set]))
 
@@ -21,8 +22,8 @@
   (world/update-entity-component game e :position util/matrix-add [x y]))
 
 (defn inbound-moves [game e]
-  (let [f (:foundation (world/state game))]
-    (set (filter #(render/in-bounds? f (util/matrix-add (:position e) %))
+  (let [{:keys [foundation]} (levels/floor game (:floor e))]
+    (set (filter #(levels/in-bounds? foundation (util/matrix-add (:position e) %))
                  world/neighbors))))
 
 (defmethod available-moves :humanoid [game e]

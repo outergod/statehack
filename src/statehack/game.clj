@@ -2,6 +2,7 @@
   (:require [statehack.system.world :as world]
             [statehack.system.player :as player]
             [statehack.system.render :as render]
+            [statehack.entity.floor :as floor]
             [statehack.entity.player :as player-entity]
             [statehack.entity.status-bar :as status]
             [statehack.entity.bot :as bot]
@@ -20,19 +21,19 @@
 (defn new-game [screen]
   (let [level (levels/load "level-0")
         [w h] (levels/dimensions level)
-        {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7] 10)]
+        {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 10)]
     (viewport/center-viewport
      {:screen screen
       :graphics (screen/text-graphics screen)
-      :world [{:foundation (render/space 7 [w h])
-               :receivers [id]
+      :world [{:receivers [id]
                :entities (util/index-by :id
                                         (concat
                                          [player
+                                          (floor/floor 1 [w h])
                                           (status/status-bar)
                                           (cursor/cursor)
                                           (log/log)
-                                          (bot/bot [4 9] 5)]
+                                          (bot/bot [4 9 1] 5)]
                                          level))}]}
      player)))
 

@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [load])
   (:require [statehack.entity :as entity]
             [statehack.entity.room :as room]
+            [statehack.system.world :as world]
             [statehack.util :as util]
             [clojure.string :as str]
             [clojure.java.io :as io]))
@@ -32,3 +33,19 @@
   (let [ps (map :position (entity/filter-capable [:position] level))]
     [(inc (apply max (map first ps)))
      (inc (apply max (map second ps)))]))
+
+(defn floor [game n]
+  (let [es (world/capable-entities game :foundation)]
+    (or (first (filter #(= (:floor %) n) es))
+        (throw (ex-info (format "No floor for level %d found" n) {:level n})))))
+
+(defn entity-floor [game e]
+  {:pre [(:floor e)]}
+  (floor game (:floor e)))
+
+(defn in-bounds?
+  "Is `[x y]` within the bounds of `foundation`?"
+  [foundation [x y]]
+  (let [[w h] foundation]
+    (and (>= x 0) (>= y 0)
+         (< x w) (< y h))))

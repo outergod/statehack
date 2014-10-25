@@ -4,7 +4,7 @@
 
 (defn selector [[x y] action targets]
   (entity
-   (c/position x y)
+   (c/position [x y])
    (c/mobile :selector :targets targets)
    (c/input :selector)
    (c/deferred action)))

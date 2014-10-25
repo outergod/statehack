@@ -35,15 +35,15 @@
       (-> game world/dup-world-state m center time/pass-time)
       (non-move game))))
 
-(defn viewport [game dir]
-  (viewport/update-viewport game (partial util/matrix-add (player-moves dir))))
+(defn viewport [game player dir]
+  (viewport/update-viewport game player (partial util/matrix-add (player-moves dir))))
 
 (defmethod input/receive :player [game player input]
   (case (:key input)
-    :arrow-up (viewport game :up)
-    :arrow-down (viewport game :down)
-    :arrow-left (viewport game :left)
-    :arrow-right (viewport game :right)
+    :arrow-up (viewport game player :up)
+    :arrow-down (viewport game player :down)
+    :arrow-left (viewport game player :left)
+    :arrow-right (viewport game player :right)
     \w (action game player :up)
     \x (action game player :down)
     \a (action game player :left)

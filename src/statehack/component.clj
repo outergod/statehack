@@ -40,9 +40,17 @@
   {:mobile (merge (apply hash-map opts)
                   {:type type})})
 
-(defn position [x y]
+(defn position [[x y]]
   {:pre [(>= x 0) (>= y 0)]}
   {:position [x y]})
+
+(defn floor [n]
+  {:pre [(integer? n)]}
+  {:floor n})
+
+(defn foundation [[w h]]
+  {:pre [(>= w 0) (>= h 0)]}
+  {:foundation [w h]})
 
 (defn renderable [type]
   {:renderable type})
@@ -64,5 +72,5 @@
   {:sight {:type type
            :distance distance}})
 
-(defn memory [level map]
+(defn memory []
   {:memory {:map []}})
