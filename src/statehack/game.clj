@@ -1,9 +1,8 @@
 (ns statehack.game
   (:require [statehack.system.world :as world]
-            [statehack.system.input :as input]
+            [statehack.system.player :as player]
             [statehack.system.render :as render]
-            [statehack.util :as util]
-            [statehack.entity.player :as player]
+            [statehack.entity.player :as player-entity]
             [statehack.entity.status-bar :as status]
             [statehack.entity.bot :as bot]
             [statehack.entity.cursor :as cursor]
@@ -15,12 +14,13 @@
             [statehack.system.combat :as combat]
             [statehack.system.transition :as transition]
             [statehack.system.levels :as levels]
+            [statehack.util :as util]
             [halo.screen :as screen]))
 
 (defn new-game [screen]
   (let [level (levels/load "level-0")
         [w h] (levels/dimensions level)
-        {:keys [id] :as player} (player/player "Malefeitor" [12 7] 10)]
+        {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7] 10)]
     (viewport/center-viewport
      {:screen screen
       :graphics (screen/text-graphics screen)
@@ -57,7 +57,7 @@
      (screen/in-screen screen
        (loop [input nil game (render/system game)]
          (screen/probe-resize screen)
-         (let [[game {:keys [quit time]}] (-> game (input/player-turn input) transition/system render/system (util/separate :quit :time))]
+         (let [[game {:keys [quit time]}] (-> game (player/system input) transition/system render/system (util/separate :quit :time))]
            (when-not quit
              (let [game (if time (-> game ai/system transition/system render/system) game)
                    player (unique/unique-entity game :player)]
