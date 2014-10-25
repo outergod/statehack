@@ -1,4 +1,5 @@
 (ns statehack.system.sight
+  "Visual calculation system"
   (:require [statehack.algebra :as algebra]
             [statehack.system.obstacle :as obstacle]
             [statehack.system.world :as world]
