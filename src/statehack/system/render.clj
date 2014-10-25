@@ -225,7 +225,7 @@
   (let [{:keys [graphics viewport]} game
         foundation (space 7 (:foundation (levels/entity-floor game e)))
         mask (sight/visible-mask game e)
-        es (entity/filter-capable [:position :renderable] es)
+        es (levels/on-floor (:floor e) (entity/filter-capable [:position :renderable] es))
         world (mask-canvas (reduce (partial entity-blit game) foundation
                                    (entity-canvas es))
                            mask)

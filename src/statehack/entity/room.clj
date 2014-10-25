@@ -2,23 +2,26 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn wall [x y]
+(defn wall [[x y z]]
   (entity
    (c/renderable :wall)
    (c/position [x y])
+   (c/floor z)
    (c/room)
    (c/obstacle)))
 
-(defn solid [x y]
+(defn solid [[x y z]]
   (entity
    (c/renderable {:tile :nihil :color 0})
    (c/position [x y])
+   (c/floor z)
    (c/obstacle)))
 
-(defn door [x y open?]
+(defn door [[x y z] open?]
   (entity
    (c/renderable :door)
    (c/position [x y])
+   (c/floor z)
    (c/door open?)
    (c/room)
    (c/obstacle :door)))

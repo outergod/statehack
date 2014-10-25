@@ -11,7 +11,7 @@
   (or (io/resource (str "levels/" name))
       (throw (ex-info (str "No such level resource found") {:name name}))))
 
-(defn extract [s [x0 y0]]
+(defn extract [s [x0 y0] floor]
    (let [lines (str/split-lines s)
          find-wall (memoize (fn [[x y]] (#{\X \O \o \e} (get-in lines [y x]))))]
      (filter identity
@@ -21,13 +21,13 @@
                 (when-let [w (find-wall [x y])]
                   (let [[x1 y1] (util/matrix-add [x0 y0] [x y])]
                     (case w
-                      \X (room/wall x1 y1)
-                      \O (room/door x1 y1 true)
-                      \o (room/door x1 y1 false)
-                      \e (room/solid x1 y1)))))))))
+                      \X (room/wall [x1 y1 floor])
+                      \O (room/door [x1 y1 floor] true)
+                      \o (room/door [x1 y1 floor] false)
+                      \e (room/solid [x1 y1 floor])))))))))
 
-(defn load [name]
-  (extract (slurp (load-resource name)) [0 0]))
+(defn load [name floor]
+  (extract (slurp (load-resource name)) [0 0] floor))
 
 (defn dimensions [level]
   (let [ps (map :position (entity/filter-capable [:position] level))]
@@ -49,3 +49,6 @@
   (let [[w h] foundation]
     (and (>= x 0) (>= y 0)
          (< x w) (< y h))))
+
+(defn on-floor [floor es]
+  (filter #(= (:floor %) floor) es))

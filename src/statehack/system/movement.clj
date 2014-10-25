@@ -21,6 +21,9 @@
 (defn move [game e [x y]]
   (world/update-entity-component game e :position util/matrix-add [x y]))
 
+(defn relocate [game e [x y]]
+  (world/update-entity-component game e :position (constantly [x y])))
+
 (defn inbound-moves [game e]
   (let [{:keys [foundation]} (levels/floor game (:floor e))]
     (set (filter #(levels/in-bounds? foundation (util/matrix-add (:position e) %))
@@ -39,7 +42,7 @@
         e (es (first targets))]
     (-> game
         (world/update-entity-component sel :mobile assoc :targets targets)
-        (world/update-entity-component sel :position (constantly (:position e))))))
+        (relocate sel (:position e)))))
 
 (defn unavailable-moves [game e]
   (let [os (obstacle/filter-obstacles (world/entity-neighbors game e))

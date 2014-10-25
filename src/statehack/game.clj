@@ -19,7 +19,7 @@
             [halo.screen :as screen]))
 
 (defn new-game [screen]
-  (let [level (levels/load "level-0")
+  (let [level (levels/load "level-0" 1)
         [w h] (levels/dimensions level)
         {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 10)]
     (viewport/center-viewport

@@ -57,17 +57,17 @@
   (set (remove #(= % [0 0])
                (for [x [-1 0 1] y [-1 0 1]] [x y]))))
 
-(defn entities-at [game & coords]
-  (let [state (state game)
-        {:keys [entities]} state
+(defn entities-at [game floor & coords]
+  (let [entities (entities game)
         coords (set coords)]
-    (filter #(coords (:position %)) (vals entities))))
+    (filter #(and (= (:floor %) floor) (coords (:position %)))
+            (vals entities))))
 
-(defn direct-neighbors [game [x y]]
-  (apply entities-at game (map (partial util/matrix-add [x y]) neighbors)))
+(defn direct-neighbors [game [x y] floor]
+  (apply entities-at game floor (map (partial util/matrix-add [x y]) neighbors)))
 
 (defn entity-neighbors [game e]
-  (direct-neighbors game (:position e)))
+  (direct-neighbors game (:position e) (:floor e)))
 
 (defn capable-entities [game & cs]
   (entity/filter-capable cs (vals (entities game))))
