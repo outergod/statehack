@@ -15,6 +15,7 @@
             [statehack.system.combat :as combat]
             [statehack.system.transition :as transition]
             [statehack.system.levels :as levels]
+            [statehack.system.memory :as memory]
             [statehack.util :as util]
             [halo.screen :as screen]))
 
@@ -58,9 +59,9 @@
      (screen/in-screen screen
        (loop [input nil game (render/system game)]
          (screen/probe-resize screen)
-         (let [[game {:keys [quit time]}] (-> game (player/system input) transition/system render/system (util/separate :quit :time))]
+         (let [[game {:keys [quit time]}] (-> game (player/system input) transition/system memory/system render/system (util/separate :quit :time))]
            (when-not quit
-             (let [game (if time (-> game ai/system transition/system render/system) game)
+             (let [game (if time (-> game ai/system transition/system memory/system render/system) game)
                    player (unique/unique-entity game :player)]
                (if (combat/dead? player)
                  (game-over game)

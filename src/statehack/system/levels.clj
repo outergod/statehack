@@ -52,3 +52,6 @@
 
 (defn on-floor [floor es]
   (filter #(= (:floor %) floor) es))
+
+(defn floor-entities [game floor]
+  (on-floor floor (vals (world/entities game))))

@@ -215,25 +215,28 @@
           (mapv (fn [x tile]
                   (if (mask [x y])
                     tile
-                    {:tile :nihil :color 0}))
+                    nil))
                 util/enumeration row))
         util/enumeration canvas))
 
-(defn- draw-world
-  "Draw all renderable entities in `es` onto `canvas`."
-  [game e es canvas]
-  (let [{:keys [graphics viewport]} game
-        foundation (space 7 (:foundation (levels/entity-floor game e)))
+(defn visible-world
+  "Render the visible world of `e` onto `canvas`"
+  [game e]
+  (let [foundation (space 7 (:foundation (levels/entity-floor game e)))
         mask (sight/visible-mask game e)
-        es (levels/on-floor (:floor e) (entity/filter-capable [:position :renderable] es))
-        world (mask-canvas (reduce (partial entity-blit game) foundation
-                                   (entity-canvas es))
-                           mask)
-        [x y] viewport
-        [w h] (size graphics :world)
-        view (fit-in world [w h] [x y])
-        [x0 y0] (position graphics :world)]
-    (canvas-blit canvas view [x0 y0])))
+        es (entity/filter-capable [:position :renderable] (levels/floor-entities game (:floor e)))]
+    (mask-canvas (reduce (partial entity-blit game) foundation
+                         (entity-canvas es))
+                 mask)))
+
+(defn- draw-world
+  "Draw all renderable entities in `es` visible to `e` onto `canvas`"
+  [game e canvas]
+  (let [{:keys [graphics viewport]} game
+        memory (get-in e [:memory :floors (:floor e)])
+        world (canvas-blit memory (visible-world game e) [0 0])
+        view (fit-in world (size graphics :world) viewport)]
+    (canvas-blit canvas view (position graphics :world))))
 
 (defn tilify-string
   "Make per-character tiles from string `s` using color `c`."
@@ -313,7 +316,7 @@
         [w h] (graphics/size graphics)
         canvas (rect :nihil 0 [w h])]
     (try
-      (->> canvas (draw-world game e es) (draw-interface game es) draw (put-canvas graphics))
+      (->> canvas (draw-world game e) (draw-interface game es) draw (put-canvas graphics))
       (draw-cursor game e es)
       (screen/refresh screen)
       (catch Exception e

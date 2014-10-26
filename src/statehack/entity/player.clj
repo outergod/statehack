@@ -17,4 +17,5 @@
    (c/input :player)
    (c/obstacle)
    (c/vulnerable hp)
-   (c/sight :eyes 10)))
+   (c/sight :eyes 10)
+   (c/memory)))

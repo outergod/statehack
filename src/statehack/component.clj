@@ -1,5 +1,6 @@
 (ns statehack.component
-  "All statehack components")
+  "All statehack components"
+  (:refer-clojure :exclude [name]))
 
 (defn unique
   "Unique entity component
@@ -221,4 +222,4 @@
 
   Related systems: sight, memory, render"
   []
-  {:memory {:map []}})
+  {:memory {}})
