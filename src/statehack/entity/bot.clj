@@ -7,7 +7,7 @@
    (c/position [x y])
    (c/floor z)
    (c/alive true)
-   (c/race :human)
+   (c/category :human)
    (c/mobile :humanoid)
    (c/renderable :humanoid)
    (c/obstacle)

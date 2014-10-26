@@ -2,10 +2,10 @@
   (:refer-clojure :exclude [name])
   (:require [statehack.entity :as entity]))
 
-(def race-names
+(def category-names
   {:human "Human"})
 
 (defn name [e]
   (cond (entity/capable? e :name) (:name e)
-        (entity/capable? e :race) (race-names (:race e))
+        (entity/capable? e :category) (category-names (:category e))
         :default "WTF"))

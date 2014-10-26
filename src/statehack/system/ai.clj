@@ -2,9 +2,7 @@
   (:require [statehack.system.world :as world]
             [statehack.system.movement :as movement]
             [statehack.system.door :as door]
-            [statehack.system.combat :as combat]
-            [statehack.system.defer :as defer]
-            [statehack.system.time :as time]))
+            [statehack.system.combat :as combat]))
 
 (def act-hierarchy (make-hierarchy))
 
