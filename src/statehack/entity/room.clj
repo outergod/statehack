@@ -8,14 +8,16 @@
    (c/position [x y])
    (c/floor z)
    (c/room)
-   (c/obstacle)))
+   (c/obstacle)
+   (c/opaque)))
 
 (defn solid [[x y z]]
   (entity
    (c/renderable {:tile :nihil :color 0})
    (c/position [x y])
    (c/floor z)
-   (c/obstacle)))
+   (c/obstacle)
+   (c/opaque)))
 
 (defn door [[x y z] open?]
   (entity
@@ -24,4 +26,5 @@
    (c/floor z)
    (c/door open?)
    (c/room)
-   (c/obstacle :door)))
+   (c/obstacle :door)
+   (c/opaque :door)))

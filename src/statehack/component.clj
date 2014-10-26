@@ -90,13 +90,36 @@
 
   Entities that are also obstacles can't co-exist at the same
   position, i.e. they obstruct each other. Typical obstacles include
-  walls, closed doors, force fields, enemies, the player.  This
-  component gets dynamically dispatched, so `type` can take other
+  walls, closed doors, force fields, enemies, the player. 
+  This component gets dynamically dispatched, so `type` can take other
   values than `true` and `false`.
 
   Related systems: obstacle"
   ([type] {:obstacle type})
   ([] (obstacle true)))
+
+(defn opaque
+  "Opacity component
+
+  Opaque entities can simply not be looked through, i.e. they obstruct the line
+  of view. Can but doesn't need to be combined with `obstacle`.
+  This component gets dynamically dispatched, so `type` can take other
+  values than `true` and `false`.
+
+  Related systems: sight"
+  ([type] {:opaque type})
+  ([] (opaque true)))
+
+(defn sight
+  "Sight component
+
+  Seeing entities can detect the presence or absence of other entities
+  within `distance`, as dispatch on `type` determines.
+
+  Related systems: sight, memory, render"
+  [type distance]
+  {:sight {:type type
+           :distance distance}})
 
 (defn door
   "Door component
@@ -202,17 +225,6 @@
   Related systems: ai"
   [type]
   {:ai {:type type}})
-
-(defn sight
-  "Sight component
-
-  Seeing entities can detect the presence or absence of other entities
-  within `distance`, as dispatch on `type` determines.
-
-  Related systems: sight, memory, render"
-  [type distance]
-  {:sight {:type type
-           :distance distance}})
 
 (defn memory
   "Memory component
