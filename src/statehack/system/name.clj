@@ -3,7 +3,8 @@
   (:require [statehack.entity :as entity]))
 
 (def category-names
-  {:human "Human"})
+  {:human "Human"
+   :serv-bot "Serv-Bot"})
 
 (defn name [e]
   (cond (entity/capable? e :name) (:name e)

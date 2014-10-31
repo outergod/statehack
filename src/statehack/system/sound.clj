@@ -16,7 +16,8 @@
    :ion-rifle "sshock/00296.wav"
    :gauss-rifle "sshock/00230.wav"
    :pistol "sshock/00240.wav"
-   :magnum-2100 "sshock/00241.wav"})
+   :magnum-2100 "sshock/00241.wav"
+   :appendage-attack "sshock/00256.wav"})
 
 (defn load-resource [name]
   (or (io/resource (str "sounds/" name))

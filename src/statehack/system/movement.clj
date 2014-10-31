@@ -29,7 +29,14 @@
     (set (filter #(levels/in-bounds? foundation (util/matrix-add (:position e) %))
                  world/neighbors))))
 
-(defmethod available-moves :humanoid [game e]
+(defmethod available-moves :bipedal [game e]
+  (let [es (obstacle/filter-obstacles (world/entity-neighbors game e))
+        ds (set (map #(world/entity-delta % e) es))]
+    (into {} (map (fn [pos] [pos #(move % e pos)])
+                  (set/difference (inbound-moves game e) ds)))))
+
+; tbd
+(defmethod available-moves :wheels [game e]
   (let [es (obstacle/filter-obstacles (world/entity-neighbors game e))
         ds (set (map #(world/entity-delta % e) es))]
     (into {} (map (fn [pos] [pos #(move % e pos)])

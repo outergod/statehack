@@ -5,7 +5,7 @@
             [statehack.entity.floor :as floor]
             [statehack.entity.player :as player-entity]
             [statehack.entity.status-bar :as status]
-            [statehack.entity.bot :as bot]
+            [statehack.entity.serv-bot :as serv-bot]
             [statehack.entity.cursor :as cursor]
             [statehack.entity.log :as log]
             [statehack.system.ai :as ai]
@@ -22,7 +22,7 @@
 (defn new-game [screen]
   (let [level (levels/load "level-0" 1)
         [w h] (levels/dimensions level)
-        {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 10)]
+        {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 100)]
     (viewport/center-viewport
      {:screen screen
       :graphics (screen/text-graphics screen)
@@ -34,7 +34,7 @@
                                           (status/status-bar)
                                           (cursor/cursor)
                                           (log/log)
-                                          (bot/bot [4 9 1] 5)]
+                                          (serv-bot/serv-bot [4 9 1])]
                                          level))}]}
      player)))
 

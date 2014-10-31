@@ -12,6 +12,7 @@
             [statehack.system.render :as render]
             [statehack.algebra :as algebra]
             [statehack.system.levels :as levels]
+            [statehack.system.transition :as transition]
             [statehack.util :as util]
             [clj-audio.core :as audio]
             [clj-audio.sampled :as sampled]

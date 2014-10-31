@@ -80,10 +80,10 @@
 
   A skilled entity can perform actions other than movement.
 
-  Related systems: combat"
-  [skills]
-  {:pre [(map? skills) (every? keyword? (keys skills)) (every? pos? (vals skills))]}
-  {:skillset skills})
+  Related systems: skills, combat"
+  [& skills]
+  {:post [(map? %) (every? keyword? (keys %)) (every? map? (vals %))]}
+  {:skillset (apply hash-map skills)})
 
 (defn obstacle
   "Obstacle component
@@ -235,3 +235,10 @@
   Related systems: sight, memory, render"
   []
   {:memory {}})
+
+(defn inventory
+  "Inventory component
+
+  Anything with an inventory can carry stuff around."
+  [& items]
+  {:inventory items})

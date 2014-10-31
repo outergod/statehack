@@ -11,7 +11,7 @@
 
 (defmulti act #'act-dispatch :hierarchy #'act-hierarchy)
 
-(defmethod act :hostile [game e]
+(defmethod act :serv-bot [game e]
   (let [ms (combat/available-melee game e)]
     (if-let [[_ m] (first ms)]
       (m game)

@@ -16,6 +16,7 @@
 (def tiles
   "Mapping of tile keywords to characters"
   {:humanoid "@"
+   :serv-bot "b"
    :corpse "%"
    :nihil " "
    :empty "·"
@@ -346,6 +347,7 @@
     [x y]))
 
 (defmethod render :humanoid [& _] {:tile :humanoid :color 7})
+(defmethod render :serv-bot [& _] {:tile :serv-bot :color 160})
 (defmethod render :corpse [& _] {:tile :corpse :color 88})
 
 (doseq [d [:hdoor :vdoor]]

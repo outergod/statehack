@@ -2,6 +2,9 @@
   (:require [statehack.system.sound :as sound]
             [statehack.system.render :as render]))
 
+(defn sound [name]
+  #(future (sound/play name)))
+
 (defn door []
   (future (sound/play :door)))
 
