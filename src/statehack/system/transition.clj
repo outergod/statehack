@@ -3,16 +3,7 @@
             [statehack.system.render :as render]))
 
 (defn sound [name]
-  #(future (sound/play name)))
-
-(defn door []
-  (future (sound/play :door)))
-
-(defn die []
-  (future (sound/play :man-dying)))
-
-(defn punch []
-  (future (sound/play :punch-02)))
+  #(future (sound/play-sound name)))
 
 (defn transition [game f]
   (update-in game [:transition] conj f))

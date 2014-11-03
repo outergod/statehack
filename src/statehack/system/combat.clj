@@ -7,6 +7,18 @@
             [statehack.system.messages :as messages]
             [statehack.system.skills :as skills]))
 
+(def hurt-hierarchy (make-hierarchy))
+
+(defn hurt-dispatch [game target]
+  (:category target))
+
+(defmulti hurt #'hurt-dispatch :hierarchy #'hurt-hierarchy)
+
+(defmethod hurt :default [game _] game)
+
+(defmethod hurt :human [game _]
+  (transition/transition game (transition/sound :player-hurt)))
+
 (defn target-hp [e]
   (get-in e [:hp :current]))
 
@@ -15,14 +27,16 @@
       (world/remove-entity-component e :mobile :obstacle :ai)
       (world/update-entity-component e :alive (constantly false))
       (world/update-entity-component e :renderable (constantly :corpse))
-      (transition/transition #(transition/die))))
+      (transition/transition #(transition/sound :die))))
 
 (defn dead? [e]
   (not (:alive e)))
 
 (defn damage [game attacker amount target]
   (let [hp (- (target-hp target) amount)
-        game (messages/log game (cl-format nil "~a attacks ~a, causing ~d damage" (name/name attacker) (name/name target) amount))]
+        game (-> game
+                 (messages/log (cl-format nil "~a attacks ~a, causing ~d damage" (name/name attacker) (name/name target) amount))
+                 (hurt target))]
     (if (pos? hp)
       (world/update-entity-component game target [:hp :current] - amount)
       (-> game
