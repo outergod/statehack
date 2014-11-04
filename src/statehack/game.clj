@@ -16,6 +16,7 @@
             [statehack.system.transition :as transition]
             [statehack.system.levels :as levels]
             [statehack.system.memory :as memory]
+            [statehack.system.sound :as sound]
             [statehack.util :as util]
             [halo.screen :as screen]))
 
@@ -56,6 +57,7 @@
 (defn run
   ([screen game]
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
+     (sound/init)
      (screen/in-screen screen
        (loop [input nil game (render/system game)]
          (screen/probe-resize screen)
