@@ -5,7 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojars.wmealing/clj-audio "0.2.0-SNAPSHOT"]
-                 [com.googlecode.lanterna/lanterna "3.0.0-alpha3"]]
+                 [com.googlecode.lanterna/lanterna "3.0.0-alpha3"]
+                 [com.googlecode.soundlibs/vorbisspi "1.0.3-1"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
                        :main statehack.core}

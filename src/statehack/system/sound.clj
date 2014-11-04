@@ -1,31 +1,88 @@
 (ns statehack.system.sound
   (:require [clojure.java.io :as io]
-            [clj-audio.core :as audio])
-  (:import [clojure.lang ISeq Seqable Sequential]
-           [javax.sound.sampled AudioSystem DataLine$Info Clip]))
+            [clj-audio.core :as audio]
+            [clj-audio.sampled :as sampled]))
 
-(def resources
+(defonce mixer (first (audio/mixers)))
+
+(defn cleanup []
+  (when (.isOpen mixer) (.close mixer)))
+
+(defn init []
+  (cleanup)
+  (if (= (.getName (class mixer)) "org.classpath.icedtea.pulseaudio.PulseAudioMixer")
+    (.openLocal mixer "statehack")
+    (.open mixer)))
+
+(def sound-resources
   {:gatling-wind-up "gatling-wind-up.wav"
    :gatling-wind-down "gatling-wind-down.wav"
    :gatling-wind-loop "gatling-wind-loop.wav"
    :punch-02 "punch-02.wav"
    :man-dying "man-dying.wav"
+
+   :player-hurt "sshock/00265.wav"
+   
    :door "sshock/00206.wav"
    :airlock-door "sshock/00204.wav"
    :blast-door "sshock/00268.wav"
+
    :ion-rifle "sshock/00296.wav"
    :gauss-rifle "sshock/00230.wav"
+   :dart "sshock/00287.wav"
    :pistol "sshock/00240.wav"
+   :flechette "sshock/00239.wav"
    :magnum-2100 "sshock/00241.wav"
-   :appendage-attack "sshock/00256.wav"})
+   :mark-3 "sshock/00218.wav"
+   :skorpion "sshock/00266.wav"
+   :plasma "sshock/00298.wav"
+   :magpulse "sshock/00246.wav"
 
-(defn load-resource [name]
-  (or (io/resource (str "sounds/" name))
-      (throw (ex-info (str "No such sound resource found") {:name name}))))
+   :serv-bot-spot "sshock/00275.wav"
+   :vmail "sshock/00293.wav"
+   :radiation "sshock/00203.wav"
 
-(defn load-stream [name]
-  (-> name resources load-resource audio/->stream))
+   :appendage-attack "sshock/00256.wav"
+   :hopper-attack "sshock/00213.wav"
 
-(defn play [name]
-  (with-open [s (load-stream name)]
-    (audio/play s)))
+   :unknown-assault-rifle-2 "sshock/00210.wav"
+   :unknown-assault-rifle-1 "sshock/00292.wav"})
+
+(def music-resources
+  {:medical "chicajo/Medical.ogg"})
+
+(defn load-resource [prefix name]
+  (io/resource (str prefix "/" name)))
+
+(defn load-sound-resource [name]
+  (or (load-resource "sounds" name)
+      (throw (ex-info (str "No such sound file found") {:name name}))))
+
+(defn load-music-resource [name]
+  (or (load-resource "music" name)
+      (throw (ex-info (str "No such music file found") {:name name}))))
+
+(defn load-sound-stream [name]
+  (if-let [file (sound-resources name)]
+    (load-sound-resource file)
+    (throw (ex-info (str "No such sound resource found") {:name name}))))
+
+(defn load-music-stream [name]
+  (if-let [file (music-resources name)]
+    (load-music-resource file)
+    (throw (ex-info (str "No such music resource found") {:name name}))))
+
+(defn- play-stream [s]
+  (audio/with-mixer mixer
+    (binding [audio/*playing* (ref false)]
+      (audio/play s))))
+
+(defn play-sound [name]
+  (with-open [s (audio/->stream (load-sound-stream name))
+              d (sampled/convert s audio/*default-format*)]
+    (play-stream d)))
+
+(defn play-music [name]
+  (with-open [s (audio/->stream (load-music-stream name))
+              d (audio/decode s)]
+    (play-stream d)))
