@@ -39,7 +39,8 @@
              (println "Crash state available.")
              (swap! crash-state (constantly state))
              (throw (.getCause e)))
-           (throw e)))))
+           (throw e)))
+       (finally (sound/cleanup))))
 
 (comment
   (let [game (game/load-game screen @world/state)
