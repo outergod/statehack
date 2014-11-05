@@ -221,7 +221,7 @@
         util/enumeration canvas))
 
 (defn visible-world
-  "Render the visible world of `e` onto `canvas`"
+  "Render the visible world of `e`"
   [game e]
   (let [foundation (space 7 (:foundation (levels/entity-floor game e)))
         mask (sight/visible-mask game e)
