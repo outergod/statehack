@@ -36,10 +36,14 @@
    :door "+"
    :swall "▢"
    :dialog-indicator "⌐"
+
+   ; not in use
    :spell-up "⁀"
    :spell-down "‿"
    :spell-left "("
-   :spell-right ")"})
+   :spell-right ")"
+   :camera "⚷"
+   :battery "🔋"})
 
 (def layout
   "Screen layout"
