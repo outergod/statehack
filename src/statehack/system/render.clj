@@ -9,8 +9,10 @@
             [statehack.system.unique :as unique]
             [statehack.system.sight :as sight]
             [statehack.system.levels :as levels]
+            [statehack.system.memory :as memory]
             [statehack.util :as util]
             [statehack.entity :as entity]
+            [clojure.walk :as walk]
             [clojure.set :as set]))
 
 (def tiles
@@ -125,10 +127,20 @@
                  [(if tile (tiles tile) (str char)) color]) %)
         canvas))
 
+(defn canvas-dimensions
+  "The dimensions of `canvas`"
+  [canvas]
+  [(count (first canvas)) (count canvas)])
+
 (defn canvas-update
-  "Update tile at coordinates [x y] in `canvas` with `f`."
+  "Update tile at coordinates [x y] in `canvas` with `f`
+
+  Ignore coordinates outside bounds."
   [canvas [x y] f]
-  (update-in canvas [y x] f))
+  (let [[w h] (canvas-dimensions canvas)]
+    (if (and (< -1 x w) (< -1 y h))
+      (update-in canvas [y x] f)
+      canvas)))
 
 (defn entity-blit
   "Blit entity `e` onto `canvas`."
@@ -177,6 +189,12 @@
   [entities]
   (map (partial reduce blit) (vals (group-by :position entities))))
 
+(defn reduce-entities
+  "Reduce entities onto `canvas`"
+  [game canvas es]
+  (reduce (partial entity-blit game) canvas
+          (entity-canvas es)))
+
 (defn put-canvas
   "Write `canvas` at coordinates `[x0 y0]`."
   ([graphics canvas x0 y0]
@@ -198,8 +216,7 @@
   `h` after moving it by offset `[x0 y0]`."
   [canvas [w h] [x0 y0]]
   (let [base (rect :nihil 0 [w h])
-        cw (count (first canvas))
-        ch (count canvas)]
+        [cw ch] (canvas-dimensions canvas)]
     (canvas-blit base (subvec (mapv #(subvec % x0 (min (+ x0 w) cw))
                                     canvas)
                               y0 (min (+ y0 h) ch))
@@ -227,19 +244,31 @@
 (defn visible-world
   "Render the visible world of `e`"
   [game e]
-  (let [foundation (space 7 (:foundation (levels/entity-floor game e)))
+  (let [canvas (space 7 (:foundation (levels/entity-floor game e)))
         mask (sight/visible-mask game e)
         es (entity/filter-capable [:position :renderable] (levels/floor-entities game (:floor e)))]
-    (mask-canvas (reduce (partial entity-blit game) foundation
-                         (entity-canvas es))
-                 mask)))
+    (mask-canvas (reduce-entities game canvas es) mask)))
+
+(defn dye
+  "Change the color of all tiles in `canvas` to `c`"
+  [canvas c]
+  (walk/postwalk #(if (map? %) (assoc % :color c) %) canvas))
+
+(defn memorized-world
+  "Render the memorized world of `e`"
+  [game e]
+  (let [{:keys [floor foundation]} (levels/entity-floor game e)
+        {:keys [entities coordinates]} (memory/memory-floor e floor)
+        canvas (reduce #(canvas-update %1 %2 (constantly {:tile :empty}))
+                       (rect :nihil 0 foundation) coordinates)
+        es (vals entities)]
+    (dye (reduce-entities game canvas es) 8)))
 
 (defn- draw-world
   "Draw all renderable entities in `es` visible to `e` onto `canvas`"
   [game e canvas]
   (let [{:keys [graphics viewport]} game
-        memory (get-in e [:memory :floors (:floor e)])
-        world (canvas-blit memory (visible-world game e) [0 0])
+        world (canvas-blit (memorized-world game e) (visible-world game e) [0 0])
         view (fit-in world (size graphics :world) viewport)]
     (canvas-blit canvas view (position graphics :world))))
 

@@ -11,6 +11,7 @@
             [statehack.system.sound :as sound]
             [statehack.system.render :as render]
             [statehack.system.unique :as unique]
+            [statehack.system.sight :as sight]
             [statehack.algebra :as algebra]
             [statehack.system.levels :as levels]
             [statehack.system.transition :as transition]

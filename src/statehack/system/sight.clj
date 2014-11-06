@@ -31,6 +31,11 @@
 (defn filter-opaques [es]
   (filter opaque? es))
 
+(defn visible-entities
+  "Visible entities on `floor` within `mask`"
+  [game floor mask]
+  (entity/filter-capable [:renderable] (world/entities-at game floor mask)))
+
 (defn visible-mask
   "Visible coordinates for sighted entity `e`."
   [game e]

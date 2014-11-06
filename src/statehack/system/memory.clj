@@ -1,26 +1,26 @@
 (ns statehack.system.memory
   "Memory system"
-  (:require [clojure.walk :as walk]
-            [statehack.system.levels :as levels]
-            [statehack.system.render :as render]
-            [statehack.system.world :as world]))
+  (:require [statehack.system.levels :as levels]
+            [statehack.system.sight :as sight]
+            [statehack.system.world :as world]
+            [statehack.util :as util]
+            [clojure.set :as set]))
 
 (defn memory-floor [e n]
-  (get-in e [:memory :floors n]))
+  (get-in e [:memory :floors n] {}))
 
-(defn update-memory-floor [game e n v]
-  (world/update-entity-component game e :memory #(assoc-in % [:floors n] v)))
-
-(defn dye-gray [canvas]
-  (walk/postwalk #(if (map? %) (assoc % :color 8) %) canvas))
+(defn update-memory-floor [game e n es mask]
+  (world/update-entity-component game e :memory
+                                 #(-> %
+                                      (update-in [:floors n :entities] merge es)
+                                      (update-in [:floors n :coordinates] set/union mask))))
 
 (defn remember-view [game e]
   {:pre [(:sight e) (:memory e) (:floor e)]}
-  (let [{:keys [floor foundation]} (levels/entity-floor game e)
-        memory (or (memory-floor e floor)
-                   (render/rect :nihil 0 foundation))
-        updated (dye-gray (render/canvas-blit memory (render/visible-world game e) [0 0]))]
-    (update-memory-floor game e floor updated)))
+  (let [{:keys [floor]} (levels/entity-floor game e)
+        mask (sight/visible-mask game e)
+        es (dissoc (util/index-by :id (sight/visible-entities game floor mask)) (e :id))]
+    (update-memory-floor game e floor es mask)))
 
 (defn system [game]
   (let [es (world/capable-entities game :memory :sight :floor)]
