@@ -59,9 +59,9 @@
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
      (sound/init)
      (screen/in-screen screen
-       (loop [input nil game (render/system game)]
+       (loop [input nil game (-> game memory/system render/system)]
          (screen/probe-resize screen)
-         (let [[game {:keys [quit time]}] (-> game (player/system input) transition/system memory/system render/system (util/separate :quit :time))]
+         (let [[game {:keys [quit time]}] (-> game (player/system input) transition/system render/system (util/separate :quit :time))]
            (when-not quit
              (let [game (if time (-> game ai/system transition/system memory/system render/system) game)
                    player (unique/unique-entity game :player)]
