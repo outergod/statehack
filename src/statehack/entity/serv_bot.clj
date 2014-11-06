@@ -13,4 +13,6 @@
    (c/obstacle)
    (c/vulnerable 20)
    (c/ai :serv-bot)
+   (c/sight :sensors 5)
+   (c/memory)
    (c/skillset :appendages {:type :melee :strength 8})))
