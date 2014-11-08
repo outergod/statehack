@@ -43,7 +43,7 @@
           (messages/log (cl-format nil "~a dies from ~d overdamage" (name/name target) (Math/abs hp)))
           (die target)))))
 
-(defn- attackable? [e]
+(defn attackable? [e]
   (and (entity/capable? e :hp)
        (:alive e)))
 

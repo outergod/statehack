@@ -31,11 +31,6 @@
 (defn filter-opaques [es]
   (filter opaque? es))
 
-(defn visible-entities
-  "Visible entities on `floor` within `mask`"
-  [game floor mask]
-  (entity/filter-capable [:renderable] (world/entities-at game floor mask)))
-
 (defn visible-mask
   "Visible coordinates for sighted entity `e`."
   [game e]
@@ -46,3 +41,12 @@
     (conj (set (mapcat (partial util/take-while-including (complement ps))
                        (algebra/visible-lines [x y] r)))
           [x y])))
+
+(defn visible-entities
+  "Visible entities on `floor` within `mask`"
+  ([game floor mask]
+     (entity/filter-capable [:renderable] (world/entities-at game floor mask)))
+  ([game e]
+     (let [{:keys [floor]} (levels/entity-floor game e)
+           mask (visible-mask game e)]
+       (visible-entities game floor mask))))

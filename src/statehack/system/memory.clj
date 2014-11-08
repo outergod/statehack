@@ -6,8 +6,9 @@
             [statehack.util :as util]
             [clojure.set :as set]))
 
-(defn memory-floor [e n]
-  (get-in e [:memory :floors n] {}))
+(defn entity-memory
+  ([e n] (get-in e [:memory :floors n] {:entities {} :coordinates []}))
+  ([e] (entity-memory e (:floor e))))
 
 (defn update-memory-floor [game e n es mask]
   (world/update-entity-component game e :memory

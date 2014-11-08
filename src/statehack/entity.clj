@@ -15,3 +15,6 @@
 (defn filter-capable [[& cs] es]
   (filter #(apply capable? % cs) es))
 
+(defn remove-capable [[& cs] es]
+  (remove #(apply capable? % cs) es))
+

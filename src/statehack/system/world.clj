@@ -8,6 +8,11 @@
   (swap! store (constantly (select-keys game [:world])))
   game)
 
+(defn >> [game & updates]
+  (reduce (fn [game f]
+            (or (f game) game))
+          game updates))
+
 (defn state [game]
   (-> game :world first))
 
