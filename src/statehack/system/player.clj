@@ -25,14 +25,17 @@
   (let [e (receivers/current game)]
     (-> (input/receive game e input) movement/update-cursor)))
 
+(defn act [game e f]
+  (letfn [(center [game] (viewport/center-viewport game (world/entity game (:id e))))]
+    (-> game world/dup-world-state f center time/pass-time)))
+
 (defn action [game player dir]
   (let [[x y] (player-moves dir)
         moves (apply merge (map #(% game player)
                                 (reverse [combat/available-melee door/available-open movement/available-moves])))
-        non-move ((movement/unavailable-moves game player) [x y])
-        center #(viewport/center-viewport % (world/entity % (:id player)))]
+        non-move ((movement/unavailable-moves game player) [x y])]
     (if-let [m (moves [x y])]
-      (-> game world/dup-world-state m center time/pass-time)
+      (act game player m)
       (non-move game))))
 
 (defn viewport [game player dir]
@@ -52,6 +55,7 @@
     \e (action game player :up-right)
     \z (action game player :down-left)
     \c (action game player :down-right)
+    \. (act game player identity)
     \C (door/close game player)
     :backspace (-> game world/pop-world-state (viewport/center-viewport player))
     :enter (world/save game)
