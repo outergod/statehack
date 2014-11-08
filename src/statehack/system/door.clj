@@ -39,3 +39,6 @@
       0 (messages/log game "No open door nearby.")
       1 (close-door game (first es))
       (defer/defer game es close-door))))
+
+(defn filter-doors [es]
+  (entity/filter-capable [:open] es))
