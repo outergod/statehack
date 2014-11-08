@@ -7,6 +7,7 @@
             [statehack.system.input.receivers :as receivers]
             [statehack.system.obstacle :as obstacle]
             [statehack.system.levels :as levels]
+            [statehack.system.door :as door]
             [statehack.util :as util]
             [clojure.set :as set]))
 
@@ -29,18 +30,22 @@
     (set (filter #(levels/in-bounds? foundation (util/matrix-add (:position e) %))
                  world/neighbors))))
 
-(defmethod available-moves :bipedal [game e]
-  (let [es (obstacle/filter-obstacles (world/entity-neighbors game e))
-        ds (set (map #(world/entity-delta % e) es))]
+(defn- available-moves-common
+  "Shared implementation of `available-moves`, using obstacles `es`"
+  [game e es]
+  (let [ds (set (map #(world/entity-delta % e) es))]
     (into {} (map (fn [pos] [pos #(move % e pos)])
                   (set/difference (inbound-moves game e) ds)))))
 
+(defmethod available-moves :bipedal [game e]
+  (let [es (obstacle/filter-obstacles (world/entity-neighbors game e))]
+    (available-moves-common game e es)))
+
 (defmethod available-moves :wheels [game e]
-  (let [es (obstacle/filter-obstacles (world/entity-neighbors game e))
-        es (entity/remove-capable [:open] es)
-        ds (set (map #(world/entity-delta % e) es))]
-    (into {} (map (fn [pos] [pos #(move % e pos)])
-                  (set/difference (inbound-moves game e) ds)))))
+  (let [es (world/entity-neighbors game e)
+        os (set (obstacle/filter-obstacles (world/entity-neighbors game e)))
+        doors (set (door/filter-doors es))]
+    (available-moves-common game e (set/union os doors))))
 
 (defn move-next [game sel]
   (let [{:keys [targets]} (:mobile sel)
