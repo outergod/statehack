@@ -12,6 +12,7 @@
             [statehack.system.memory :as memory]
             [statehack.util :as util]
             [statehack.entity :as entity]
+            [statehack.algebra :as algebra]
             [clojure.walk :as walk]
             [clojure.set :as set]))
 
@@ -393,16 +394,16 @@
 (defmethod render :wall [game wall]
   {:tile (condp set/subset? (set (map #(world/entity-delta % wall)
                                       (entity/filter-capable [:room] (world/entity-neighbors game wall))))
-           world/neighbors :nihil
-           (set/difference world/neighbors #{[1 -1]}) :blcorner
-           (set/difference world/neighbors #{[-1 -1]}) :brcorner
-           (set/difference world/neighbors #{[1 1]}) :tlcorner
-           (set/difference world/neighbors #{[-1 1]}) :trcorner
+           algebra/neighbor-deltas :nihil
+           (set/difference algebra/neighbor-deltas #{[1 -1]}) :blcorner
+           (set/difference algebra/neighbor-deltas #{[-1 -1]}) :brcorner
+           (set/difference algebra/neighbor-deltas #{[1 1]}) :tlcorner
+           (set/difference algebra/neighbor-deltas #{[-1 1]}) :trcorner
            
-           (set/difference world/neighbors #{[-1 -1] [1 -1] [0 -1]}) :hwall
-           (set/difference world/neighbors #{[1 1] [-1 1] [0 1]}) :hwall
-           (set/difference world/neighbors #{[-1 0] [-1 -1] [-1 1]}) :vwall
-           (set/difference world/neighbors #{[1 0] [1 1] [1 -1]}) :vwall
+           (set/difference algebra/neighbor-deltas #{[-1 -1] [1 -1] [0 -1]}) :hwall
+           (set/difference algebra/neighbor-deltas #{[1 1] [-1 1] [0 1]}) :hwall
+           (set/difference algebra/neighbor-deltas #{[-1 0] [-1 -1] [-1 1]}) :vwall
+           (set/difference algebra/neighbor-deltas #{[1 0] [1 1] [1 -1]}) :vwall
 
            #{[1 0] [-1 0] [0 1] [0 -1]} :cross
            #{[1 0] [-1 0] [0 1]} :hdcross

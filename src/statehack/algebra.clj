@@ -1,6 +1,23 @@
 (ns statehack.algebra
   "Algebraic algorithms for rasterized, linear planes"
-  (:require [statehack.util :as util]))
+  (:require [clojure.set :as set]
+            [clojure.data.priority-map :refer [priority-map]]
+            [statehack.util :as util]))
+
+(def neighbor-deltas
+  "Set of neighbor node deltas"
+  (set (remove #(= % [0 0])
+               (for [x [-1 0 1] y [-1 0 1]] [x y]))))
+
+(defn neighbors
+  "Set of `[x y]`'s neighbors"
+  [[x y]]
+  (set (map (partial util/matrix-add [x y]) neighbor-deltas)))
+
+(defn euclidian-distance
+  "Euclidian distance between two coordinates"
+  ([[x y]] (Math/sqrt (+ (Math/pow x 2) (Math/pow y 2))))
+  ([[x0 y0] [x1 y1]] (euclidian-distance [(- x1 x0) (- y1 y0)])))
 
 (defn- filter-circle
   "Evaluate to all points in a square with length `(* r 2)` around
@@ -10,7 +27,7 @@
   (let [start (* r -1) end (inc r)]
     (map (partial util/matrix-add [x0 y0])
          (filter (fn [[x y]]
-                   (pred (Math/round (Math/sqrt (+ (Math/pow x 2) (Math/pow y 2)))) r))
+                   (pred (Math/round (euclidian-distance [x y])) r))
                  (for [x (range start end) y (range start end)] [x y])))))
 
 (defn circle
@@ -97,11 +114,44 @@
   "Sequence of points from `[x0 y0]` to `[x1 y1]` determined using the
   Bresenham algorithm"
   [[x0 y0] [x1 y1]]
-  (let [[dx dy] (util/matrix-subtract [x1 y1] [x0 y0])
-        [n m projectf] (octant-projection [dx dy])
-        err (fn [x] (- (* x m) 0.5))]
-    (for [quick (range 0 (inc n)) :let [slow (int (Math/ceil (err quick)))]]
-      (util/matrix-add [x0 y0] (projectf [quick slow])))))
+  (if (= [x0 y0] [x1 y1])
+    [[x0 y0]]
+    (let [[dx dy] (util/matrix-subtract [x1 y1] [x0 y0])
+          [n m projectf] (octant-projection [dx dy])
+          err (fn [x] (- (* x m) 0.5))]
+      (for [quick (range 0 (inc n)) :let [slow (int (Math/ceil (err quick)))]]
+        (util/matrix-add [x0 y0] (projectf [quick slow]))))))
+
+(defn frame
+  "Calculate set of coordinates framing an area of boundaries `[w h]`"
+  [[w h]]
+  (set/union (set (mapcat (fn [x] [[x -1] [x h]]) (range -1 (inc w))))
+             (set (mapcat (fn [y] [[-1 y] [w y]]) (range -1 (inc h))))))
+
+(defn a*
+  "Calculate a path from `[x0 y0]` to `[x1 y1]` within bounds `[w h]`
+  using the A* algorithm, given obstacle coordinates `os`
+
+  `nil` if no path can be determined."
+  [[x0 y0] [x1 y1] [w h] os]
+  (let [os (set/union os (frame [w h]))]
+    (letfn [(h [[x y]] (dec (count (bresenham-line [x y] [x1 y1]))))
+            (f [[x y] g] (+ g (h [x y])))
+            (n [[x y] g parents closed]
+              (let [g (inc g)
+                    parents (conj parents [x y])]
+                (map (fn [[x y]] [[[x y] g parents] (f [x y] g)])
+                     (set/difference (neighbors [x y]) os closed))))]
+      (loop [fringe (priority-map [[x0 y0] 0 []] (h [x0 y0]))
+             closed #{}
+             goal (priority-map)]
+        (let [[[[x y] distance parents] cost :as node] (peek fringe)
+              [[[x-goal y-goal] _ parents-goal] cost-goal :as node-goal] (peek goal)]
+          (cond (= [x y] [x1 y1]) (recur (pop fringe) closed (conj goal node))
+                (and (not-empty node-goal)
+                     (or (empty? node)
+                         (< cost-goal cost))) (conj parents-goal [x-goal y-goal])
+                node (recur (into (pop fringe) (n [x y] distance parents closed)) (conj closed [x y]) goal)))))))
 
 (comment
   ; Useful for playing around

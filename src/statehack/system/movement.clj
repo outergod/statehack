@@ -9,6 +9,7 @@
             [statehack.system.levels :as levels]
             [statehack.system.door :as door]
             [statehack.util :as util]
+            [statehack.algebra :as algebra]
             [clojure.set :as set]))
 
 (def move-hierarchy (make-hierarchy))
@@ -28,7 +29,7 @@
 (defn inbound-moves [game e]
   (let [{:keys [foundation]} (levels/floor game (:floor e))]
     (set (filter #(levels/in-bounds? foundation (util/matrix-add (:position e) %))
-                 world/neighbors))))
+                 algebra/neighbor-deltas))))
 
 (defn- available-moves-common
   "Shared implementation of `available-moves`, using obstacles `es`"
@@ -58,7 +59,7 @@
 
 (defn unavailable-moves [game e]
   (let [os (obstacle/filter-obstacles (world/entity-neighbors game e))
-        cs (set/difference world/neighbors (inbound-moves game e))]
+        cs (set/difference algebra/neighbor-deltas (inbound-moves game e))]
     (merge (into {} (map (fn [o] [(world/entity-delta o e) #(messages/log % "There's an obstacle in the way.")]) os))
            (into {} (map (fn [c] [c #(messages/log % "Somehow, you can't move here...")]) cs)))))
 

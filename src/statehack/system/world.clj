@@ -1,6 +1,7 @@
 (ns statehack.system.world
   (:require [statehack.util :as util]
-            [statehack.entity :as entity]))
+            [statehack.entity :as entity]
+            [statehack.algebra :as algebra]))
 
 (def store (atom {}))
 
@@ -58,10 +59,6 @@
 (defn pop-world-state [game]
   (update-in game [:world] #(if (> (count %) 1) (next %) %)))
 
-(def neighbors
-  (set (remove #(= % [0 0])
-               (for [x [-1 0 1] y [-1 0 1]] [x y]))))
-
 (defn entities-at [game floor coords]
   (let [entities (entities game)
         coords (set coords)]
@@ -69,7 +66,7 @@
             (vals entities))))
 
 (defn direct-neighbors [game [x y] floor]
-  (entities-at game floor (map (partial util/matrix-add [x y]) neighbors)))
+  (entities-at game floor (algebra/neighbors [x y])))
 
 (defn entity-neighbors [game e]
   (direct-neighbors game (:position e) (:floor e)))

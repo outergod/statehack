@@ -4,6 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
+                 [org.clojure/data.priority-map "0.0.5"]
                  [org.clojars.wmealing/clj-audio "0.2.0-SNAPSHOT"]
                  [com.googlecode.lanterna/lanterna "3.0.0-alpha3"]
                  [com.googlecode.soundlibs/vorbisspi "1.0.3-1"]]
