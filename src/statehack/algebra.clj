@@ -135,7 +135,7 @@
   `nil` if no path can be determined."
   [[x0 y0] [x1 y1] [w h] os]
   (let [os (set/union os (frame [w h]))]
-    (letfn [(h [[x y]] (dec (count (bresenham-line [x y] [x1 y1]))))
+    (letfn [(h [[x y]] (euclidian-distance [x y] [x1 y1]))
             (f [[x y] g] (+ g (h [x y])))
             (n [[x y] g parents closed]
               (let [g (inc g)
