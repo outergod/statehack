@@ -135,23 +135,25 @@
   `nil` if no path can be determined."
   [[x0 y0] [x1 y1] [w h] os]
   (let [os (set/union os (frame [w h]))]
-    (letfn [(h [[x y]] (euclidian-distance [x y] [x1 y1]))
-            (f [[x y] g] (+ g (h [x y])))
-            (n [[x y] g parents closed]
-              (let [g (inc g)
-                    parents (conj parents [x y])]
-                (map (fn [[x y]] [[[x y] g parents] (f [x y] g)])
-                     (set/difference (neighbors [x y]) os closed))))]
-      (loop [fringe (priority-map [[x0 y0] 0 []] (h [x0 y0]))
-             closed #{}
-             goal (priority-map)]
-        (let [[[[x y] distance parents] cost :as node] (peek fringe)
-              [[[x-goal y-goal] _ parents-goal] cost-goal :as node-goal] (peek goal)]
-          (cond (= [x y] [x1 y1]) (recur (pop fringe) closed (conj goal node))
-                (and (not-empty node-goal)
-                     (or (empty? node)
-                         (< cost-goal cost))) (conj parents-goal [x-goal y-goal])
-                node (recur (into (pop fringe) (n [x y] distance parents closed)) (conj closed [x y]) goal)))))))
+    (if (os [x1 y1])
+      nil
+      (letfn [(h [[x y]] (euclidian-distance [x y] [x1 y1]))
+              (f [[x y] g] (+ g (h [x y])))
+              (n [[x y] g parents closed]
+                (let [g (inc g)
+                      parents (conj parents [x y])]
+                  (map (fn [[x y]] [[[x y] g parents] (f [x y] g)])
+                       (set/difference (neighbors [x y]) os closed))))]
+        (loop [fringe (priority-map [[x0 y0] 0 []] (h [x0 y0]))
+               closed #{}
+               goal (priority-map)]
+          (let [[[[x y] distance parents] cost :as node] (peek fringe)
+                [[[x-goal y-goal] _ parents-goal] cost-goal :as node-goal] (peek goal)]
+            (cond (= [x y] [x1 y1]) (recur (pop fringe) closed (conj goal node))
+                  (and (not-empty node-goal)
+                       (or (empty? node)
+                           (< cost-goal cost))) (conj parents-goal [x-goal y-goal])
+                           node (recur (into (pop fringe) (n [x y] distance parents closed)) (conj closed [x y]) goal))))))))
 
 (comment
   ; Useful for playing around
