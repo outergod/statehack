@@ -8,6 +8,8 @@
             [statehack.system.unique :as unique]
             [statehack.system.transition :as transition]
             [statehack.system.skills :as skills]
+            [statehack.system.levels :as levels]
+            [statehack.algebra :as algebra]
             [statehack.util :as util]))
 
 (def act-hierarchy (make-hierarchy))
@@ -20,7 +22,7 @@
 (defn known-player-location [game e]
   (let [player-id (:id (unique/unique-entity game :player))
         visible-es (util/index-by :id (sight/visible-entities game e))
-        memory-es (:entities (memory/entity-memory e))]
+        memory-es (:entities (memory/entity-floor-memory e))]
     [(visible-es player-id) (memory-es player-id)]))
 
 (defn first-player-spot? [game e]
@@ -29,7 +31,8 @@
 
 (defn player-known? [game e]
   (let [[sight memory] (known-player-location game e)]
-    (or sight memory)))
+    (cond sight [:sight sight]
+          memory [:memory memory])))
 
 (defn player-nearby? [game e]
   (let [player-id (:id (unique/unique-entity game :player))
@@ -42,15 +45,43 @@
       (move game)
       game)))
 
+(defn move-towards [game e target]
+  (let [{:keys [foundation]} (levels/entity-floor game e)
+        es (vals (dissoc (:entities (memory/entity-floor-memory e)) (:id target)))
+        os (set (map :position es))
+        path (algebra/a* (:position e) (:position target) foundation os)]
+    (if (> (count path) 1)
+      (movement/relocate game e (fnext path))
+      game)))
+
+(defn move-melee-range [game e target]
+  (let [{:keys [foundation]} (levels/entity-floor game e)
+        es (vals (:entities (memory/entity-floor-memory e)))
+        os (set (map :position es))
+        paths (sort-by count
+                       (remove nil?
+                               (map #(algebra/a* (:position e) % foundation os)
+                                    (algebra/neighbors (:position target)))))]
+    (if-let [path (first paths)]
+      (movement/relocate game e (fnext path))
+      game)))
+
 (defmethod act :serv-bot [game e]
-  (let [player (unique/unique-entity game :player)
+  (let [[type player] (player-known? game e)
         melee (skills/any-type-skill e :melee)]
-    (world/>> game
-              #(when (first-player-spot? % e)
-                 (transition/transition % (transition/sound :serv-bot-spot)))
-              #(if (some-> % (player-nearby? e) combat/attackable?)
-                 (combat/melee % e melee player)
-                 (move-random % e)))))
+    (world/>> game [(:id e)]
+              #(when (and (= type :sight) (not (:player-spotted (memory/entity-memory %2))))
+                 (-> %1
+                     (transition/transition (transition/sound :serv-bot-spot))
+                     (memory/update-memory %2 assoc :player-spotted true)))
+              #(when (= (:position %2) (:position player))
+                 (-> %1
+                     (memory/update-memory-floor %2 (fn [mem] (update-in mem [:entities] dissoc (:id player))))
+                     (memory/update-memory %2 dissoc :player-spotted)))
+              #(cond (some-> %1 (player-nearby? %2) combat/attackable?) (combat/melee %1 %2 melee player)
+                     (= type :sight) (move-melee-range %1 %2 player)
+                     (= type :memory) (move-towards %1 %2 player)
+                     :default (move-random %1 %2)))))
 
 (defn system [game]
   (let [es (world/capable-entities game :ai)]

@@ -9,11 +9,6 @@
   (swap! store (constantly (select-keys game [:world])))
   game)
 
-(defn >> [game & updates]
-  (reduce (fn [game f]
-            (or (f game) game))
-          game updates))
-
 (defn state [game]
   (-> game :world first))
 
@@ -22,6 +17,12 @@
 
 (defn entity [game id]
   ((entities game) id))
+
+(defn >> [game [& ids] & updates]
+  (reduce (fn [game f]
+            (let [es (map (partial entity game) ids)]
+              (or (apply f game es) game)))
+          game updates))
 
 (defn dup-world-state [game]
   (let [world (:world game)

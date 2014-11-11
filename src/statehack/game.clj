@@ -54,6 +54,9 @@
     (-> game (messages/log "Game Over. Whatever that means..") render/system)
     (screen/read-input-blocking screen)))
 
+(defn turn [game]
+  (-> game transition/system memory/system render/system))
+
 (defn run
   ([screen game]
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
@@ -61,9 +64,9 @@
      (screen/in-screen screen
        (loop [input nil game (-> game memory/system render/system)]
          (screen/probe-resize screen)
-         (let [[game {:keys [quit time]}] (-> game (player/system input) transition/system render/system (util/separate :quit :time))]
+         (let [[game {:keys [quit time]}] (-> game (player/system input) turn (util/separate :quit :time))]
            (when-not quit
-             (let [game (if time (-> game ai/system transition/system memory/system render/system) game)
+             (let [game (if time (-> game ai/system turn) game)
                    player (unique/unique-entity game :player)]
                (if (combat/dead? player)
                  (game-over game)

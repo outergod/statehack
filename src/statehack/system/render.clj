@@ -259,7 +259,7 @@
   "Render the memorized world of `e`"
   [game e]
   (let [{:keys [floor foundation]} (levels/entity-floor game e)
-        {:keys [entities coordinates]} (memory/entity-memory e floor)
+        {:keys [entities coordinates]} (memory/entity-floor-memory e floor)
         canvas (reduce #(canvas-update %1 %2 (constantly {:tile :empty}))
                        (rect :nihil 0 foundation) coordinates)
         es (vals entities)]
