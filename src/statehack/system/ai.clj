@@ -58,10 +58,10 @@
   (let [{:keys [foundation]} (levels/entity-floor game e)
         es (vals (:entities (memory/entity-floor-memory e)))
         os (set (map :position es))
-        paths (sort-by count
-                       (remove nil?
-                               (map #(algebra/a* (:position e) % foundation os)
-                                    (algebra/neighbors (:position target)))))]
+        paths (sort algebra/PathComparator
+                    (remove nil?
+                            (map #(algebra/a* (:position e) % foundation os)
+                                 (algebra/neighbors (:position target)))))]
     (if-let [path (first paths)]
       (movement/relocate game e (fnext path))
       game)))

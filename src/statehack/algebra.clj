@@ -2,7 +2,8 @@
   "Algebraic algorithms for rasterized, linear planes"
   (:require [clojure.set :as set]
             [clojure.data.priority-map :refer [priority-map]]
-            [statehack.util :as util]))
+            [statehack.util :as util])
+  (:import [java.util Comparator]))
 
 (def neighbor-deltas
   "Set of neighbor node deltas"
@@ -155,6 +156,31 @@
                            (< cost-goal cost))) (conj parents-goal [x-goal y-goal])
                            node (recur (into (pop fringe) (n [x y] distance parents closed)) (conj closed [x y]) goal))))))))
 
+(defn path-shortcuts
+  "Count the number of diagonal moves in `path`
+
+  This is used as a secondary length metric for paths that have the
+  same number of steps."
+  [path]
+  (first (reduce (fn [[c [x0 y0]] [x1 y1]]
+                   [(if (or (= x0 x1) (= y0 y1)) c (inc c))
+                    [x1 y1]])
+                 [0 (first path)] (next path))))
+
+(def PathComparator
+  "Comparator for the length of two paths
+
+   Takes the number of shortcuts into account"
+  (reify Comparator
+    (compare [_ path1 path2]
+      (let [c1 (count path1) c2 (count path2)
+            s1 (path-shortcuts path1) s2 (path-shortcuts path2)]
+        (cond (= c1 c2) (cond (= s1 s2) 0
+                              (< s1 s2) -1
+                              :default 1) 
+              (< c1 c2) -1
+              :deafult 1)))))
+
 (comment
   ; Useful for playing around
   (defn test-algebra [coll [x0 y0]]
@@ -172,4 +198,13 @@
 
   (test-algebra (partition 2 (interleave (iterate inc 0) (algebra/visible-lines [40 12] 8))) [40 12])
 
-  (test-algebra [["radius" (algebra/visible-radius [40 12] 8)] ["area" (algebra/visible-area [40 12] 8)]] [40 12]))
+  (test-algebra [["radius" (algebra/visible-radius [40 12] 8)] ["area" (algebra/visible-area [40 12] 8)]] [40 12])
+
+  (n [[x y] g parents closed]
+     (let [delta (fn [[x1 y1]]
+                   (+ g (if (or (= x1 x) (= y1 y)) 1 1.5)))
+           parents (conj parents [x y])]
+       (map (fn [[x y]]
+              (let [g (delta [x y])]
+                [[[x y] g parents] (f [x y] g)]))
+            (set/difference (neighbors [x y]) os closed)))))
