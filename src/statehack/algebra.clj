@@ -179,7 +179,7 @@
                               (< s1 s2) -1
                               :default 1) 
               (< c1 c2) -1
-              :deafult 1)))))
+              :default 1)))))
 
 (comment
   ; Useful for playing around
