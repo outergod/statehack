@@ -141,9 +141,12 @@
       (letfn [(h [[x y]] (euclidian-distance [x y] [x1 y1]))
               (f [[x y] g] (+ g (h [x y])))
               (n [[x y] g parents closed]
-                (let [g (inc g)
+                (let [delta (fn [[x1 y1]]
+                              (+ g (if (or (= x1 x) (= y1 y)) 1 1.5)))
                       parents (conj parents [x y])]
-                  (map (fn [[x y]] [[[x y] g parents] (f [x y] g)])
+                  (map (fn [[x y]]
+                         (let [g (delta [x y])]
+                           [[[x y] g parents] (f [x y] g)]))
                        (set/difference (neighbors [x y]) os closed))))]
         (loop [fringe (priority-map [[x0 y0] 0 []] (h [x0 y0]))
                closed #{}
@@ -198,13 +201,4 @@
 
   (test-algebra (partition 2 (interleave (iterate inc 0) (algebra/visible-lines [40 12] 8))) [40 12])
 
-  (test-algebra [["radius" (algebra/visible-radius [40 12] 8)] ["area" (algebra/visible-area [40 12] 8)]] [40 12])
-
-  (n [[x y] g parents closed]
-     (let [delta (fn [[x1 y1]]
-                   (+ g (if (or (= x1 x) (= y1 y)) 1 1.5)))
-           parents (conj parents [x y])]
-       (map (fn [[x y]]
-              (let [g (delta [x y])]
-                [[[x y] g parents] (f [x y] g)]))
-            (set/difference (neighbors [x y]) os closed)))))
+  (test-algebra [["radius" (algebra/visible-radius [40 12] 8)] ["area" (algebra/visible-area [40 12] 8)]] [40 12]))
