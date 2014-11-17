@@ -45,6 +45,12 @@
       (move game)
       game)))
 
+(defn path-to [game e target]
+  (let [{:keys [foundation]} (levels/entity-floor game e)
+        es (vals (dissoc (:entities (memory/entity-floor-memory e)) (:id target)))
+        os (set (map :position es))]
+    (next (algebra/a* (:position e) (:position target) foundation os))))
+
 (defn move-towards [game e target]
   (let [{:keys [foundation]} (levels/entity-floor game e)
         es (vals (dissoc (:entities (memory/entity-floor-memory e)) (:id target)))
@@ -66,6 +72,11 @@
       (movement/relocate game e (fnext path))
       game)))
 
+(defn forget-player [game e player]
+  (-> game
+      (memory/update-memory-floor e #(update-in % [:entities] dissoc (:id player)))
+      (memory/update-memory e dissoc :player-spotted)))
+
 (defmethod act :serv-bot [game e]
   (let [[type player] (player-known? game e)
         melee (skills/any-type-skill e :melee)]
@@ -75,12 +86,12 @@
                      (transition/transition (transition/sound :serv-bot-spot))
                      (memory/update-memory %2 assoc :player-spotted true)))
               #(when (= (:position %2) (:position player))
-                 (-> %1
-                     (memory/update-memory-floor %2 (fn [mem] (update-in mem [:entities] dissoc (:id player))))
-                     (memory/update-memory %2 dissoc :player-spotted)))
+                 (forget-player %1 %2 player))
               #(cond (some-> %1 (player-nearby? %2) combat/attackable?) (combat/melee %1 %2 melee player)
                      (= type :sight) (move-melee-range %1 %2 player)
-                     (= type :memory) (move-towards %1 %2 player)
+                     (= type :memory) (if-let [path (path-to %1 %2 player)]
+                                        (movement/relocate %1 %2 (first path))
+                                        (forget-player %1 %2 player))
                      :default (move-random %1 %2)))))
 
 (defn system [game]
