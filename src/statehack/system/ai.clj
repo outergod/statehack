@@ -66,8 +66,8 @@
         os (set (map :position es))
         paths (sort algebra/PathComparator
                     (remove nil?
-                            (map #(algebra/a* (:position e) % foundation os)
-                                 (algebra/neighbors (:position target)))))]
+                            (pmap #(algebra/a* (:position e) % foundation os)
+                                  (algebra/neighbors (:position target)))))]
     (if-let [path (first paths)]
       (movement/relocate game e (fnext path))
       game)))
