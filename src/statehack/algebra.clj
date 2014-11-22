@@ -157,7 +157,7 @@
                   (and (not-empty node-goal)
                        (or (empty? node)
                            (< cost-goal cost))) (conj parents-goal [x-goal y-goal])
-                           node (recur (into (pop fringe) (n [x y] distance parents closed)) (conj closed [x y]) goal))))))))
+                  node (recur (into (pop fringe) (n [x y] distance parents closed)) (conj closed [x y]) goal))))))))
 
 (defn path-shortcuts
   "Count the number of diagonal moves in `path`
