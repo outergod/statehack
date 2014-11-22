@@ -30,38 +30,32 @@
     (.open mixer)))
 
 (def sound-resources
-  {:gatling-wind-up "gatling-wind-up.wav"
-   :gatling-wind-down "gatling-wind-down.wav"
-   :gatling-wind-loop "gatling-wind-loop.wav"
-   :punch-02 "punch-02.wav"
-   :man-dying "man-dying.wav"
-
-   :player-hurt "sshock/00265.wav"
+  {:player-hurt "00265.wav"
    
-   :door "sshock/00206.wav"
-   :airlock-door "sshock/00204.wav"
-   :blast-door "sshock/00268.wav"
+   :door "00206.wav"
+   :airlock-door "00204.wav"
+   :blast-door "00268.wav"
 
-   :ion-rifle "sshock/00296.wav"
-   :gauss-rifle "sshock/00230.wav"
-   :dart "sshock/00287.wav"
-   :pistol "sshock/00240.wav"
-   :flechette "sshock/00239.wav"
-   :magnum-2100 "sshock/00241.wav"
-   :mark-3 "sshock/00218.wav"
-   :skorpion "sshock/00266.wav"
-   :plasma "sshock/00298.wav"
-   :magpulse "sshock/00246.wav"
+   :ion-rifle "00296.wav"
+   :gauss-rifle "00230.wav"
+   :dart "00287.wav"
+   :pistol "00240.wav"
+   :flechette "00239.wav"
+   :magnum-2100 "00241.wav"
+   :mark-3 "00218.wav"
+   :skorpion "00266.wav"
+   :plasma "00298.wav"
+   :magpulse "00246.wav"
 
-   :serv-bot-spot "sshock/00275.wav"
-   :vmail "sshock/00293.wav"
-   :radiation "sshock/00203.wav"
+   :serv-bot-spot "00275.wav"
+   :vmail "00293.wav"
+   :radiation "00203.wav"
 
-   :appendage-attack "sshock/00256.wav"
-   :hopper-attack "sshock/00213.wav"
+   :appendage-attack "00256.wav"
+   :hopper-attack "00213.wav"
 
-   :unknown-assault-rifle-2 "sshock/00210.wav"
-   :unknown-assault-rifle-1 "sshock/00292.wav"})
+   :unknown-assault-rifle-2 "00210.wav"
+   :unknown-assault-rifle-1 "00292.wav"})
 
 (def music-resources
   {:medical "chicajo/Medical.ogg"})
@@ -70,11 +64,11 @@
   (io/resource (str prefix "/" name)))
 
 (defn load-sound-resource [name]
-  (or (load-resource "sounds" name)
+  (or (load-resource "sshock/sounds" name)
       (throw (ex-info (str "No such sound file found") {:name name}))))
 
 (defn load-music-resource [name]
-  (or (load-resource "music" name)
+  (or (load-resource "sshock/music" name)
       (throw (ex-info (str "No such music file found") {:name name}))))
 
 (defn load-sound-stream [name]
