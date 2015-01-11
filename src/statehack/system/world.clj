@@ -60,6 +60,9 @@
   (let [c (if (sequential? c) c [c])]
     (apply update-in-world-state game (concat [:entities (:id e)] c) f args)))
 
+(defn add-entity-component [game e c & cs]
+  (apply update-in-world-state game [:entities (:id e)] #(apply merge % c cs)))
+
 (defn update-entities [game f & args]
   (apply update-in-world-state game [:entities] f args))
 
