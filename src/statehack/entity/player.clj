@@ -31,5 +31,6 @@
    (c/input :player)
    (c/obstacle)
    (c/vulnerable hp)
+   #_(c/sight :omniscience nil)
    (c/sight :eyes 10)
    (c/memory)))
