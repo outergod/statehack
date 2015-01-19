@@ -120,7 +120,7 @@
 (defmethod render :default [_ x] (:renderable x))
 
 (def blit-order "Precedence of blit operations" {})
-w
+
 (defn blit-precedence
   "Define precedence of renderable `r1` over `r2`"
   [r1 r2]
