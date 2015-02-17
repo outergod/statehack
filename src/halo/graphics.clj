@@ -33,8 +33,9 @@
   ([^TextGraphics graphics i]
      (.setForegroundColor graphics (color i))))
 
+;; Type hints are important, performance-sensitive spot
 (defn put
-  ([^TextGraphics graphics s x y]
+  ([^TextGraphics graphics ^String s ^Integer x ^Integer y]
      (.putString graphics x y s))
   ([^TextGraphics graphics s x y & {:keys [color]}]
      (when color

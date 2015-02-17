@@ -15,10 +15,12 @@
 
 (ns statehack.util)
 
+(def ^:private matrix-add-cached (memoize (partial mapv +)))
+
 (defn matrix-add
   ([x] x)
   ([x y]
-     (mapv + x y))
+     (matrix-add-cached x y))
   ([x y & more]
      (reduce matrix-add (matrix-add x y) more)))
 
