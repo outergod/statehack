@@ -11,4 +11,5 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
                        :main statehack.core}
-             :dev {:resource-paths ["dev"]}})
+             :dev {:resource-paths ["dev"]
+                   :dependencies [[criterium "0.4.3"]]}})
