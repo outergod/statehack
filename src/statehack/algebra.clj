@@ -25,10 +25,13 @@
   (set (remove #(= % [0 0])
                (for [x [-1 0 1] y [-1 0 1]] [x y]))))
 
-(defn neighbors
-  "Set of `[x y]`'s neighbors"
-  [[x y]]
-  (set (map (partial util/matrix-add [x y]) neighbor-deltas)))
+(def neighbors
+  "Set of `[x y]`'s neighbors
+
+  Memoized."
+  (memoize
+   (fn [[x y]]
+     (set (map (partial util/matrix-add [x y]) neighbor-deltas)))))
 
 (defn euclidian-distance
   "Euclidian distance between two coordinates"

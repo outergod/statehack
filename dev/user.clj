@@ -14,13 +14,15 @@
             [statehack.algebra :as algebra]
             [statehack.system.levels :as levels]
             [statehack.system.transition :as transition]
+            [statehack.system.ai :as ai]
             [statehack.util :as util]
             [clj-audio.core :as audio]
             [clj-audio.sampled :as sampled]
             [clojure.stacktrace :refer :all]
             [clojure.pprint :refer :all]
             [clojure.reflect :as reflect]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [criterium.core :as criterium])
   (:import [clojure.lang IExceptionInfo]))
 
 (defn publics [o]
