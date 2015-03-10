@@ -12,4 +12,5 @@
   :profiles {:uberjar {:aot :all
                        :main statehack.core}
              :dev {:resource-paths ["dev"]
-                   :dependencies [[criterium "0.4.3"]]}})
+                   :dependencies [[criterium "0.4.3"]
+                                  [com.taoensso/timbre "3.4.0"]]}})
