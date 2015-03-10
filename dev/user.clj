@@ -1,7 +1,6 @@
 (ns user
   (:require [halo.screen :as screen]
             [halo.graphics :as graphics]
-            [statehack.system :as system]
             [statehack.game :as game]
             [statehack.entity :as entity]
             [statehack.system.world :as world]

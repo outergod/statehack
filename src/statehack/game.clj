@@ -36,8 +36,9 @@
             [halo.screen :as screen]))
 
 (defn new-game [screen]
-  (let [level (levels/load "level-0" 1)
-        [w h] (levels/dimensions level)
+  (let [;level (levels/load "level-0" 1)
+        lab (levels/load-room "starting-lab" [0 0] 1)
+        [w h] (levels/dimensions lab)
         {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 100)]
     (viewport/center-viewport
      {:screen screen
@@ -49,9 +50,8 @@
                                           (floor/floor 1 [w h])
                                           (status/status-bar)
                                           (cursor/cursor)
-                                          (log/log)
-                                          (serv-bot/serv-bot [4 9 1])]
-                                         level))}]}
+                                          (log/log)]
+                                         lab))}]}
      player)))
 
 (defn load-game [screen world]

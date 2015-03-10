@@ -257,3 +257,10 @@
   Anything with an inventory can carry stuff around."
   [& items]
   {:inventory items})
+
+(defn pickup
+  "Pickup component
+
+  A pickup can be carried around in an `inventory`."
+  []
+  {:pickup true})

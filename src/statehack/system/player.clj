@@ -24,6 +24,7 @@
             [statehack.system.defer :as defer]
             [statehack.system.time :as time]
             [statehack.system.messages :as messages]
+            [statehack.system.inventory :as inventory]
             [statehack.util :as util]))
 
 (def player-moves
@@ -56,6 +57,9 @@
 (defn viewport [game player dir]
   (viewport/update-viewport game player (partial util/matrix-add (player-moves dir))))
 
+(defn pick-up [game player items]
+  )
+
 (defmethod input/receive :player [game player input]
   (case (:key input)
     :arrow-up (viewport game player :up)
@@ -71,6 +75,7 @@
     \z (action game player :down-left)
     \c (action game player :down-right)
     \. (act game player identity)
+    \, (pick-up game player (inventory/available-pickups game player))
     \C (door/close game player)
     :backspace (-> game world/pop-world-state (viewport/center-viewport player))
     :enter (world/save game)

@@ -29,5 +29,6 @@
    (c/vulnerable 20)
    (c/ai :serv-bot)
    (c/sight :sensors 5)
+   #_(c/sight :omniscience nil)
    (c/memory)
    (c/skillset :appendages {:type :melee :strength 8})))

@@ -54,7 +54,8 @@
    :door "+"
    :swall "▢"
    :dialog-indicator "⌐"
-
+   :weapon ")"
+   
    ; not in use
    :spell-up "⁀"
    :spell-down "‿"
@@ -444,3 +445,11 @@
 (blit-precedence :humanoid :door)
 (blit-precedence :humanoid :corpse)
 (blit-precedence :corpse :door)
+
+(blit-precedence :humanoid :weapon)
+(blit-precedence :weapon :corpse)
+
+(defmethod render :weapon [game e]
+  {:tile :weapon
+   :color 15})
+

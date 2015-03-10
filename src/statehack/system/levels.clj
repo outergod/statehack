@@ -17,32 +17,35 @@
   (:refer-clojure :exclude [load])
   (:require [statehack.entity :as entity]
             [statehack.entity.room :as room]
+            [statehack.entity.serv-bot :as serv-bot]
+            [statehack.entity.dart-gun :as dart-gun]
             [statehack.system.world :as world]
             [statehack.util :as util]
             [clojure.string :as str]
             [clojure.java.io :as io]))
 
-(defn load-resource [name]
-  (or (io/resource (str "levels/" name))
-      (throw (ex-info (str "No such level resource found") {:name name}))))
+(def rooms {"starting-lab" {\X #(room/wall %&)
+                            \o #(room/door %& false)
+                            \O #(room/door %& true)
+                            \b #(serv-bot/serv-bot %&)
+                            \l #(dart-gun/dart-gun %&)}})
 
-(defn extract [s [x0 y0] floor]
-   (let [lines (str/split-lines s)
-         find-wall (memoize (fn [[x y]] (#{\X \O \o \e} (get-in lines [y x]))))]
-     (filter identity
-             (flatten
-              (for [[row y] (partition 2 (interleave lines (range (count s))))
-                    [token x] (partition 2 (interleave row (range (count row))))]
-                (when-let [w (find-wall [x y])]
-                  (let [[x1 y1] (util/matrix-add [x0 y0] [x y])]
-                    (case w
-                      \X (room/wall [x1 y1 floor])
-                      \O (room/door [x1 y1 floor] true)
-                      \o (room/door [x1 y1 floor] false)
-                      \e (room/solid [x1 y1 floor])))))))))
+(defn extract-room [s spec [x0 y0] floor]
+  (letfn [(token [c] (get spec c (constantly nil)))]
+    (filter identity
+            (flatten
+             (for [[y row] (util/enumerate (str/split-lines s))
+                   [x c] (util/enumerate row)]
+               (let [[x1 y1] (util/matrix-add [x0 y0] [x y])
+                     f (token c)]
+                 (f x1 y1 floor)))))))
 
-(defn load [name floor]
-  (extract (slurp (load-resource name)) [0 0] floor))
+(defn load-room-resource [name]
+  (or (io/resource (str "rooms/" name))
+      (throw (ex-info (str "No such room resource found") {:name name}))))
+
+(defn load-room [name [x0 y0] floor]
+  (extract-room (slurp (load-room-resource name)) (rooms name) [x0 y0] floor))
 
 (defn dimensions [level]
   (let [ps (map :position (entity/filter-capable [:position] level))]
