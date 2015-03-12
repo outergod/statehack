@@ -35,13 +35,5 @@
 
 (defn available-pickups [game e]
   (let [{:keys [position floor]} e]
-    (filter #(and (= position (:position e)) (= floor (:floor e)))
+    (filter #(and (= position (:position %)) (= floor (:floor %)))
             (world/capable-entities game :pickup))))
-
-#_(defn close [game e]
-  (let [es (filter #(and (entity/capable? % :open) (:open %))
-                   (world/entity-neighbors game e))]
-    (case (count es)
-      0 (messages/log game "No open door nearby.")
-      1 (close-door game (first es))
-      (defer/defer game es close-door))))

@@ -25,6 +25,7 @@
             [statehack.system.time :as time]
             [statehack.system.messages :as messages]
             [statehack.system.inventory :as inventory]
+            [statehack.system.menu :as menu]
             [statehack.util :as util]))
 
 (def player-moves
@@ -58,7 +59,9 @@
   (viewport/update-viewport game player (partial util/matrix-add (player-moves dir))))
 
 (defn pick-up [game player items]
-  )
+  (if (seq items)
+    (menu/menu game [:id (set (map :id items))] #(inventory/pick-up-item %1 player %2))
+    (messages/log game "Nothing found to pick up")))
 
 (defmethod input/receive :player [game player input]
   (case (:key input)

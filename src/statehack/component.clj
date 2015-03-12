@@ -264,3 +264,8 @@
   A pickup can be carried around in an `inventory`."
   []
   {:pickup true})
+
+(defn reference
+  "Reference to other entities"
+  [criteria]
+  {:reference criteria})

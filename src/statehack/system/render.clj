@@ -317,6 +317,12 @@
       (canvas-update (util/matrix-add [x y] [1 1]) (constantly {:tile :dialog-indicator :color 7}))
       (canvas-blit (tilify-string (messages/current e) 7) (util/matrix-add [x y] [2 1]))))
 
+(defn- draw-menu
+  "Draw a menu using menu-capable entity `e`."
+  [canvas e [w h]]
+  (-> canvas
+      (canvas-blit (window 7 [w h]) [0 1])))
+
 (defn- draw-interface
   "Draw the interface portion of the screen onto `canvas` using
   applicable renderables from `es`."
@@ -332,6 +338,7 @@
                 canvas
                 (draw-log canvas e (:position messages)))
          :dialog (draw-dialog canvas e (:position messages) (:size messages))
+         :menu (draw-menu canvas e (graphics/size graphics))
          canvas))
        canvas (entity/filter-capable [:renderable] es))))
 
