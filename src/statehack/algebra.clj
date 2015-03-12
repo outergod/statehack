@@ -16,7 +16,7 @@
 (ns statehack.algebra
   "Algebraic algorithms for rasterized, linear planes"
   (:require [clojure.set :as set]
-            [clojure.data.priority-map :refer [priority-map]]
+            [clojure.data.priority-map :refer [priority-map-keyfn]]
             [statehack.util :as util])
   (:import [java.util Comparator]))
 
@@ -158,24 +158,27 @@
       nil
       (letfn [(h [[x y]] (euclidian-distance [x y] [x1 y1]))
               (f [[x y] g] (+ g (h [x y])))
-              (n [[x y] g parents closed]
+              (n [[x y] g parents fringe closed]
                 (let [delta (fn [[x1 y1]]
                               (+ g (if (or (= x1 x) (= y1 y)) 1 1.5)))
                       parents (conj parents [x y])]
-                  (map (fn [[x y]]
-                         (let [g (delta [x y])]
-                           [[[x y] g parents] (f [x y] g)]))
-                       (set/difference (neighbors [x y]) os closed))))]
-        (loop [fringe (priority-map [[x0 y0] 0 []] (h [x0 y0]))
+                  (keep (fn [[x y]]
+                          (let [g (delta [x y])
+                                cost (f [x y] g)
+                                [prev-cost] (fringe [x y])]
+                            (when-not (and prev-cost (<= prev-cost cost))
+                              [[x y] [cost g parents]])))
+                        (set/difference (neighbors [x y]) os closed))))]
+        (loop [fringe (priority-map-keyfn first [x0 y0] [(h [x0 y0]) 0 []])
                closed #{}
-               goal (priority-map)]
-          (let [[[[x y] distance parents] cost :as node] (peek fringe)
-                [[[x-goal y-goal] _ parents-goal] cost-goal :as node-goal] (peek goal)]
+               goal (priority-map-keyfn first)]
+          (let [[[x y] [cost distance parents] :as node] (peek fringe)
+                [[x-goal y-goal] [cost-goal _ parents-goal] :as node-goal] (peek goal)]
             (cond (= [x y] [x1 y1]) (recur (pop fringe) closed (conj goal node))
                   (and (not-empty node-goal)
                        (or (empty? node)
                            (< cost-goal cost))) (conj parents-goal [x-goal y-goal])
-                  node (recur (into (pop fringe) (n [x y] distance parents closed)) (conj closed [x y]) goal))))))))
+                  node (recur (into (pop fringe) (n [x y] distance parents fringe closed)) (conj closed [x y]) goal))))))))
 
 (defn path-shortcuts
   "Count the number of diagonal moves in `path`
