@@ -41,7 +41,7 @@
            (let [{:keys [state]} (ex-data e)]
              (println "Crash state available.")
              (swap! crash-state (constantly state))
-             (throw (.getCause e)))
+             (throw (or (.getCause e) e)))
            (throw e)))
        (finally (sound/cleanup))))
 
