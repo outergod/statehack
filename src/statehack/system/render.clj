@@ -142,7 +142,7 @@
                               :position (position graphics s)}])
                   sections))))
 
-(defn draw
+(defn canvas-transform
   "Transform two-dimensional `canvas` from tile/color mapping to
   character/color vectors."
   [canvas]
@@ -325,9 +325,16 @@
 
 (defn- draw-menu
   "Draw a menu using menu-capable entity `e`."
-  [canvas e [w h]]
+  [[w h] canvas e]
   (-> canvas
-      (canvas-blit (window 7 [w h]) [0 1])))
+      (canvas-blit (window 7 [w (dec h)]) [0 1])))
+
+(defn- draw-menus
+  "Draw the menus portion of the screen"
+  [game es canvas]
+  (let [{:keys [graphics]} game]
+    (reduce (partial draw-menu (graphics/size graphics))
+            canvas (world/capable-entities game :menu))))
 
 (defn- draw-interface
   "Draw the interface portion of the screen onto `canvas` using
@@ -344,15 +351,16 @@
                 canvas
                 (draw-log canvas e (:position messages)))
          :dialog (draw-dialog canvas e (:position messages) (:size messages))
-         :menu (draw-menu canvas e (graphics/size graphics))
          canvas))
        canvas (entity/filter-capable [:renderable] es))))
 
 (defn receiver-section
   "Which section corresponds to the current receiver in `game`?"
   [game]
-  (if (entity/capable? (receivers/current game) :messages)
-    :messages :world))
+  (let [r (receivers/current game)]
+    (cond (entity/capable? r :messages) :messages
+          (entity/capable? r :menu) :menu
+          :default :world)))
 
 (defn draw-cursor
   "Draw the cursor-capable entity in `es`."
@@ -363,12 +371,13 @@
         cursor-position (:position cursor)
         section (receiver-section game)
         [x y] (util/matrix-add (position graphics section) cursor-position)]
-    (if (= section :world)
-      (let [[x y] (util/matrix-add (util/matrix-subtract [x y] viewport)
-                                   (center-offset [w h] (size graphics :world)))]
-        (if (visible? game cursor-position)
-          (screen/move-cursor screen x y)
-          (screen/hide-cursor screen)))
+    (case section
+      :world (let [[x y] (util/matrix-add (util/matrix-subtract [x y] viewport)
+                                          (center-offset [w h] (size graphics :world)))]
+               (if (visible? game cursor-position)
+                 (screen/move-cursor screen x y)
+                 (screen/hide-cursor screen)))
+      :menu (apply screen/move-cursor screen cursor-position)
       (screen/move-cursor screen x y))))
 
 (defn system
@@ -380,7 +389,7 @@
         [w h] (graphics/size graphics)
         canvas (rect :nihil 0 [w h])]
     (try
-      (->> canvas (draw-world game e) (draw-interface game es) draw (put-canvas graphics))
+      (->> canvas (draw-world game e) (draw-interface game es) (draw-menus game es) canvas-transform (put-canvas graphics))
       (draw-cursor game e es)
       (screen/refresh screen)
       (catch Exception e
