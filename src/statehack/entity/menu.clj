@@ -21,5 +21,5 @@
   (entity
    (c/renderable :menu)
    (c/input :menu)
-   (c/reference criteria)
+   (c/menu 0 criteria)
    (c/deferred action)))

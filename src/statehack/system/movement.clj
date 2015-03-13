@@ -83,7 +83,7 @@
   [e]
   (cond (entity/capable? e :messages) [(+ (count (first (:messages e))) 2) 1]
         (entity/capable? e :position) (:position e)
-        (= (:renderable e) :menu) [0 (:index e)]
+        (entity/capable? e :menu) [0 (get-in e [:menu :index])]
         :default (throw (ex-info "Cursor pointing at entity position can't be determined of" {:entity e}))))
 
 (defn update-cursor

@@ -269,7 +269,8 @@
   []
   {:pickup true})
 
-(defn reference
-  "Reference to other entities"
-  [criteria]
-  {:reference criteria})
+(defn menu
+  "Menu referencing criteria"
+  [index criteria]
+  {:menu {:criteria criteria
+          :index index}})
