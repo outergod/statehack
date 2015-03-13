@@ -39,7 +39,7 @@
   (let [;level (levels/load "level-0" 1)
         lab (levels/load-room "starting-lab" [0 0] 1)
         [w h] (levels/dimensions lab)
-        {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 100)]
+        {:keys [id] :as player} (player-entity/player "The Hacker" [12 7 1] 100)]
     (viewport/center-viewport
      {:screen screen
       :graphics (screen/text-graphics screen)
