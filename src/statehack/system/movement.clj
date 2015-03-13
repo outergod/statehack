@@ -78,11 +78,18 @@
     (merge (into {} (map (fn [o] [(world/entity-delta o e) #(messages/log % "There's an obstacle in the way.")]) os))
            (into {} (map (fn [c] [c #(messages/log % "Somehow, you can't move here...")]) cs)))))
 
-(defn update-cursor [game]
+(defn entity-cursor-position
+  "Determine the cursor position based on the active entity"
+  [e]
+  (cond (entity/capable? e :messages) [(+ (count (first (:messages e))) 2) 1]
+        (entity/capable? e :position) (:position e)
+        (= (:renderable e) :menu) [0 (:index e)]
+        :default (throw (ex-info "Cursor pointing at entity position can't be determined of" {:entity e}))))
+
+(defn update-cursor
+  "Update the cursor position in accordance with the current receiver"
+  [game]
   (let [{:keys [entities receivers]} (world/state game)
         r (receivers/current game)
-        e (unique/unique-entity game :cursor)
-        [x y] (if (entity/capable? r :messages)
-                [(+ (count (first (:messages r))) 2) 1]
-                (:position r))]
-    (world/update-entity-component game e :position (constantly [x y]))))
+        e (unique/unique-entity game :cursor)]
+    (world/update-entity-component game e :position (constantly (entity-cursor-position r)))))
