@@ -72,6 +72,48 @@
     :messages 5}
    :order [:status :world :messages]})
 
+;;; Method `render`
+
+(def render-hierarchy "Hierarchy for `render`" (make-hierarchy))
+
+(defn derive-render
+  "Derive for `render-hierarchy`"
+  [tag parent]
+  (alter-var-root #'render-hierarchy derive tag parent))
+
+(defn render-dispatch
+  "Dispatch for `render`"
+  [game e]
+  (e :renderable))
+
+(defmulti render
+  "Determine tile and color for rendering entity `e`"
+  {:arglists '([game e])}
+  #'render-dispatch :hierarchy #'render-hierarchy)
+
+(defmethod render :default [_ x] (:renderable x))
+
+;;; Method `blit`
+
+(def blit-order "Precedence of blit operations" {})
+
+(defn blit-precedence
+  "Define precedence of renderable `r1` over `r2`"
+  [r1 r2]
+  (alter-var-root #'blit-order assoc #{r1 r2} r1))
+
+(defn blit
+  "Evaluate to the entity with higher blit order"
+  [e1 e2]
+  (let [[r1 r2] (map :renderable [e1 e2])
+        rs (blit-order #{r1 r2})]
+    (condp = rs ; case does never match; why??
+      r1 e1
+      r2 e2
+      (throw (ex-info "Blit order of entities undefined" {:entities [e1 e2]})))))
+
+;;; Layout
+
 (defn size
   "Width and height of a screen `section`"
   [graphics section]
@@ -99,42 +141,6 @@
     (into {} (map (fn [s] [s {:size (size graphics s)
                               :position (position graphics s)}])
                   sections))))
-
-(def render-hierarchy "Hierarchy for `render`" (make-hierarchy))
-
-(defn derive-render
-  "Derive for `render-hierarchy`"
-  [tag parent]
-  (alter-var-root #'render-hierarchy derive tag parent))
-
-(defn render-dispatch
-  "Dispatch for `render`"
-  [game e]
-  (e :renderable))
-
-(defmulti render
-  "Determine tile and color for rendering entity `e`"
-  {:arglists '([game e])}
-  #'render-dispatch :hierarchy #'render-hierarchy)
-
-(defmethod render :default [_ x] (:renderable x))
-
-(def blit-order "Precedence of blit operations" {})
-
-(defn blit-precedence
-  "Define precedence of renderable `r1` over `r2`"
-  [r1 r2]
-  (alter-var-root #'blit-order assoc #{r1 r2} r1))
-
-(defn blit
-  "Evaluate to the entity with higher blit order"
-  [e1 e2]
-  (let [[r1 r2] (map :renderable [e1 e2])
-        rs (blit-order #{r1 r2})]
-    (condp = rs ; case does never match; why??
-      r1 e1
-      r2 e2
-      (throw (ex-info "Blit order of entities undefined" {:entities [e1 e2]})))))
 
 (defn draw
   "Transform two-dimensional `canvas` from tile/color mapping to
