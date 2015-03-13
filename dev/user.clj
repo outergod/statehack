@@ -34,6 +34,9 @@
 
 (def crash-state (atom {}))
 
+(defn stacktrace []
+  (print-stack-trace *e))
+
 (defn run []
   (try (game/run screen)
        (catch Throwable e
