@@ -76,6 +76,7 @@
   ([screen game]
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
      (sound/init)
+     (screen/clear screen)
      (screen/in-screen screen
        (loop [input nil game (-> game memory/system render/system)]
          (screen/probe-resize screen)
