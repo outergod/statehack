@@ -254,14 +254,18 @@
 (defn inventory
   "Inventory component
 
-  Anything with an inventory can carry stuff around."
+  Anything with an inventory can carry stuff around.
+
+  Related systems: inventory"
   [& items]
   {:inventory items})
 
 (defn pickup
   "Pickup component
 
-  A pickup can be carried around in an `inventory`."
+  A pickup can be carried around in an `inventory`.
+
+  Related systems: inventory"
   []
   {:pickup true})
 
