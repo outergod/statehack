@@ -19,6 +19,7 @@
 
 (defn menu [criteria action]
   (entity
+   (c/unique :menu)
    (c/renderable :menu)
    (c/input :menu)
    (c/menu 0 criteria)
