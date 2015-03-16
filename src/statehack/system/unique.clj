@@ -17,7 +17,7 @@
   (:require [statehack.system.world :as world]))
 
 (defn unique-entity [game type]
-  (let [es (filter #(= (:unique %) type) (vals (world/entities game)))]
+  (let [es (filter #(= (:unique %) type) (world/capable-entities game :unique))]
     (case (count es)
       0 nil
       1 (first es)
