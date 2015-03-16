@@ -75,7 +75,7 @@
   [game e]
   (let [[x y] (:position e)
         r (-> e :sight :distance)
-        ps (set (map :position (filter-opaques (levels/on-floor (:floor e) (entity/filter-capable [:position :floor] (vals (world/entities game)))))))]
+        ps (set (map :position (filter-opaques (levels/on-floor (:floor e) (world/capable-entities game :position :floor)))))]
     (conj (set (mapcat (partial util/take-while-including (complement ps))
                        (algebra/visible-lines [x y] r)))
           [x y])))
