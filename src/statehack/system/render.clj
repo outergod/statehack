@@ -64,13 +64,15 @@
    :camera "⚷"
    :battery "🔋"})
 
+(defn frame [type & opts]
+  (with-meta (apply hash-map opts) {:type type}))
+
 (def layout
   "Screen layout"
-  {:sizes
-   {:status 1
-    :world :rest
-    :messages 5}
-   :order [:status :world :messages]})
+  [(frame :layer :sections [(frame :status :size 1)
+                            (frame :world :size :rest)
+                            (frame :messages :size 5)])
+   (frame :menu :size :rest)])
 
 ;;; Method `render`
 
@@ -112,35 +114,7 @@
       r2 e2
       (throw (ex-info "Blit order of entities undefined" {:entities [e1 e2]})))))
 
-;;; Layout
-
-(defn size
-  "Width and height of a screen `section`"
-  [graphics section]
-  (let [[w h] (graphics/size graphics)
-        {:keys [sizes]} layout
-        fixed (reduce + (filter integer? (vals sizes)))
-        s (sizes section)]
-    [w
-     (if (= s :rest)
-       (- h fixed)
-       s)]))
-
-(defn position
-  "Offset of a screen `section`"
-  [graphics section]
-  (let [{:keys [sizes order]} layout
-        pre (take-while (partial not= section) order)
-        height (comp second (partial size graphics))]
-    [0 (reduce + (map height pre))]))
-
-(defn proportions
-  "Proportions (size and position) of the whole layout"
-  [graphics]
-  (let [sections (:order layout)]
-    (into {} (map (fn [s] [s {:size (size graphics s)
-                              :position (position graphics s)}])
-                  sections))))
+;;; Canvas Transformations
 
 (defn canvas-transform
   "Transform two-dimensional `canvas` from tile/color mapping to
@@ -245,7 +219,7 @@
                               y0 (min (+ y0 h) ch))
                  (center-offset [cw ch] [w h]))))
 
-(defn visible?
+#_(defn visible?
   "Is `[x y]` within the visible area of the world section?"
   [game [x y]]
   (let [{:keys [graphics viewport]} game
@@ -287,74 +261,12 @@
         es (vals entities)]
     (dye (reduce-entities game canvas es) 8)))
 
-(defn- draw-world
-  "Draw all renderable entities in `es` visible to `e` onto `canvas`"
-  [game e canvas]
-  (let [{:keys [graphics viewport]} game
-        world (canvas-blit (memorized-world game e) (visible-world game e) [0 0])
-        view (fit-in world (size graphics :world) viewport)]
-    (canvas-blit canvas view (position graphics :world))))
-
 (defn tilify-string
   "Make per-character tiles from string `s` using color `c`."
   [s c]
   [(mapv (fn [chr] {:char chr :color c}) s)])
 
-(defn- draw-status
-  "Draw the status portion of the interface using status-capable entity `e` and
-  `canvas` at coordinates `[x y]`."
-  [game canvas e [x y]]
-  (canvas-blit canvas (tilify-string (status/text game e) 7) (util/matrix-add [x y] [1 0])))
-
-(defn- draw-log
-  "Draw the log portion of the interface using log-capable entity `e` and
-  `canvas` at coordinates `[x y]`."
-  [canvas e [x y]]
-  (reduce (fn [canvas [n m]]
-            (canvas-blit canvas (tilify-string m 7) (util/matrix-add [x y] [1 n])))
-          canvas (util/enumerate (messages/recent e 5))))
-
-(defn- draw-dialog
-  "Draw the dialog portion of the interface using dialog-capable entity
-  `e` at coordinates `[x y]`, proportions `[w h]`."
-  [canvas e [x y] [w h]]
-  (-> canvas
-      (canvas-blit (window 7 [w h]) [x y])
-      (canvas-update (util/matrix-add [x y] [1 1]) (constantly {:tile :dialog-indicator :color 7}))
-      (canvas-blit (tilify-string (messages/current e) 7) (util/matrix-add [x y] [2 1]))))
-
-(defn- draw-menu
-  "Draw a menu using menu-capable entity `e`."
-  [[w h] canvas e]
-  (-> canvas
-      (canvas-blit (window 7 [w (dec h)]) [0 1])))
-
-(defn- draw-menus
-  "Draw the menus portion of the screen"
-  [game es canvas]
-  (let [{:keys [graphics]} game]
-    (reduce (partial draw-menu (graphics/size graphics))
-            canvas (world/capable-entities game :menu))))
-
-(defn- draw-interface
-  "Draw the interface portion of the screen onto `canvas` using
-  applicable renderables from `es`."
-  [game es canvas]
-  (let [{:keys [graphics]} game
-        {:keys [status world messages]} (proportions graphics)
-        dialog-visible? (unique/unique-entity game :dialog)]
-    (reduce
-     (fn [canvas e]
-       (case (:renderable e)
-         :status (draw-status game canvas e (:position status))
-         :log (if dialog-visible?
-                canvas
-                (draw-log canvas e (:position messages)))
-         :dialog (draw-dialog canvas e (:position messages) (:size messages))
-         canvas))
-       canvas (entity/filter-capable [:renderable] es))))
-
-(defn receiver-section
+#_(defn receiver-section
   "Which section corresponds to the current receiver in `game`?"
   [game]
   (let [r (receivers/current game)]
@@ -362,7 +274,7 @@
           (entity/capable? r :menu) :menu
           :default :world)))
 
-(defn draw-cursor
+#_(defn draw-cursor
   "Draw the cursor-capable entity in `es`."
   [game e es]
   (let [cursor (unique/unique-entity game :cursor)
@@ -380,6 +292,75 @@
       :menu (apply screen/move-cursor screen cursor-position)
       (screen/move-cursor screen x y))))
 
+;;; Interface Methods
+
+(def draw-hierarchy "Hierarchy for `draw` and `size`" (make-hierarchy))
+
+(defn draw-dispatch
+  "Dispatch for `draw`"
+  [game frame [x y] [w h] canvas]
+  (type frame))
+
+(defmulti draw
+  {:arglists '([game frame [x y] [w h] canvas])}
+  #'draw-dispatch :hierarchy #'draw-hierarchy)
+
+(defmethod draw :default [game frame [x y] [w h] canvas]
+  (binding [*out* *err*] (println "Unknown frame type" (type frame)))
+  canvas)
+
+(defn size-dispatch
+  "Dispatch for `size`"
+  [frame h]
+  (type frame))
+
+(defmulti size
+  {:arglists '([frame h])}
+  #'size-dispatch :hierarchy #'draw-hierarchy)
+
+(defmethod size :layer [{:keys [sections]} h]
+  (let [sizes (map #(size % h) sections)
+        fixed (reduce + (filter number? sizes))]
+    (map #(if (= % :rest) (- h fixed) %) sizes)))
+
+(defmethod size :default [{:keys [size]} h] size)
+
+(defn offsets [sizes]
+  (drop-last (reductions + 0 sizes)))
+
+(defmethod draw clojure.lang.PersistentVector [game layers [x y] [w h] canvas]
+  (reduce (fn [canvas layer] (draw game layer [x y] [w h] canvas)) canvas layers))
+
+(defmethod draw :layer [game {:keys [sections] :as layer} [x y] [w h] canvas]
+  (let [sizes (size layer h)]
+    (reduce (fn [canvas [frame y h]] (draw game frame [x y] [w h] canvas))
+            canvas (partition 3 (interleave sections (offsets sizes) sizes)))))
+
+(defmethod draw :status [game frame [x y] [w h] canvas]
+  (canvas-blit canvas (tilify-string (status/text game (receivers/current game)) 7) (util/matrix-add [x y] [1 0])))
+
+(defmethod draw :world [game frame [x y] [w h] canvas]
+  (let [{:keys [viewport]} game
+        e (unique/unique-entity game :player) ; TODO replace with seeing receiver
+        world (canvas-blit (memorized-world game e) (visible-world game e) [0 0])
+        view (fit-in world [w h] viewport)]
+    (canvas-blit canvas view [x y])))
+
+(defmethod draw :messages [game frame [x y] [w h] canvas]
+  (if-let [d (unique/unique-entity game :dialog)]
+    (-> canvas
+        (canvas-blit (window 7 [w h]) [x y])
+        (canvas-update (util/matrix-add [x y] [1 1]) (constantly {:tile :dialog-indicator :color 7}))
+        (canvas-blit (tilify-string (messages/current d) 7) (util/matrix-add [x y] [2 1])))
+    (reduce (fn [canvas [n m]]
+            (canvas-blit canvas (tilify-string m 7) (util/matrix-add [x y] [1 n])))
+            canvas (util/enumerate (messages/recent (unique/unique-entity game :log) 5)))))
+
+(defmethod draw :menu [game frame [x y] [w h] canvas]
+  (if-let [m (unique/unique-entity game :menu)]
+    (canvas-blit canvas (window 7 [w (dec h)]) [0 1])
+    canvas))
+
 (defn system
   "Draw the whole UI."
   [{:keys [screen graphics] :as game}]
@@ -389,21 +370,21 @@
         [w h] (graphics/size graphics)
         canvas (rect :nihil 0 [w h])]
     (try
-      (->> canvas (draw-world game e) (draw-interface game es) (draw-menus game es) canvas-transform (put-canvas graphics))
-      (draw-cursor game e es)
+      (->> canvas (draw game layout [0 0] [w h]) canvas-transform (put-canvas graphics))
+      #_(draw-cursor game e es)
       (screen/refresh screen)
       (catch Exception e
         (throw (ex-info "Exception in rendering" {:state state} e)))))
   game)
 
-(defn center-on
+#_(defn center-on
   "Determine the offset coordinates requires to center the world area
   on `[x y]`."
   [graphics [x y]]
   (let [[w h] (size graphics :world)]
     [(- x (int (/ w 2))) (- y (int (/ h 2)))]))
 
-(defn into-bounds
+#_(defn into-bounds
   "Snap back `[x y]` into the visible screen area of `section` given
   a foundation of size `[w h]`, if necessary."
   [graphics section [w h] [x y]]
@@ -474,4 +455,3 @@
 (defmethod render :weapon [game e]
   {:tile :weapon
    :color 15})
-
