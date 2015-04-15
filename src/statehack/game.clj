@@ -39,20 +39,19 @@
   (let [;level (levels/load "level-0" 1)
         lab (levels/load-room "starting-lab" [0 0] 1)
         [w h] (levels/dimensions lab)
-        {:keys [id] :as player} (player-entity/player "The Hacker" [12 7 1] 100)]
-    (viewport/center-viewport
-     {:screen screen
-      :graphics (screen/text-graphics screen)
-      :world [{:receivers [id]
-               :entities (util/index-by :id
-                                        (concat
-                                         [player
-                                          (floor/floor 1 [w h])
-                                          (status/status-bar)
-                                          (cursor/cursor)
-                                          (log/log)]
-                                         lab))}]}
-     player)))
+        {:keys [id] :as player} (player-entity/player "The Hacker" [12 7 1] 100)
+        game {:screen screen
+              :graphics (screen/text-graphics screen)
+              :world [{:receivers [id]
+                       :entities (util/index-by :id
+                                                (concat
+                                                 [player
+                                                  (floor/floor 1 [w h])
+                                                  (status/status-bar)
+                                                  (cursor/cursor)
+                                                  (log/log)]
+                                                 lab))}]}]
+    (viewport/center-viewport game player)))
 
 (defn load-game [screen world]
   (let [game {:screen screen
@@ -66,11 +65,11 @@
 
 (defn game-over [game]
   (let [{:keys [screen]} game]
-    (-> game (messages/log "Game Over. Whatever that means..") render/system)
+    (-> game (messages/log "Game Over. Whatever that means..") render/system-draw)
     (screen/read-input-blocking screen)))
 
 (defn turn [game]
-  (-> game transition/system memory/system render/system))
+  (-> game transition/system memory/system render/system-draw))
 
 (defn run
   ([screen game]
@@ -78,9 +77,9 @@
      (sound/init)
      (screen/clear screen)
      (screen/in-screen screen
-       (loop [input nil game (-> game memory/system render/system)]
+       (loop [input nil game (-> game render/system-layout turn)]
          (screen/probe-resize screen)
-         (let [[game {:keys [quit time]}] (-> game (player/system input) turn (util/separate :quit :time))]
+         (let [[game {:keys [quit time]}] (-> game (player/system input) render/system-layout viewport/snap-back turn (util/separate :quit :time))]
            (when-not quit
              (let [game (if time (-> game ai/system turn) game)
                    player (unique/unique-entity game :player)]

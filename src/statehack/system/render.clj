@@ -70,7 +70,7 @@
 (def layout
   "Screen layout"
   [(frame :layer :sections [(frame :status :size 1)
-                            (frame :world :size :rest)
+                            (frame :world :id :world :size :rest)
                             (frame :messages :size 5)])
    (frame :menu :size :rest)])
 
@@ -208,16 +208,25 @@
   [(int (max (/ (- w2 w1) 2) 0))
    (int (max (/ (- h2 h1) 2) 0))])
 
+(defn cut
+  "Cut out part of `canvas`"
+  [canvas [x y] [w h]]
+  (let [[cw ch] (canvas-dimensions canvas)]
+    (subvec (mapv #(subvec % (max 0 x) (min cw (+ x w)))
+                  canvas)
+            (max 0 y) (min ch (+ y h)))))
+
 (defn fit-in
-  "Cut and/or center `canvas` into an area of width `w` and height
-  `h` after moving it by offset `[x0 y0]`."
-  [canvas [w h] [x0 y0]]
+  "Cut and/or center `canvas`
+
+  Into an area of width `w` and height `h` after centering it 
+  on `[x y]`."
+  [canvas [w h] [x y]]
   (let [base (rect :nihil 0 [w h])
-        [cw ch] (canvas-dimensions canvas)]
-    (canvas-blit base (subvec (mapv #(subvec % x0 (min (+ x0 w) cw))
-                                    canvas)
-                              y0 (min (+ y0 h) ch))
-                 (center-offset [cw ch] [w h]))))
+        [cw ch] (canvas-dimensions canvas)
+        [x0 y0] [(max 0 (min (- w cw) (- (int (/ w 2)) x)))
+                 (max 0 (min (- h ch) (- (int (/ h 2)) y)))]]
+    (canvas-blit base (cut canvas [(- cw w) (- ch h)] [w h]) [x0 y0])))
 
 #_(defn visible?
   "Is `[x y]` within the visible area of the world section?"
@@ -266,14 +275,6 @@
   [s c]
   [(mapv (fn [chr] {:char chr :color c}) s)])
 
-#_(defn receiver-section
-  "Which section corresponds to the current receiver in `game`?"
-  [game]
-  (let [r (receivers/current game)]
-    (cond (entity/capable? r :messages) :messages
-          (entity/capable? r :menu) :menu
-          :default :world)))
-
 #_(defn draw-cursor
   "Draw the cursor-capable entity in `es`."
   [game e es]
@@ -290,6 +291,15 @@
                  (screen/move-cursor screen x y)
                  (screen/hide-cursor screen)))
       :menu (apply screen/move-cursor screen cursor-position)
+      (screen/move-cursor screen x y))))
+
+(defn draw-cursor
+  "Draw the cursor"
+  [game]
+  (let [{:keys [screen graphics viewport]} game
+        {[x y] :position} (unique/unique-entity game :cursor)]
+    (if (entity/capable? (receivers/current game) :position)
+      nil
       (screen/move-cursor screen x y))))
 
 ;;; Interface Methods
@@ -318,21 +328,24 @@
   {:arglists '([frame h])}
   #'size-dispatch :hierarchy #'draw-hierarchy)
 
-(defmethod size :layer [{:keys [sections]} h]
-  (let [sizes (map #(size % h) sections)
+(defmethod size :layer [{:keys [sections] :as layer} h]
+  (let [sizes (map #(:size (size % h)) sections)
         fixed (reduce + (filter number? sizes))]
-    (map #(if (= % :rest) (- h fixed) %) sizes)))
+    (assoc layer
+      :sections (map #(assoc %1 :size %2)
+                     sections
+                     (map #(if (= % :rest) (- h fixed) %) sizes)))))
 
-(defmethod size :default [{:keys [size]} h] size)
+(defmethod size :default [frame h] frame)
 
 (defn offsets [sizes]
   (drop-last (reductions + 0 sizes)))
 
-(defmethod draw clojure.lang.PersistentVector [game layers [x y] [w h] canvas]
+(defmethod draw clojure.lang.Sequential [game layers [x y] [w h] canvas]
   (reduce (fn [canvas layer] (draw game layer [x y] [w h] canvas)) canvas layers))
 
 (defmethod draw :layer [game {:keys [sections] :as layer} [x y] [w h] canvas]
-  (let [sizes (size layer h)]
+  (let [sizes (map :size sections)]
     (reduce (fn [canvas [frame y h]] (draw game frame [x y] [w h] canvas))
             canvas (partition 3 (interleave sections (offsets sizes) sizes)))))
 
@@ -361,16 +374,23 @@
     (canvas-blit canvas (window 7 [w (dec h)]) [0 1])
     canvas))
 
-(defn system
+(defn system-layout
+  "Determine the current layout"
+  [{:keys [graphics] :as game}]
+  (let [[_ h] (graphics/size graphics)
+        layers (map #(size % h) layout)]
+    (assoc game :layout {:layers (vec layers) :by-id (group-by :id (flatten layers))})))
+
+(defn system-draw
   "Draw the whole UI."
-  [{:keys [screen graphics] :as game}]
+  [{:keys [screen graphics layout] :as game}]
   (let [{:keys [entities] :as state} (world/state game)
         es (vals entities)
         e (unique/unique-entity game :player)
         [w h] (graphics/size graphics)
         canvas (rect :nihil 0 [w h])]
     (try
-      (->> canvas (draw game layout [0 0] [w h]) canvas-transform (put-canvas graphics))
+      (->> canvas (draw game (layout :layers) [0 0] [w h]) canvas-transform (put-canvas graphics))
       #_(draw-cursor game e es)
       (screen/refresh screen)
       (catch Exception e
