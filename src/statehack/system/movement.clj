@@ -15,7 +15,6 @@
 
 (ns statehack.system.movement
   (:require [statehack.entity :as entity]
-            [statehack.system.render :as render]
             [statehack.system.messages :as messages]
             [statehack.system.world :as world]
             [statehack.system.unique :as unique]

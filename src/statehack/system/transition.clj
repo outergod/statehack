@@ -14,8 +14,7 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.transition
-  (:require [statehack.system.sound :as sound]
-            [statehack.system.render :as render]))
+  (:require [statehack.system.sound :as sound]))
 
 (defn sound [name]
   #(future (sound/play-sound name)))

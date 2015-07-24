@@ -16,7 +16,7 @@
 (ns statehack.game
   (:require [statehack.system.world :as world]
             [statehack.system.player :as player]
-            [statehack.system.render :as render]
+            #_[statehack.system.render :as render]
             [statehack.entity.floor :as floor]
             [statehack.entity.player :as player-entity]
             [statehack.entity.status-bar :as status]
@@ -66,18 +66,20 @@
 
 (defn game-over [game]
   (let [{:keys [screen]} game]
-    (-> game (messages/log "Game Over. Whatever that means..") render/system)
+    (-> game (messages/log "Game Over. Whatever that means..") #_render/system)
     (screen/read-input-blocking screen)))
 
+;; TODO render
+
 (defn turn [game]
-  (-> game transition/system memory/system render/system))
+  (-> game transition/system memory/system #_render/system))
 
 (defn run
   ([screen game]
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
      (sound/init)
      (screen/in-screen screen
-       (loop [input nil game (-> game memory/system render/system)]
+       (loop [input nil game (-> game memory/system #_render/system)]
          (screen/probe-resize screen)
          (let [[game {:keys [quit time]}] (-> game (player/system input) turn (util/separate :quit :time))]
            (when-not quit
