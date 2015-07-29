@@ -16,6 +16,7 @@
 (ns statehack.game
   (:require [statehack.system.world :as world]
             [statehack.system.player :as player]
+            [statehack.system.layout :as layout]
             #_[statehack.system.render :as render]
             [statehack.entity.floor :as floor]
             [statehack.entity.player :as player-entity]
@@ -72,14 +73,14 @@
 ;; TODO render
 
 (defn turn [game]
-  (-> game transition/system memory/system #_render/system))
+  (-> game transition/system memory/system layout/system #_render/system))
 
 (defn run
   ([screen game]
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
      (sound/init)
      (screen/in-screen screen
-       (loop [input nil game (-> game memory/system #_render/system)]
+       (loop [input nil game (-> game memory/system layout/system #_render/system)]
          (screen/probe-resize screen)
          (let [[game {:keys [quit time]}] (-> game (player/system input) turn (util/separate :quit :time))]
            (when-not quit
