@@ -42,7 +42,7 @@
     (-> (input/receive game e input) movement/update-cursor)))
 
 (defn act [game e f]
-  (letfn [(center [game] (viewport/center-viewport game (world/entity game (:id e))))]
+  (letfn [(center [game] (viewport/center-on game (world/entity game (:id e))))]
     (-> game world/dup-world-state f center time/pass-time)))
 
 (defn action [game player dir]
@@ -77,7 +77,7 @@
     \. (act game player identity)
     \, (pick-up game player (inventory/available-pickups game player))
     \C (door/close game player)
-    :backspace (-> game world/pop-world-state (viewport/center-viewport player))
+    :backspace (-> game world/pop-world-state (viewport/center-on player))
     :enter (world/save game)
     :escape (assoc game :quit true)
     game))

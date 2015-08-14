@@ -41,13 +41,17 @@
   (let [[primary secondary] (if (= alignment :horizontal) [w h] [h w])
         fixed-size (apply + (map (fn [{:keys [size]}] (or size 0)) children))
         rest (max (- primary fixed-size) 0)]
-    (assoc e :children (map (fn [{:keys [size] :as e}]
-                              (let [size (or size rest)]
-                                (render e (if (= alignment :horizontal) [size h] [w size]))))
-                            children))))
+    (assoc e
+           :children (map (fn [{:keys [size] :as e}]
+                            (let [size (or size rest)]
+                              (render e (if (= alignment :horizontal) [size h] [w size]))))
+                          children)
+           :dimensions [w h])))
 
 (defmethod render :stack [{:keys [children] :as e} [w h]]
-  (assoc e :children (map #(render % [w h]) children)))
+  (assoc e
+         :children (map #(render % [w h]) children)
+         :dimensions [w h]))
 
 (def render-mem (memoize render))
 
@@ -79,5 +83,7 @@
        (view :world {})
        (view :messages {:size 5})))
 
-(defn system [{:keys [graphics] :as game}]
+(defn system
+  "Determine the layout dimensions"
+  [{:keys [graphics] :as game}]
   (assoc game :layout (render-mem layout (graphics/size graphics))))

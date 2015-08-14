@@ -8,7 +8,6 @@
             [statehack.system.movement :as movement]
             [statehack.system.door :as door]
             [statehack.system.sound :as sound]
-            #_[statehack.system.render :as render]
             [statehack.system.unique :as unique]
             [statehack.system.sight :as sight]
             [statehack.algebra :as algebra]

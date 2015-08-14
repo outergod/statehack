@@ -17,7 +17,7 @@
   (:require [statehack.system.world :as world]
             [statehack.system.player :as player]
             [statehack.system.layout :as layout]
-            #_[statehack.system.render :as render]
+            [statehack.system.graphics :as graphics]
             [statehack.entity.floor :as floor]
             [statehack.entity.player :as player-entity]
             [statehack.entity.status-bar :as status]
@@ -41,46 +41,42 @@
         lab (levels/load-room "starting-lab" [0 0] 1)
         [w h] (levels/dimensions lab)
         {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 100)]
-    (viewport/center-viewport
-     {:screen screen
-      :graphics (screen/text-graphics screen)
-      :world [{:receivers [id]
-               :entities (util/index-by :id
-                                        (concat
-                                         [player
-                                          (floor/floor 1 [w h])
-                                          (status/status-bar)
-                                          (cursor/cursor)
-                                          (log/log)]
-                                         lab))}]}
-     player)))
+    {:screen screen
+              :graphics (screen/text-graphics screen)
+              :world [{:receivers [id]
+                       :entities (util/index-by :id
+                                                (concat
+                                                 [player
+                                                  (floor/floor 1 [w h])
+                                                  (status/status-bar)
+                                                  (cursor/cursor)
+                                                  (log/log)]
+                                                 lab))}]}))
 
 (defn load-game [screen world]
   (let [game {:screen screen
               :graphics (screen/text-graphics screen)
               :world world}
         player (unique/unique-entity game :player)]
-    (viewport/center-viewport game player)))
+    (viewport/center-on game player)))
 
 (comment
   (game/run scr (game/load-game scr @statehack.system.world/state)))
 
 (defn game-over [game]
   (let [{:keys [screen]} game]
-    (-> game (messages/log "Game Over. Whatever that means..") #_render/system)
+    (-> game (messages/log "Game Over. Whatever that means..") graphics/system)
     (screen/read-input-blocking screen)))
 
-;; TODO render
-
 (defn turn [game]
-  (-> game transition/system memory/system layout/system #_render/system))
+  (-> game transition/system memory/system layout/system graphics/system))
 
 (defn run
   ([screen game]
      (doall (take-while identity (repeatedly #(screen/read-input screen))))
      (sound/init)
      (screen/in-screen screen
-       (loop [input nil game (-> game memory/system layout/system #_render/system)]
+       (loop [input nil game (-> game memory/system layout/system (viewport/center-on (unique/unique-entity game :player)) graphics/system)]
          (screen/probe-resize screen)
          (let [[game {:keys [quit time]}] (-> game (player/system input) turn (util/separate :quit :time))]
            (when-not quit

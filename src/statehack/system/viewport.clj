@@ -14,16 +14,26 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.viewport
-  (:require #_[statehack.system.render :as render]
-            [statehack.system.world :as world]
+  (:require [statehack.system.unique :as unique]
             [statehack.system.levels :as levels]
             [statehack.util :as util]))
 
-;; TODO layout
-(defn update-viewport [game e f]
-  (let [{:keys [foundation]} (levels/entity-floor game e)
-        {:keys [graphics]} game]
-    game #_(update-in game [:viewport] #(render/into-bounds graphics :world foundation (f %)))))
+(defn snap
+  "Snap back `[x y]` into the visible area
 
-(defn center-viewport [game e]
-  game #_(update-viewport game e (constantly (render/center-on (:graphics game) (e :position)))))
+  Given a foundation of size `[w h]` and visible area of `[sw sh]`."
+  [[x y] [sw sh] [w h]]
+  (let [[a b] [(int (/ sw 2)) (int (/ sh 2))]
+        [x0 y0] [(- x a) (- y b)]
+        x0 (min (max x0 0) (- w sw))
+        y0 (min (max y0 0) (- h sh))]
+    (util/matrix-add [x0 y0] [a b])))
+
+(defn update-viewport [game e f]
+  (let [{:keys [layout]} game
+        {:keys [foundation]} (levels/entity-floor game e)]
+    (update-in game [:viewport] #(snap (f %) [80 18] foundation))))
+
+(defn center-on [game e]
+  (let [{:keys [layout]} game]
+    (update-viewport game e (constantly (e :position)))))
