@@ -25,6 +25,7 @@
             [statehack.system.unique :as unique]
             [statehack.system.status :as status]
             [statehack.system.messages :as messages]
+            [statehack.system.input.receivers :as receivers]
             [statehack.util :as util]
             [statehack.entity :as entity]
             [statehack.algebra :as algebra]
@@ -36,34 +37,38 @@
 
 (defn render-dispatch
   "Dispatch for `render`"
-  [game e]
+  [game e offset]
   (e :type))
 
 (defmulti render
   "Render layout element `e`"
-  {:arglists '([game e])}
+  {:arglists '([game e offset])}
   #'render-dispatch :hierarchy #'render-hierarchy)
 
 (def draw-hierarchy "Hierarchy for `draw`" (make-hierarchy))
 
 (defn draw-dispatch
   "Dispatch for `draw`"
-  [game binding dimensions]
+  [game binding dimensions offset]
   binding)
 
 (defmulti draw
   "Draw `binding`"
-  {:arglists '([game binding dimensions])}
+  {:arglists '([game binding dimensions offset])}
   #'draw-dispatch :hierarchy #'draw-hierarchy)
 
-(defmethod render :box [game {:keys [children]}]
-  (mapcat (partial render game) children))
+(defmethod render :box [game {:keys [children]} offset]
+  ;; TODO horizontal
+  (loop [acc [] [c & cs] children o offset]
+    (if c (let [[_ h] (:dimensions c)]
+            (recur (concat acc (render game c o)) cs (util/matrix-add o [0 h])))
+        acc)))
 
-(defmethod render :stack [game {:keys [children]}]
-  (mapcat (partial render game) children))
+(defmethod render :stack [game {:keys [children]} offset]
+  (mapcat #(render game % offset) children))
 
-(defmethod render :view [game {:keys [binding dimensions]}]
-  (draw game binding dimensions))
+(defmethod render :view [game {:keys [binding dimensions]} offset]
+  (draw game binding dimensions offset))
 
 (def blit-order "Precedence of blit operations" {})
 
@@ -214,16 +219,24 @@
   [(int (max (/ (- w2 w1) 2) 0))
    (int (max (/ (- h2 h1) 2) 0))])
 
-(defn- fit-in
-  "Cut and/or center `canvas` into an area of width `w` and height
-  `h` after centering it on `[x y]`."
+(defn- canvas-viewport
+  "Calculate actual viewport"
   [canvas [w h] [x y]]
-  (let [base (rect :nihil 0 [w h])
-        [cw ch] (canvas-dimensions canvas)
+  (let [[cw ch] (canvas-dimensions canvas)
         [x0 y0] (map (partial max 0) (util/matrix-subtract [x y] [(/ w 2) (/ h 2)]))
         [x1 y1] [(min (+ x0 w) cw) (min (+ y0 h) ch)]]
-    (canvas-blit base (subvec (mapv #(subvec % x0 x1) canvas) y0 y1)
-                 (center-offset [cw ch] [w h]))))
+    [[x0 y0] [x1 y1]]))
+
+(defn- fit-in
+  "Cut and/or center `canvas`
+
+  Cut and center the area designated by `viewport` into an area of
+  `dimensions`. `offset` leaves a margin on the blitting target."
+  [canvas dimensions viewport offset]
+  (let [[[x0 y0] [x1 y1]] viewport]
+    (canvas-blit (rect :nihil 0 dimensions)
+                 (subvec (mapv #(subvec % x0 x1) canvas) y0 y1)
+                 offset)))
 
 (defn mask-canvas
   "Apply `mask` to `canvas`, making everything outside the mask invisible"
@@ -270,21 +283,29 @@
 
 ;; World
 
-(defmethod draw :world [{:keys [graphics viewport] :as game} _ dimensions]
+(defmethod draw :world [{:keys [screen graphics viewport] :as game} _ dimensions offset]
   (let [player (unique/unique-entity game :player)
-        world (canvas-blit (memorized-world game player) (visible-world game player))]
-    (fit-in world dimensions viewport)))
+        world (canvas-blit (memorized-world game player) (visible-world game player))
+        [[x0 y0] [x1 y1]] (canvas-viewport world dimensions viewport)
+        co (center-offset (canvas-dimensions world) dimensions)
+        [x y] (:position (unique/unique-entity game :cursor))]
+    (when (entity/capable? (receivers/current game) :position)
+      (if (and (<= x0 x x1) (<= y0 y y1))
+        (screen/move-cursor screen (util/matrix-add (util/matrix-subtract [x y] [x0 y0])
+                                                    co offset))
+        (screen/hide-cursor screen)))
+    (fit-in world dimensions [[x0 y0] [x1 y1]] co)))
 
 ;; Messages
 
-(defmethod draw :messages [game _ [w h]]
+(defmethod draw :messages [game _ [w h] _]
   (let [log (unique/unique-entity game :log)
         canvas (rect :nihil 0 [w h])]
     (canvas-blit canvas (map #(tilify-string % 7) (messages/recent log 5)))))
 
 ;; Status
 
-(defmethod draw :status [game _ [w h]]
+(defmethod draw :status [game _ [w h] _]
   (let [player (unique/unique-entity game :player)
         canvas (rect :nihil 0 [w h])]
     (canvas-blit canvas [(tilify-string (status/text game player) 7)])))
@@ -351,6 +372,6 @@
 ;; System
 
 (defn system [{:keys [screen graphics layout] :as game}]
-  (put-canvas graphics (transform (render game layout)))
+  (put-canvas graphics (transform (render game layout [0 0])))
   (screen/refresh screen)
   game)
