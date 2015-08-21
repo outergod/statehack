@@ -51,7 +51,7 @@
   (.refresh screen))
 
 (defn move-cursor
-  [^Screen screen x y]
+  [^Screen screen [x y]]
   (.setCursorPosition screen (TerminalPosition. x y)))
 
 (defn hide-cursor
