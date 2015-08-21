@@ -13,4 +13,4 @@
                        :main statehack.core}
              :dev {:resource-paths ["dev"]
                    :dependencies [[criterium "0.4.3"]
-                                  [com.taoensso/timbre "3.4.0"]]}})
+                                  [com.taoensso/timbre "4.1.1"]]}})
