@@ -16,6 +16,7 @@
 (ns statehack.system.viewport
   (:require [statehack.system.unique :as unique]
             [statehack.system.levels :as levels]
+            [statehack.system.layout :as layout]
             [statehack.util :as util]))
 
 (defn snap
@@ -31,9 +32,9 @@
 
 (defn update-viewport [game e f]
   (let [{:keys [layout]} game
+        dimensions (get-in (layout/by-id layout) [:world-view :dimensions])
         {:keys [foundation]} (levels/entity-floor game e)]
-    (update-in game [:viewport] #(snap (f %) [80 18] foundation))))
+    (update-in game [:viewport] #(snap (f %) dimensions foundation))))
 
 (defn center-on [game e]
-  (let [{:keys [layout]} game]
-    (update-viewport game e (constantly (e :position)))))
+  (update-viewport game e (constantly (e :position))))

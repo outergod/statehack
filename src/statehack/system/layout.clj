@@ -15,7 +15,9 @@
 
 (ns statehack.system.layout
   "Layouting facility"
-  (:require [halo.graphics :as graphics]))
+  (:require [halo.graphics :as graphics]
+            [clojure.zip :as zip]
+            [statehack.util :as util]))
 
 (def render-hierarchy "Hierarchy for `render`" (make-hierarchy))
 
@@ -59,7 +61,7 @@
 
 (defn element [type opts]
   (merge {:visible true}
-         (select-keys opts [:visible :size])
+         (select-keys opts [:visible :size :id])
          {:type type}))
 
 (defn container [type opts & children]
@@ -80,8 +82,12 @@
 (def layout
   (box {:alignment :vertical}
        (view :status {:size 1})
-       (view :world {})
+       (view :world {:id :world-view})
        (view :messages {:size 5})))
+
+(defn by-id [layout]
+  (let [zipper (zip/zipper (constantly true) :children (fn [node xs] (assoc node :children xs)) layout)]
+    (util/index-by :id (filter :id (map zip/node (take-while (complement zip/end?) (iterate zip/next zipper)))))))
 
 (defn system
   "Determine the layout dimensions"
