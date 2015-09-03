@@ -7,7 +7,8 @@
                  [org.clojure/data.priority-map "0.0.5"]
                  [org.clojars.wmealing/clj-audio "0.2.0-SNAPSHOT"]
                  [com.googlecode.lanterna/lanterna "3.0.0-alpha3"]
-                 [com.googlecode.soundlibs/vorbisspi "1.0.3-1"]]
+                 [com.googlecode.soundlibs/vorbisspi "1.0.3-1"]
+                 [simple-time "0.2.0"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
                        :main statehack.core}

@@ -16,9 +16,13 @@
 (ns statehack.system.sound
   (:require [clojure.java.io :as io]
             [clj-audio.core :as audio]
-            [clj-audio.sampled :as sampled]))
+            [clj-audio.sampled :as sampled]
+            [simple-time.core :as time]))
 
 (defonce mixer (first (audio/mixers)))
+
+(def fade-duration 5)
+(def fade-minimum -20)
 
 (defn cleanup []
   (when (.isOpen mixer) (.close mixer)))
@@ -58,7 +62,29 @@
    :unknown-assault-rifle-1 "00292.wav"})
 
 (def music-resources
-  {:medical "chicajo/Medical.ogg"})
+  {:theme "chicajo/SSTheme06Retro.ogg"
+   :elevator "chicajo/SsElevator.ogg"
+   :cyber "chicajo/CyberSpace.ogg"
+   :medical "chicajo/Medical.ogg"
+   :science "chicajo/SsLev2.ogg"
+   :maintenance "chicajo/SsLev3.ogg"
+   :storage "chicajo/SsLev4.ogg"
+
+   :executive "chicajo/SsLev6.ogg"})
+
+(def music-channels
+  (agent (for [_ (range 2)]
+           [(audio/with-mixer mixer
+              (sampled/make-line :output audio/*default-format* audio/default-buffer-size))
+            (ref false)])
+         :error-mode :continue))
+
+(defn stop-music []
+  (send music-channels
+        (fn [[[c1 p1] [c2 p2]]]
+          (dosync (ref-set p1 false)
+                  (ref-set p2 false))
+          [[c1 p1] [c2 p2]])))
 
 (defn load-resource [prefix name]
   (io/resource (str prefix "/" name)))
@@ -91,7 +117,57 @@
               d (sampled/convert s audio/*default-format*)]
     (play-stream d)))
 
+(defn stop-playback [line playing]
+  (dosync (ref-set playing false))
+  (loop []
+    (when (sampled/running? line)
+      (Thread/sleep 100)
+      (recur))))
+
+(defn fade-volume [control duration f]
+  (let [start (time/now)]
+    (loop [now start]
+      (let [delta (time/- now start)]
+        (when (time/< delta duration)
+          (sampled/value control (f delta))
+          (recur (time/now)))))))
+
+(defn fade-out [line playing]
+  (when @playing
+    (let [control (:master-gain (sampled/controls-map line))
+          min (max fade-minimum (:minimum (sampled/control-info control)))
+          duration (time/seconds->timespan fade-duration)]
+      (fade-volume control duration
+                   (fn [delta]
+                     (* min (/ (time/timespan->total-milliseconds delta)
+                               (time/timespan->total-milliseconds duration)))))
+      (stop-playback line playing))))
+
+(defn fade-in [line playing resource]
+  (stop-playback line playing)
+  (future (binding [audio/*playing* playing]
+            (with-open [s (audio/->stream resource)
+                        d (audio/decode s)]
+              (audio/play-with d line))))
+  (let [control (:master-gain (sampled/controls-map line))
+        min (max fade-minimum (:minimum (sampled/control-info control)))
+        duration (time/seconds->timespan fade-duration)]
+    (sampled/value control min)
+    (fade-volume control duration
+                 (fn [delta]
+                   (+ min
+                      (* (Math/abs min)
+                         (/ (time/timespan->total-milliseconds delta)
+                            (time/timespan->total-milliseconds duration))))))
+    (sampled/value control 0.0)))
+
+(defn crossfade [resource]
+  (fn [[[c1 p1] [c2 p2]]]
+    (audio/with-mixer mixer
+      (doseq [f [(future (fade-out c1 p1))
+                 (future (fade-in c2 p2 resource))]]
+        (deref f)))
+    [[c2 p2] [c1 p1]]))
+
 (defn play-music [name]
-  (with-open [s (audio/->stream (load-music-stream name))
-              d (audio/decode s)]
-    (play-stream d)))
+  (send music-channels (crossfade (load-music-stream name))))
