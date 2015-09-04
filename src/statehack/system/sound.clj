@@ -155,7 +155,9 @@
   (future (binding [audio/*playing* playing]
             (with-open [s (audio/->stream resource)
                         d (audio/decode s)]
-              (audio/play-with d line))))
+              (loop []
+                (audio/play-with d line)
+                (when @playing (recur))))))
   (let [control (:master-gain (sampled/controls-map line))
         min (max fade-minimum (:minimum (sampled/control-info control)))
         duration (time/seconds->timespan fade-duration)]
