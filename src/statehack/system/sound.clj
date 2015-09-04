@@ -14,7 +14,10 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.sound
-  (:require [clojure.java.io :as io]
+  (:require [statehack.system.unique :as unique]
+            [statehack.system.world :as world]
+            [statehack.entity :as entity]
+            [clojure.java.io :as io]
             [clj-audio.core :as audio]
             [clj-audio.sampled :as sampled]
             [simple-time.core :as time]))
@@ -24,14 +27,14 @@
 (def fade-duration 5)
 (def fade-minimum -20)
 
-(defn cleanup []
-  (when (.isOpen mixer) (.close mixer)))
+(def music-channels
+  (agent (for [_ (range 2)]
+           [(audio/with-mixer mixer
+              (sampled/make-line :output audio/*default-format* audio/default-buffer-size))
+            (ref false)])
+         :error-mode :continue))
 
-(defn init []
-  (cleanup)
-  (if (= (.getName (class mixer)) "org.classpath.icedtea.pulseaudio.PulseAudioMixer")
-    (.openLocal mixer "statehack")
-    (.open mixer)))
+(def current-track (ref nil))
 
 (def sound-resources
   {:player-hurt "00265.wav"
@@ -72,19 +75,23 @@
 
    :executive "chicajo/SsLev6.ogg"})
 
-(def music-channels
-  (agent (for [_ (range 2)]
-           [(audio/with-mixer mixer
-              (sampled/make-line :output audio/*default-format* audio/default-buffer-size))
-            (ref false)])
-         :error-mode :continue))
-
 (defn stop-music []
   (send music-channels
         (fn [[[c1 p1] [c2 p2]]]
           (dosync (ref-set p1 false)
-                  (ref-set p2 false))
+                  (ref-set p2 false)
+                  (ref-set current-track nil))
           [[c1 p1] [c2 p2]])))
+
+(defn cleanup []
+  (stop-music)
+  (when (.isOpen mixer) (.close mixer)))
+
+(defn init []
+  (cleanup)
+  (if (= (.getName (class mixer)) "org.classpath.icedtea.pulseaudio.PulseAudioMixer")
+    (.openLocal mixer "statehack")
+    (.open mixer)))
 
 (defn load-resource [prefix name]
   (io/resource (str prefix "/" name)))
@@ -171,3 +178,12 @@
 
 (defn play-music [name]
   (send music-channels (crossfade (load-music-stream name))))
+
+(defn music-system [game]
+  (let [{:keys [position floor]} (unique/unique-entity game :player)
+        {:keys [music]} (->> (world/entities-at game floor [position])
+                             (entity/filter-capable [:music]) first)]
+    (when (and music (not= @current-track music))
+      (dosync (ref-set current-track music))
+      (play-music music))
+    game))

@@ -19,19 +19,21 @@
             [statehack.entity.room :as room]
             [statehack.entity.serv-bot :as serv-bot]
             [statehack.entity.dart-gun :as dart-gun]
+            [statehack.entity.music :as music]
             [statehack.system.world :as world]
             [statehack.util :as util]
             [clojure.string :as str]
             [clojure.java.io :as io]))
 
-(def rooms {"starting-lab" {\X #(room/wall %&)
-                            \o #(room/door %& false)
-                            \O #(room/door %& true)
-                            \b #(serv-bot/serv-bot %&)
-                            \l #(dart-gun/dart-gun %&)}})
+(def rooms {"starting-lab" {:tiles {\X #(room/wall %&)
+                                    \o #(room/door %& false)
+                                    \O #(room/door %& true)
+                                    \b #(serv-bot/serv-bot %&)
+                                    \l #(dart-gun/dart-gun %&)}
+                            :music :medical}})
 
-(defn extract-room [s spec [x0 y0] floor]
-  (letfn [(token [c] (get spec c (constantly nil)))]
+(defn extract-room [s tiles [x0 y0] floor]
+  (let [token (fn [c] (get tiles c (constantly nil)))]
     (filter identity
             (flatten
              (for [[y row] (util/enumerate (str/split-lines s))
@@ -44,13 +46,18 @@
   (or (io/resource (str "rooms/" name))
       (throw (ex-info (str "No such room resource found") {:name name}))))
 
-(defn load-room [name [x0 y0] floor]
-  (extract-room (slurp (load-room-resource name)) (rooms name) [x0 y0] floor))
-
 (defn dimensions [level]
   (let [ps (map :position (entity/filter-capable [:position] level))]
     [(inc (apply max (map first ps)))
      (inc (apply max (map second ps)))]))
+
+(defn load-room [name [x0 y0] floor]
+  (let [{:keys [tiles music]} (rooms name)
+        room (extract-room (slurp (load-room-resource name)) tiles [x0 y0] floor)
+        [x1 y1] (util/matrix-add [x0 y0] (dimensions room))]
+    (concat room
+            (for [x (range x0 x1) y (range y0 y1)]
+              (music/music music [x y floor])))))
 
 (defn floor [game n]
   (let [es (world/capable-entities game :foundation)]

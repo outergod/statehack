@@ -264,3 +264,10 @@
   A pickup can be carried around in an `inventory`."
   []
   {:pickup true})
+
+(defn music
+  "Music component
+
+  Triggers the playback of music"
+  [name]
+  {:music name})
