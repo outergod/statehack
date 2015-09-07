@@ -28,12 +28,12 @@
   (sort (set (map :name (filter #(:public (:flags %))
                                 (:members (reflect/reflect o :ancestors true)))))))
 
-(def screen (screen/screen))
-(def graphics (screen/text-graphics screen))
+#_(def screen (screen/screen))
+#_(def graphics (screen/text-graphics screen))
 
 (def crash-state (atom {}))
 
-(defn run []
+#_(defn run []
   (try (game/run screen)
        (catch Throwable e
          (if (instance? IExceptionInfo e)

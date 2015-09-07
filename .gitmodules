@@ -1,3 +1,9 @@
 [submodule "resources/sshock"]
 	path = resources/sshock
 	url = https://github.com/e-user/statehack-sshock
+[submodule "resources/public/js/vendor/term.js"]
+	path = resources/public/js/vendor/term.js
+	url = git@github.com:chjj/term.js.git
+[submodule "resources/public/js/vendor/socket.io"]
+	path = resources/public/js/vendor/socket.io
+	url = git@github.com:socketio/socket.io-client.git
