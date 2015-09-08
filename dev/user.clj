@@ -15,6 +15,7 @@
             [statehack.system.transition :as transition]
             [statehack.system.ai :as ai]
             [statehack.util :as util]
+            [statehack.http :as http]
             [clj-audio.core :as audio]
             [clj-audio.sampled :as sampled]
             [clojure.stacktrace :refer :all]
