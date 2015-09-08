@@ -33,7 +33,7 @@
   (GET "/socket" [] socket-handler)
   (GET "/" [] (io/resource "public/index.html"))
   (route/resources "/")
-  (route/not-found "<h1>Not in b4 404 :(</h1>"))
+  (route/not-found (io/resource "public/404.html")))
 
 (defn stop-server []
   (when-not (nil? @server)
