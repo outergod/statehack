@@ -1,5 +1,5 @@
 ;(function() {
-  var socket = new WebSocket("ws://localhost:8080/socket");
+  var socket = new WebSocket('ws://' + this.location.host + '/socket');
   var term = new Terminal({
     cols: 80,
     rows: 24,
