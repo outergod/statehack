@@ -16,6 +16,7 @@
             [statehack.system.ai :as ai]
             [statehack.util :as util]
             [statehack.http :as http]
+            [manifold.stream :as stream]
             [clj-audio.core :as audio]
             [clj-audio.sampled :as sampled]
             [clojure.stacktrace :refer :all]
@@ -23,27 +24,31 @@
             [clojure.reflect :as reflect]
             [clojure.java.io :as io]
             [criterium.core :as criterium])
-  (:import [clojure.lang IExceptionInfo]))
+  (:import [clojure.lang IExceptionInfo]
+           [java.io InputStream OutputStream]))
 
 (defn publics [o]
   (sort (set (map :name (filter #(:public (:flags %))
                                 (:members (reflect/reflect o :ancestors true)))))))
 
-#_(def screen (screen/screen))
 #_(def graphics (screen/text-graphics screen))
 
 (def crash-state (atom {}))
 
-#_(defn run []
-  (try (game/run screen)
-       (catch Throwable e
-         (if (instance? IExceptionInfo e)
-           (let [{:keys [state]} (ex-data e)]
-             (println "Crash state available.")
-             (swap! crash-state (constantly state))
-             (throw (.getCause e)))
-           (throw e)))
-       (finally (sound/cleanup))))
+(defn run []
+  (let [screen (screen/screen :in (byte-streams/to-input-stream @http/socket)
+                              :out (proxy [OutputStream] []
+                                     (write [bytes] (stream/put! @http/socket (byte-streams/to-string bytes)))))]
+    (stream/put! @http/socket "\033]2;statehack\007")
+    (try (game/run screen)
+         (catch Throwable e
+           (if (instance? IExceptionInfo e)
+             (let [{:keys [state]} (ex-data e)]
+               (println "Crash state available.")
+               (swap! crash-state (constantly state))
+               (throw (.getCause e)))
+             (throw e)))
+         (finally (sound/cleanup)))))
 
 (comment
   (let [game (game/load-game screen @world/state)

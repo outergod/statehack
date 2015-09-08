@@ -14,7 +14,9 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.http
-  (:require [org.httpkit.server :as http]
+  (:require [aleph.http :as http]
+            [manifold.stream :as stream]
+            [manifold.deferred :as deferred]
             [compojure.route :as route]
             [compojure.core :refer [defroutes GET]]
             [compojure.handler :refer [site]]
@@ -22,12 +24,18 @@
 
 (defonce server (atom nil))
 (def socket (atom nil))
-(add-watch socket :init
-           (fn [_ _ _ socket]
-             (http/on-receive socket (fn [data] (http/send! socket data)))))
+
+(def non-websocket-request
+  {:status 400
+   :headers {"content-type" "application/text"}
+   :body "Expected a websocket request."})
 
 (defn socket-handler [request]
-  (http/with-channel request channel (reset! socket channel)))
+  (deferred/catch
+      (deferred/let-flow [websocket (http/websocket-connection request)]
+        (reset! socket websocket)
+        nil)
+      (fn [_] non-websocket-request)))
 
 (defroutes routes
   (GET "/socket" [] socket-handler)
@@ -41,4 +49,4 @@
     (reset! server nil)))
 
 (defn start-server []
-  (reset! server (http/run-server (site #'routes) {:port 8080})))
+  (reset! server (http/start-server (site #'routes) {:port 8080})))

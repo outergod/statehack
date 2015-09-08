@@ -9,7 +9,7 @@
                  [com.googlecode.lanterna/lanterna "3.0.0-alpha3"]
                  [com.googlecode.soundlibs/vorbisspi "1.0.3-1"]
                  [simple-time "0.2.0"]
-                 [http-kit "2.1.19"]
+                 [aleph "0.4.0"]
                  [compojure "1.4.0"]
                  [javax.servlet/servlet-api "2.5"]]
   :target-path "target/%s"

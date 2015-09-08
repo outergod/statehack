@@ -4,30 +4,28 @@
     cols: 80,
     rows: 24,
     useStyle: true,
-    screenKeys: true,
     cursorBlink: false
   });
   term.open(document.body);
   term.on('title', function (title) {
     document.title = title;
   });
+  
+  socket.addEventListener('open', function () {
+    term.on('data', function (queue) {
+      socket.send(queue);
+    });
+  });
 
-  socket.onopen = function () {
-    socket.send(JSON.stringify({command: 'write', payload: 'Hello World!'}));
-  };
+  socket.addEventListener('message', function (e) {
+    term.write(e.data);
+  });
 
-  socket.onmessage = function (e) {
-    var data = JSON.parse(e.data);
-    if (data.command === 'write') {
-      term.write(data.payload);
-    }
-  };
-
-  socket.onclose = function () {
+  socket.addEventListener('close', function () {
     term.destroy();
-  };
-
-  this.onbeforeunload = function () {
+  });
+  
+  this.addEventListener('beforeunload', function () {
     socket.close();
-  };
+  });
 }).call(this);

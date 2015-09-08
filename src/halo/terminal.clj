@@ -30,12 +30,14 @@
     listener))
 
 (defn terminal
-  [& {:keys [cols rows charset resize-listener]
+  [& {:keys [cols rows charset resize-listener in out]
       :or {cols 80
            rows 24
            charset :utf-8
-           resize-listener nil}}]
-  (let [term (UnixTerminal. System/in System/out (charsets charset))]
+           resize-listener nil
+           in System/in
+           out System/out}}]
+  (let [term (UnixTerminal. in out (charsets charset))]
     (when resize-listener
       (add-resize-listener term resize-listener))
     term))
