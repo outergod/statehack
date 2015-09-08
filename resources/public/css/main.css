@@ -56,19 +56,27 @@ textarea {
    Author's custom styles
    ========================================================================== */
 
+html {
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
 .terminal {
-  float: left;
-  border: #000000 solid 5px;
-  font-family: Inconsolata;
-  font-size: 16px;
-  color: #f0f0f0;
-  background: #000000;
-  line-height: 1.0;
+    float: none;
+    border: 0;
+    font-family: Inconsolata;
+    font-size: 16px;
+    color: #f0f0f0;
+    background: #000000;
+    line-height: 1.0;
 }
 
 .terminal-cursor {
-  color: #000000;
-  background: #f0f0f0;
+    color: #000000;
+    background: #f0f0f0;
 }
 
 /* ==========================================================================
