@@ -23,7 +23,10 @@
             [clojure.java.io :as io]))
 
 (defonce server (atom nil))
-(def socket (atom nil))
+
+(def input (stream/stream* {:permanent? true}))
+(def output (stream/stream* {:permanent? true}))
+(def stream (stream/splice output input))
 
 (def non-websocket-request
   {:status 400
@@ -33,8 +36,8 @@
 (defn socket-handler [request]
   (deferred/catch
       (deferred/let-flow [websocket (http/websocket-connection request)]
-        (reset! socket websocket)
-        nil)
+        (stream/connect websocket input)
+        (stream/connect output websocket))
       (fn [_] non-websocket-request)))
 
 (defroutes routes

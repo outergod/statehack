@@ -36,9 +36,9 @@
 (def crash-state (atom {}))
 
 (defn run []
-  (let [screen (screen/screen :in (byte-streams/to-input-stream @http/socket)
+  (let [screen (screen/screen :in (byte-streams/to-input-stream http/stream)
                               :out (proxy [OutputStream] []
-                                     (write [bytes] (stream/put! @http/socket (byte-streams/to-string bytes)))))]
+                                     (write [bytes] (stream/put! http/stream (byte-streams/to-string bytes)))))]
     (stream/put! @http/socket "\033]2;statehack\007")
     (try (game/run screen)
          (catch Throwable e
