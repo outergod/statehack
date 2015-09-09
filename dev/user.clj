@@ -39,7 +39,7 @@
   (let [screen (screen/screen :in (byte-streams/to-input-stream http/stream)
                               :out (proxy [OutputStream] []
                                      (write [bytes] (stream/put! http/stream (byte-streams/to-string bytes)))))]
-    (stream/put! @http/socket "\033]2;statehack\007")
+    (stream/put! http/socket "\033]2;statehack\007")
     (try (game/run screen)
          (catch Throwable e
            (if (instance? IExceptionInfo e)
