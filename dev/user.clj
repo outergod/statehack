@@ -31,24 +31,30 @@
   (sort (set (map :name (filter #(:public (:flags %))
                                 (:members (reflect/reflect o :ancestors true)))))))
 
-#_(def graphics (screen/text-graphics screen))
-
 (def crash-state (atom {}))
 
-(defn run []
+(defn- run [screen]
+  (try (game/run screen)
+       (catch Throwable e
+         (if (instance? IExceptionInfo e)
+           (let [{:keys [state]} (ex-data e)]
+             (println "Crash state available.")
+             (swap! crash-state (constantly state))
+             (throw (.getCause e)))
+           (throw e)))
+       (finally (sound/cleanup))))
+
+(defn run-http []
   (let [screen (screen/screen :in (byte-streams/to-input-stream http/stream)
                               :out (proxy [OutputStream] []
                                      (write [bytes] (stream/put! http/stream (byte-streams/to-string bytes)))))]
     (stream/put! http/stream "\033]2;statehack\007")
-    (try (game/run screen)
-         (catch Throwable e
-           (if (instance? IExceptionInfo e)
-             (let [{:keys [state]} (ex-data e)]
-               (println "Crash state available.")
-               (swap! crash-state (constantly state))
-               (throw (.getCause e)))
-             (throw e)))
-         (finally (sound/cleanup)))))
+    (run screen)))
+
+(defn run-console []
+  (run (screen/screen)))
+
+(http/start-server)
 
 (comment
   (let [game (game/load-game screen @world/state)

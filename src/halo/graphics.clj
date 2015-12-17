@@ -33,13 +33,20 @@
   ([^TextGraphics graphics i]
      (.setForegroundColor graphics (color i))))
 
+(defn set-background-color
+  ([^TextGraphics graphics r g b]
+     (.setBackgroundColor graphics (color r g b)))
+  ([^TextGraphics graphics i]
+     (.setBackgroundColor graphics (color i))))
+
 ;; Type hints are important, performance-sensitive spot
 (defn put
   ([^TextGraphics graphics ^String s ^Integer x ^Integer y]
      (.putString graphics x y s))
-  ([^TextGraphics graphics s x y & {:keys [color]}]
-     (when color
-       (if (sequential? color)
-         (apply set-color graphics color)
-         (set-color graphics color)))
+  ([^TextGraphics graphics s x y & {:keys [color background]}]
+   (doseq [[c f] [[color set-color] [background set-background-color]]]
+     (when c
+       (if (sequential? c)
+         (apply f graphics c)
+         (f graphics c))))
      (put graphics s x y)))
