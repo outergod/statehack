@@ -19,6 +19,7 @@
             [statehack.entity.room :as room]
             [statehack.entity.serv-bot :as serv-bot]
             [statehack.entity.dart-gun :as dart-gun]
+            [statehack.entity.token :as token]
             [statehack.entity.music :as music]
             [statehack.system.world :as world]
             [statehack.util :as util]
@@ -29,7 +30,8 @@
                                     \o #(room/door %& false)
                                     \O #(room/door %& true)
                                     \b #(serv-bot/serv-bot %&)
-                                    \l #(dart-gun/dart-gun %&)}
+                                    \l (fn [& coords] [(dart-gun/dart-gun coords)
+                                                       (token/token coords "Foo")])}
                             :music :medical}})
 
 (defn extract-room [s tiles [x0 y0] floor]

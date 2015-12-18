@@ -78,11 +78,14 @@
 (defn pop-world-state [game]
   (update-in game [:world] #(if (> (count %) 1) (next %) %)))
 
-(defn entities-at [game floor coords]
-  (let [entities (entities game)
-        coords (set coords)]
-    (filter #(and (= (:floor %) floor) (coords (:position %)))
-            (vals entities))))
+(defn entities-at
+  ([game floor coords]
+   (let [entities (entities game)
+         coords (set coords)]
+     (filter #(and (= (:floor %) floor) (coords (:position %)))
+             (vals entities))))
+  ([game e]
+   (entities-at game (:floor e) [(:position e)])))
 
 (defn direct-neighbors [game [x y] floor]
   (entities-at game floor (algebra/neighbors [x y])))

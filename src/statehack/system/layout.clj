@@ -17,6 +17,10 @@
   "Layouting facility"
   (:require [halo.graphics :as graphics]
             [clojure.zip :as zip]
+            [clojure.walk :as walk]
+            [statehack.entity :as entity]
+            [statehack.system.inventory :as inventory]
+            [statehack.system.input.receivers :as receivers]
             [statehack.util :as util]))
 
 (def render-hierarchy "Hierarchy for `render`" (make-hierarchy))
@@ -75,21 +79,36 @@
 
 (def stack (partial container :stack))
 
-(defn view [binding opts]
-  (merge (element :view opts)
-         {:binding binding}))
+(defn view
+  ([binding opts]
+   (merge (element :view opts)
+          {:binding binding}))
+  ([binding] (view binding {})))
 
 (def layout
-  (box {:alignment :vertical}
-       (view :status {:size 1})
-       (view :world {:id :world-view})
-       (view :messages {:size 5})))
+  (stack {}
+   (box {:alignment :horizontal :visible inventory/inventory-open?}
+        (view :inventory)
+        (view :floor {:size 40}))
+   (box {:alignment :vertical}
+        (view :status {:size 1})
+        (view :world {:id :world-view})
+        (view :messages {:size 5}))))
+
+(defn layout-zipper [layout]
+  (zip/zipper (constantly true) :children (fn [node xs] (assoc node :children xs)) layout))
+
+(defn eval-bindings [game element]
+  (into {} (for [[k v] element]
+             [k (if (fn? v) (v game) v)])))
+
+(defn eval-layout-bindings [game layout]
+  (walk/postwalk #(if (map? %) (eval-bindings game %) %) layout))
 
 (defn by-id [layout]
-  (let [zipper (zip/zipper (constantly true) :children (fn [node xs] (assoc node :children xs)) layout)]
-    (util/index-by :id (filter :id (map zip/node (take-while (complement zip/end?) (iterate zip/next zipper)))))))
+  (util/index-by :id (filter :id (map zip/node (take-while (complement zip/end?) (iterate zip/next (layout-zipper layout)))))))
 
 (defn system
   "Determine the layout dimensions"
   [{:keys [graphics] :as game}]
-  (assoc game :layout (render-mem layout (graphics/size graphics))))
+  (assoc game :layout (eval-layout-bindings game (render-mem layout (graphics/size graphics)))))

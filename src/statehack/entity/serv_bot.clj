@@ -31,4 +31,5 @@
    (c/sight :sensors 5)
    #_(c/sight :omniscience nil)
    (c/memory)
-   (c/skillset :appendages {:type :melee :strength 8})))
+   (c/skillset :appendages {:type :melee :strength 8})
+   (c/inventory)))

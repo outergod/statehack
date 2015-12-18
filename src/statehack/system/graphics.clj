@@ -25,7 +25,9 @@
             [statehack.system.unique :as unique]
             [statehack.system.status :as status]
             [statehack.system.messages :as messages]
+            [statehack.system.name :as name]
             [statehack.system.input.receivers :as receivers]
+            [statehack.system.inventory :as inventory]
             [statehack.util :as util]
             [statehack.entity :as entity]
             [statehack.algebra :as algebra]
@@ -49,26 +51,13 @@
 
 (defn draw-dispatch
   "Dispatch for `draw`"
-  [game binding dimensions offset]
-  binding)
+  [game view offset]
+  (:binding view))
 
 (defmulti draw
-  "Draw `binding`"
-  {:arglists '([game binding dimensions offset])}
+  "Draw `view`"
+  {:arglists '([game view offset])}
   #'draw-dispatch :hierarchy #'draw-hierarchy)
-
-(defmethod render :box [game {:keys [children]} offset]
-  ;; TODO horizontal
-  (loop [acc [] [c & cs] children o offset]
-    (if c (let [[_ h] (:dimensions c)]
-            (recur (concat acc (render game c o)) cs (util/matrix-add o [0 h])))
-        acc)))
-
-(defmethod render :stack [game {:keys [children]} offset]
-  (mapcat #(render game % offset) children))
-
-(defmethod render :view [game {:keys [binding dimensions]} offset]
-  (draw game binding dimensions offset))
 
 (def blit-order "Precedence of blit operations" {})
 
@@ -143,8 +132,8 @@
   "Transform two-dimensional `canvas` from tile/color mapping to
   character/color vectors."
   [canvas]
-  (mapv #(mapv (fn [{:keys [tile color char]}]
-                 [(if tile (tiles tile) (str char)) color]) %)
+  (mapv #(mapv (fn [{:keys [tile color background char]}]
+                 [(if tile (tiles tile) (str char)) color (or background 16)]) %)
         canvas))
 
 (defn dye
@@ -271,19 +260,65 @@
   "Write `canvas` at coordinates `[x0 y0]`."
   ([graphics canvas x0 y0]
      (doseq [[y row] (util/enumerate canvas)
-             [x [s c]] (util/enumerate row)]
-       (graphics/put graphics s (+ x x0) (+ y y0) :color c)))
+             [x [s c b]] (util/enumerate row)]
+       (graphics/put graphics s (+ x x0) (+ y y0) :color c :background b)))
   ([graphics canvas]
    (put-canvas graphics canvas 0 0)))
 
 (defn tilify-string
-  "Make per-character tiles from string `s` using color `c`."
-  [s c]
-  (mapv (fn [chr] {:char chr :color c}) s))
+  "Make per-character tiles from string `s` using color `c`
+
+  With optional background color `b`."
+  ([s c]
+   (tilify-string s c 16))
+  ([s c b]
+   (mapv (fn [chr] {:char chr :color c :background b}) s)))
+
+(defn window
+  "Produces a canvas frame"
+  ([[w h] color {:keys [title]}]
+   {:pre [(pos? w) (pos? h)]}
+   (let [tile (fn [type] {:tile type :color color})
+         s (if title (str "|" title "|") "")
+         length (count s)]
+     (apply concat
+            [[(flatten [(tile :tlcorner) (tilify-string s 7) (repeat (- w 2 length) (tile :hwall)) (tile :trcorner)])]
+             (repeat (- h 2) (flatten [(tile :vwall) (repeat (- w 2) (tile :nihil)) (tile :vwall)]))
+             [(flatten [(tile :blcorner) (repeat (- w 2) (tile :hwall)) (tile :brcorner)])]])))
+  ([[w h] color] (window [w h] color {})))
+
+#_(defn- draw-dialog
+  "Draw the dialog portion of the interface using dialog-capable entity
+  `e` at coordinates `[x y]`, proportions `[w h]`."
+  [canvas e [x y] [w h]]
+  (-> canvas
+      (canvas-blit (window 7 [w h]) [x y])
+      (canvas-update (util/matrix-add [x y] [1 1]) (constantly {:tile :dialog-indicator :color 7}))
+      (canvas-blit (tilify-string (messages/current e) 7) (util/matrix-add [x y] [2 1]))))
+
+(defmethod render :box [game {:keys [alignment children]} offset]
+  (let [[step merge]
+        (case alignment
+          :horizontal [(fn [[w _]] [w 0])
+                       (fn [acc view]
+                         (if (empty? acc)
+                           view
+                           (map concat acc view)))]
+          :vertical [(fn [[_ h]] [0 h]) concat])]
+    (loop [acc [] [c & cs] children o offset]
+      (if c (recur (merge acc (render game c o)) cs (util/matrix-add o (step (:dimensions c))))
+          acc))))
+
+(defmethod render :stack [game {:keys [children]} offset]
+  (reduce canvas-blit (map #(render game % offset)
+                           (reverse (filter :visible children)))))
+
+(defmethod render :view [game {:keys [visible] :as view} offset]
+  (if visible (draw game view offset) []))
 
 ;; World
 
-(defmethod draw :world [{:keys [screen graphics viewport] :as game} _ dimensions offset]
+(defmethod draw :world [{:keys [screen graphics viewport] :as game} {:keys [dimensions]} offset]
   (let [player (unique/unique-entity game :player)
         world (canvas-blit (memorized-world game player) (visible-world game player))
         [[x0 y0] [x1 y1]] (canvas-viewport world dimensions viewport)
@@ -298,23 +333,51 @@
 
 ;; Messages
 
-(defmethod draw :messages [game _ [w h] _]
+(defmethod draw :messages [game {:keys [dimensions]} _]
   (let [log (unique/unique-entity game :log)
-        canvas (rect :nihil 0 [w h])]
+        canvas (rect :nihil 0 dimensions)]
     (canvas-blit canvas (map #(tilify-string % 7) (messages/recent log 5)))))
 
 ;; Status
 
-(defmethod draw :status [game _ [w h] _]
+(defmethod draw :status [game {:keys [dimensions]} _]
   (let [player (unique/unique-entity game :player)
-        canvas (rect :nihil 0 [w h])]
+        canvas (rect :nihil 0 dimensions)]
     (canvas-blit canvas [(tilify-string (status/text game player) 7)])))
+
+;; Menu
+
+(defmethod draw :inventory [{:keys [screen] :as game} {:keys [dimensions]} offset]
+  (let [{:keys [selected reference]} (:inventory-menu (receivers/current game))
+        {:keys [inventory]} (world/entity game reference)
+        es (world/entities game)]
+    (screen/move-cursor screen (util/matrix-add [0 selected] [1 2] offset))
+    (canvas-blit (window dimensions 7 {:title "Inventory"})
+                 (map-indexed #(tilify-string (name/name (es %2)) ; TODO reference
+                                              (if (= selected %1) 0 7)
+                                              (if (= selected %1) 7 16))
+                              inventory)
+                 [2 2])))
+
+(defmethod draw :floor [{:keys [screen] :as game} {:keys [dimensions]} offset]
+  (let [{:keys [selected reference]} (:inventory-menu (receivers/current game))
+        holder (world/entity game reference)
+        pickups (inventory/available-pickups game holder)]
+    (screen/move-cursor screen (util/matrix-add [0 selected] [1 2] offset))
+    (canvas-blit (window dimensions 7 {:title "Floor"})
+                 (map-indexed #(tilify-string (name/name %2)
+                                              (if (= selected %1) 0 7)
+                                              (if (= selected %1) 7 16))
+                              pickups)
+                 [2 2])))
 
 ;; Tile
 
 (defmethod tile :humanoid [& _] {:tile :humanoid :color 7})
 (defmethod tile :serv-bot [& _] {:tile :serv-bot :color 160})
 (defmethod tile :corpse [& _] {:tile :corpse :color 88})
+(defmethod tile :camera [& _] {:tile :camera :color 7})
+(defmethod tile :battery [& _] {:tile :battery :color 7})
 
 (doseq [d [:hdoor :vdoor]]
   (derive-tile d :door))
@@ -364,6 +427,12 @@
 
 (blit-precedence :humanoid :weapon)
 (blit-precedence :weapon :corpse)
+
+(blit-precedence :weapon :battery)
+(blit-precedence :humanoid :battery)
+
+(blit-precedence :camera :weapon)
+(blit-precedence :humanoid :camera)
 
 (defmethod tile :weapon [game e]
   {:tile :weapon

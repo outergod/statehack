@@ -256,7 +256,15 @@
 
   Anything with an inventory can carry stuff around."
   [& items]
-  {:inventory items})
+  {:inventory (or items [])})
+
+(defn inventory-menu
+  "Inventory menu component
+
+  References other entity `id`"
+  [id]
+  {:inventory-menu {:selected 0
+                    :reference id}})
 
 (defn pickup
   "Pickup component
@@ -271,3 +279,4 @@
   Triggers the playback of music"
   [name]
   {:music name})
+

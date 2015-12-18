@@ -13,15 +13,15 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.entity.dart-gun
+(ns statehack.entity.token
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn dart-gun
-  [[x y z]]
+(defn token
+  [[x y z] name]
   (entity
-   (c/name "SV-23 Dart Gun")
+   (c/name (str "Test token [" name "]"))
    (c/position [x y])
    (c/floor z)
    (c/pickup)
-   (c/renderable :weapon)))
+   (c/renderable :battery)))
