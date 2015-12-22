@@ -32,8 +32,7 @@
             [statehack.entity :as entity]
             [statehack.algebra :as algebra]
             [clojure.walk :as walk]
-            [clojure.set :as set]
-            [taoensso.timbre :as timbre]))
+            [clojure.set :as set]))
 
 (def render-hierarchy "Hierarchy for `render`" (make-hierarchy))
 
