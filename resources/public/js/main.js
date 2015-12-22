@@ -13,10 +13,12 @@
   
   socket.addEventListener('open', function () {
     term.on('data', function (queue) {
-      socket.send(queue);
+      if (queue.trim() !== '') {
+        socket.send(queue);
+      }
     });
     term.on('key', function (key, e) {
-      if (e.key === 'Enter') {
+      if (e.keyIdentifier === 'Enter') {
         socket.send('\n');
       }
     });
