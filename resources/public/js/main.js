@@ -15,6 +15,11 @@
     term.on('data', function (queue) {
       socket.send(queue);
     });
+    term.on('key', function (key, e) {
+      if (e.key === 'Enter') {
+        socket.send('\n');
+      }
+    });
   });
 
   socket.addEventListener('message', function (e) {
