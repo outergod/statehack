@@ -88,5 +88,5 @@
     \x (change-index game menu dec)
     \a (change-frame game menu :floor)
     \d (change-frame game menu :inventory)
-    \t (pick-up-or-drop game menu)
+    :enter (pick-up-or-drop game menu)
     game))
