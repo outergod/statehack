@@ -18,7 +18,11 @@
             [statehack.component :as c]
             [statehack.entity :as entity]
             [statehack.system.input :as input]
-            [statehack.system.input.receivers :as receivers]))
+            [statehack.system.input.receivers :as receivers]
+            [statehack.entity.menu.inventory :as inventory-menu]))
+
+(def default-frame {:pickup :floor
+                    :inventory :inventory})
 
 (defn in-inventory? [e1 e2]
   {:pre [(:inventory e1) (:pickup e2)]}
@@ -33,34 +37,56 @@
 (defn drop-item [game e1 e2]
   {:pre [(in-inventory? e1 e2)]}
   (world/>> game [(:id e1) (:id e2)]
-            #(world/update-entity-component %1 :inventory remove #{(:id %2)})
-            #(world/add-entity-component %2 (c/position (:position %1)) (c/floor (:floor %1)))))
+            (fn [game actor item] (world/update-entity-component game actor :inventory (partial remove #{(:id item)})))
+            (fn [game actor item] (world/add-entity-component game item (c/position (:position actor)) (c/floor (:floor actor))))))
 
 (defn available-pickups [game e]
   (entity/filter-capable [:pickup] (world/entities-at game e)))
 
-(defn change-index [game e f]
-  (let [player (->> [:inventory-menu :reference] (get-in e) (world/entity game))
-        max (count (available-pickups game player))]
-    (if (zero? max)
-      game
-      (world/update-entity-component game e [:inventory-menu :selected]
-                                     (comp #(mod % max) f)))))
+(defn- frame-items [game e frame]
+  (if (= frame :floor)
+    (available-pickups game e)
+    (map (partial world/entity game) (:inventory e))))
 
-(defn pick-up [game {:keys [inventory-menu]}]
-  (let [player (world/entity game (:reference inventory-menu))
-        {:keys [selected]} inventory-menu]
-    (if (empty? (available-pickups game player))
+(defn change-index [game {:keys [inventory-menu] :as menu} f]
+  (let [{:keys [reference index frame]} inventory-menu
+        player (world/entity game reference)
+        max (count (frame-items game player frame))]
+    (world/update-entity-component game menu [:inventory-menu :index]
+                                   (comp (if (zero? max) (constantly 0) #(mod % max)) f))))
+
+(defn change-frame [game {:keys [inventory-menu] :as menu} frame]
+  (if (= (inventory-menu :type) :pickup)
+    (world/>> game [(:id menu)]
+              #(world/update-entity-component %1 %2 [:inventory-menu :frame] (constantly frame))
+              #(change-index %1 %2 identity))
+    game))
+
+(defn pick-up-or-drop [game {:keys [inventory-menu] :as menu}]
+  (let [{:keys [reference index frame type]} inventory-menu
+        actor (world/entity game reference)
+        items (frame-items game actor frame)]
+    (if (or (= type :inventory) (empty? items))
       game
-      (pick-up-item game player (nth (available-pickups game player) selected)))))
+      (let [f (if (= frame :floor) pick-up-item drop-item)]
+        (-> game (f actor (nth items index)) (change-index menu identity))))))
 
 (defn inventory-open? [game]
   (entity/capable? (receivers/current game) :inventory-menu))
 
-(defmethod input/receive :inventory [game inventory input]
+(defn inventory-type [game]
+  (get-in (receivers/current game) [:inventory-menu :type]))
+
+(defn open [game player type]
+  (let [i (inventory-menu/inventory (:id player) type (default-frame type))]
+    (-> game (world/add-entity i) (receivers/push-control i))))
+
+(defmethod input/receive :inventory-menu [game menu input]
   (case (:key input)
-    :escape (-> game receivers/pop-control (world/remove-entity inventory))
-    \w (change-index game inventory inc)
-    \x (change-index game inventory dec)
-    (:enter \t) (pick-up game inventory)
+    :escape (-> game receivers/pop-control (world/remove-entity menu))
+    \w (change-index game menu inc)
+    \x (change-index game menu dec)
+    \a (change-frame game menu :floor)
+    \d (change-frame game menu :inventory)
+    \t (pick-up-or-drop game menu)
     game))

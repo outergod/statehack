@@ -346,29 +346,26 @@
 
 ;; Menu
 
+(defn- selectable-list
+  "Make a selectable list from `items`"
+  [screen dimensions items active? index offset title]
+  (when active? (screen/move-cursor screen (util/matrix-add [0 index] [1 2] offset)))
+  (canvas-blit (window dimensions 7 {:title title})
+               (map-indexed #(apply tilify-string %2 (if (and active? (= index %1)) [0 7] [7 16]))
+                            items)
+               [2 2]))
+
 (defmethod draw :inventory [{:keys [screen] :as game} {:keys [dimensions]} offset]
-  (let [{:keys [selected reference]} (:inventory-menu (receivers/current game))
+  (let [{:keys [index reference frame]} (:inventory-menu (receivers/current game))
         {:keys [inventory]} (world/entity game reference)
         es (world/entities game)]
-    (screen/move-cursor screen (util/matrix-add [0 selected] [1 2] offset))
-    (canvas-blit (window dimensions 7 {:title "Inventory"})
-                 (map-indexed #(tilify-string (name/name (es %2)) ; TODO reference
-                                              (if (= selected %1) 0 7)
-                                              (if (= selected %1) 7 16))
-                              inventory)
-                 [2 2])))
+    (selectable-list screen dimensions (map (comp name/name es) inventory) (= frame :inventory) index offset "Inventory")))
 
 (defmethod draw :floor [{:keys [screen] :as game} {:keys [dimensions]} offset]
-  (let [{:keys [selected reference]} (:inventory-menu (receivers/current game))
+  (let [{:keys [index reference frame]} (:inventory-menu (receivers/current game))
         holder (world/entity game reference)
         pickups (inventory/available-pickups game holder)]
-    (screen/move-cursor screen (util/matrix-add [0 selected] [1 2] offset))
-    (canvas-blit (window dimensions 7 {:title "Floor"})
-                 (map-indexed #(tilify-string (name/name %2)
-                                              (if (= selected %1) 0 7)
-                                              (if (= selected %1) 7 16))
-                              pickups)
-                 [2 2])))
+    (selectable-list screen dimensions (map name/name pickups) (= frame :floor) index offset "Floor")))
 
 ;; Tile
 

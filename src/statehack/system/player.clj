@@ -14,7 +14,7 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.player
-  (:require [statehack.entity.inventory :as inventory]
+  (:require [statehack.system.inventory :as inventory]
             [statehack.system.input :as input]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.world :as world]
@@ -57,10 +57,6 @@
 (defn viewport [game player dir]
   (viewport/update-viewport game player (partial util/matrix-add (player-moves dir))))
 
-(defn open-inventory [game player]
-  (let [i (inventory/inventory (:id player))]
-    (-> game (world/add-entity i) (receivers/push-control i))))
-
 (defmethod input/receive :player [game player input]
   (case (:key input)
     :arrow-up (viewport game player :up)
@@ -76,7 +72,8 @@
     \z (action game player :down-left)
     \c (action game player :down-right)
     \. (act game player identity)
-    \, (open-inventory game player)
+    \i (inventory/open game player :inventory)
+    \, (inventory/open game player :pickup)
     \C (door/close game player)
     :backspace (-> game world/pop-world-state (viewport/center-on player))
     :enter (world/save game)

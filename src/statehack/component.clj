@@ -262,8 +262,10 @@
   "Inventory menu component
 
   References other entity `id`"
-  [id]
-  {:inventory-menu {:selected 0
+  [id type frame]
+  {:inventory-menu {:index 0
+                    :frame frame
+                    :type type
                     :reference id}})
 
 (defn pickup

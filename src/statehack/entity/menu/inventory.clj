@@ -13,11 +13,11 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.entity.inventory
+(ns statehack.entity.menu.inventory
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn inventory [id]
+(defn inventory [id type frame]
   (entity
-   (c/inventory-menu id)
-   (c/input :inventory)))
+   (c/inventory-menu id type frame)
+   (c/input :inventory-menu)))

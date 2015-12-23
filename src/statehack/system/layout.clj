@@ -45,11 +45,12 @@
 
 (defmethod render :box [{:keys [alignment children] :as e} [w h]]
   (let [[primary secondary] (if (= alignment :horizontal) [w h] [h w])
-        fixed-size (apply + (map (fn [{:keys [size]}] (or size 0)) children))
+        child-size (fn [{:keys [visible size]}] (or (and visible size) 0))
+        fixed-size (apply + (map child-size children))
         rest (max (- primary fixed-size) 0)]
     (assoc e
-           :children (map (fn [{:keys [size] :as e}]
-                            (let [size (or size rest)]
+           :children (map (fn [{:keys [visible size] :as e}]
+                            (let [size (if (and visible (not size)) rest (child-size e))]
                               (render e (if (= alignment :horizontal) [size h] [w size]))))
                           children)
            :dimensions [w h])))
@@ -88,8 +89,8 @@
 (def layout
   (stack {}
    (box {:alignment :horizontal :visible inventory/inventory-open?}
-        (view :inventory)
-        (view :floor {:size 40}))
+        (view :floor {:size 40 :visible #(= (inventory/inventory-type %) :pickup)})
+        (view :inventory))
    (box {:alignment :vertical}
         (view :status {:size 1})
         (view :world {:id :world-view})
@@ -111,4 +112,4 @@
 (defn system
   "Determine the layout dimensions"
   [{:keys [graphics] :as game}]
-  (assoc game :layout (eval-layout-bindings game (render-mem layout (graphics/size graphics)))))
+  (assoc game :layout (render-mem (eval-layout-bindings game layout) (graphics/size graphics))))
