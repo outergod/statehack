@@ -34,4 +34,5 @@
    #_(c/sight :omniscience nil)
    (c/sight :eyes 10)
    (c/memory)
-   (c/inventory)))
+   (c/inventory)
+   (c/slots :melee nil :gun nil)))

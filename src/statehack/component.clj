@@ -271,9 +271,12 @@
 (defn pickup
   "Pickup component
 
-  A pickup can be carried around in an `inventory`."
-  []
-  {:pickup true})
+  A pickup can be carried around in an `inventory`.
+  Activation type might require other component(s) present."
+  ([activate]
+   {:pickup activate})
+  ([]
+   (pickup :none)))
 
 (defn music
   "Music component
@@ -282,3 +285,18 @@
   [name]
   {:music name})
 
+(defn slots
+  "Slots component
+
+  Enables slotting equipment"
+  [& slots]
+  {:post [(map? %) (every? keyword? (keys %))]}
+  {:slots (apply hash-map slots)})
+
+(defn weapon
+  "Weapon component
+
+  Stats for a weapon"
+  [type strength]
+  {:weapon {:type type
+            :strength strength}})

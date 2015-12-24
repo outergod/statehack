@@ -23,5 +23,6 @@
    (c/name "SV-23 Dart Gun")
    (c/position [x y])
    (c/floor z)
-   (c/pickup)
+   (c/pickup :slot-weapon)
+   (c/weapon :gun 10)
    (c/renderable :weapon)))

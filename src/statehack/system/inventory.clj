@@ -19,7 +19,9 @@
             [statehack.entity :as entity]
             [statehack.system.input :as input]
             [statehack.system.input.receivers :as receivers]
-            [statehack.entity.menu.inventory :as inventory-menu]))
+            [statehack.entity.menu.inventory :as inventory-menu]
+            [statehack.system.messages :as messages]
+            [statehack.system.name :as name]))
 
 (def default-frame {:pickup :floor
                     :inventory :inventory})
@@ -55,27 +57,79 @@
     (world/update-entity-component game menu [:inventory-menu :index]
                                    (comp (if (zero? max) (constantly 0) #(mod % max)) f))))
 
-(defn change-frame [game {:keys [inventory-menu] :as menu} frame]
-  (if (= (inventory-menu :type) :pickup)
-    (world/>> game [(:id menu)]
-              #(world/update-entity-component %1 %2 [:inventory-menu :frame] (constantly frame))
-              #(change-index %1 %2 identity))
-    game))
-
 (defn pick-up-or-drop [game {:keys [inventory-menu] :as menu}]
-  (let [{:keys [reference index frame type]} inventory-menu
+  (let [{:keys [reference index frame]} inventory-menu
         actor (world/entity game reference)
         items (frame-items game actor frame)]
-    (if (or (= type :inventory) (empty? items))
+    (if (empty? items)
       game
       (let [f (if (= frame :floor) pick-up-item drop-item)]
         (-> game (f actor (nth items index)) (change-index menu identity))))))
 
-(defn inventory-open? [game]
+(defmulti activate
+  (fn [game actor item]
+    {:pre [(entity/capable? item :pickup)]}
+    (:pickup item)))
+
+(defmethod activate :none [game _ item]
+  (messages/log game (str "Don't know how to activate " (name/name item))))
+
+(defmethod activate :slot-weapon [game actor item]
+  (let [{:keys [weapon]} item
+        {:keys [type]} weapon
+        {:keys [slots]} actor]
+    (if (contains? slots type)
+      (world/update-entity-component game actor [:slots type] (constantly (:id item)))
+      (messages/log game (format "%s cannot use %s" (name/name actor) (name/name item))))))
+
+(defn activate-item [game {:keys [inventory-menu] :as menu}]
+  (let [{:keys [reference index frame]} inventory-menu
+        actor (world/entity game reference)
+        items (frame-items game actor frame)]
+    (if (empty? items)
+      game
+      (activate game actor (nth items index)))))
+
+(defn inventory-type
+  "The type of inventory-menu
+
+  If applicable."
+  [menu]
+  (get-in menu [:inventory-menu :type]))
+
+(defmulti change-frame
+  (fn [_ menu direction]
+    [(inventory-type menu) direction]))
+
+(defmethod change-frame :default [game _ _] game)
+
+(defn- change-frame-common [game menu frame]
+  (world/>> game [(:id menu)]
+            #(world/update-entity-component %1 %2 [:inventory-menu :frame] (constantly frame))
+            #(change-index %1 %2 identity)))
+
+(defmethod change-frame [:pickup :left] [game menu _]
+  (change-frame-common game menu :floor))
+
+(defmethod change-frame [:pickup :right] [game menu _]
+  (change-frame-common game menu :inventory))
+
+(defn inventory-open?
+  "Is the current input receiver an `inventory-menu`?"
+  [game]
   (entity/capable? (receivers/current game) :inventory-menu))
 
-(defn inventory-type [game]
-  (get-in (receivers/current game) [:inventory-menu :type]))
+(defmulti handle-enter
+  "Handle the `enter` key
+
+  Depends on the type of `inventory-menu`."
+  (fn [_ menu] (inventory-type menu)))
+
+(defmethod handle-enter :pickup [game menu]
+  (pick-up-or-drop game menu))
+
+(defmethod handle-enter :inventory [game menu]
+  (activate-item game menu))
 
 (defn open [game player type]
   (let [i (inventory-menu/inventory (:id player) type (default-frame type))]
@@ -86,7 +140,7 @@
     :escape (-> game receivers/pop-control (world/remove-entity menu))
     \w (change-index game menu inc)
     \x (change-index game menu dec)
-    \a (change-frame game menu :floor)
-    \d (change-frame game menu :inventory)
-    :enter (pick-up-or-drop game menu)
+    \a (change-frame game menu :left)
+    \d (change-frame game menu :right)
+    :enter (handle-enter game menu)
     game))

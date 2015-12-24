@@ -89,7 +89,7 @@
 (def layout
   (stack {}
    (box {:alignment :horizontal :visible inventory/inventory-open?}
-        (view :floor {:size 40 :visible #(= (inventory/inventory-type %) :pickup)})
+        (view :floor {:size 40 :visible #(= (inventory/inventory-type (receivers/current %)) :pickup)})
         (view :inventory))
    (box {:alignment :vertical}
         (view :status {:size 1})
