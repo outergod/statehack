@@ -42,7 +42,7 @@
 ;; Type hints are important, performance-sensitive spot
 (defn put
   ([^TextGraphics graphics ^String s ^Integer x ^Integer y]
-     (.putString graphics x y s))
+   (.putString graphics x y s))
   ([^TextGraphics graphics s x y & {:keys [color background]}]
    (doseq [[c f] [[color set-color] [background set-background-color]]]
      (when c
