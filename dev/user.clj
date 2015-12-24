@@ -14,6 +14,7 @@
             [statehack.system.levels :as levels]
             [statehack.system.transition :as transition]
             [statehack.system.ai :as ai]
+            [statehack.system.input.receivers :as receivers]
             [statehack.util :as util]
             [statehack.http :as http]
             [manifold.stream :as stream]
@@ -57,6 +58,6 @@
 (http/start-server)
 
 (comment
-  (let [game (game/load-game screen @world/state)
-        player (world/player-entity game)]
+  (let [game (game/load-game (screen/screen) @world/store)
+        player (receivers/current game)]
     (movement/available-moves game player)))
