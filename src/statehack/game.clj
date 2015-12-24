@@ -60,9 +60,6 @@
         player (unique/unique-entity game :player)]
     (viewport/center-on game player)))
 
-(comment
-  (game/run scr (game/load-game scr @statehack.system.world/state)))
-
 (defn game-over [game]
   (let [{:keys [screen]} game]
     (-> game (messages/log "Game Over. Whatever that means..") graphics/system)
