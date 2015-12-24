@@ -42,16 +42,16 @@
         [w h] (levels/dimensions lab)
         {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 100)]
     {:screen screen
-              :graphics (screen/text-graphics screen)
-              :world [{:receivers [id]
-                       :entities (util/index-by :id
-                                                (concat
-                                                 [player
-                                                  (floor/floor 1 [w h])
-                                                  (status/status-bar)
-                                                  (cursor/cursor)
-                                                  (log/log)]
-                                                 lab))}]}))
+     :graphics (screen/text-graphics screen)
+     :world [{:receivers [id]
+              :entities (util/index-by :id
+                                       (concat
+                                        [player
+                                         (floor/floor 1 [w h])
+                                         (status/status-bar)
+                                         (cursor/cursor)
+                                         (log/log)]
+                                        lab))}]}))
 
 (defn load-game [screen world]
   (let [game {:screen screen
