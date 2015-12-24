@@ -21,7 +21,7 @@
 (def store (atom {}))
 
 (defn save [game]
-  (swap! store (constantly (select-keys game [:world])))
+  (swap! store (constantly (:world game)))
   game)
 
 (defn state [game]
