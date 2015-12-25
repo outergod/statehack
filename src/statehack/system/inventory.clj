@@ -21,7 +21,8 @@
             [statehack.system.input.receivers :as receivers]
             [statehack.entity.menu.inventory :as inventory-menu]
             [statehack.system.messages :as messages]
-            [statehack.system.name :as name]))
+            [statehack.system.name :as name]
+            [statehack.system.slots :as slots]))
 
 (def default-frame {:pickup :floor
                     :inventory :inventory})
@@ -39,6 +40,7 @@
 (defn drop-item [game e1 e2]
   {:pre [(in-inventory? e1 e2)]}
   (world/>> game [(:id e1) (:id e2)]
+            slots/unslot-item
             (fn [game actor item] (world/update-entity-component game actor :inventory (partial remove #{(:id item)})))
             (fn [game actor item] (world/add-entity-component game item (c/position (:position actor)) (c/floor (:floor actor))))))
 
@@ -78,8 +80,8 @@
   (let [{:keys [weapon]} item
         {:keys [type]} weapon
         {:keys [slots]} actor]
-    (if (contains? slots type)
-      (world/update-entity-component game actor [:slots type] (constantly (:id item)))
+    (if ((slots/available-slots actor) type)
+      (slots/slot-item game actor item type)
       (messages/log game (format "%s cannot use %s" (name/name actor) (name/name item))))))
 
 (defn activate-item [game {:keys [inventory-menu] :as menu}]

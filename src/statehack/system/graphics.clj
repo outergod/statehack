@@ -28,6 +28,7 @@
             [statehack.system.name :as name]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.inventory :as inventory]
+            [statehack.system.slots :as slots]
             [statehack.util :as util]
             [statehack.entity :as entity]
             [statehack.algebra :as algebra]
@@ -348,24 +349,28 @@
 
 (defn- selectable-list
   "Make a selectable list from `items`"
-  [screen dimensions items active? index offset title]
+  [screen [w h] items slotted active? index offset title]
   (when active? (screen/move-cursor screen (util/matrix-add [0 index] [1 2] offset)))
-  (canvas-blit (window dimensions 7 {:title title})
-               (map-indexed #(apply tilify-string %2 (if (and active? (= index %1)) [0 7] [7 16]))
+  (canvas-blit (window [w h] 7 {:title title})
+               (map-indexed (fn [i {:keys [id] :as item}]
+                              (let [s (str (name/name item) (if (slotted id) " (slotted)" ""))]
+                                (if (and active? (= index i))
+                                  (tilify-string (format (str "%-" (- w 4) "s") s) 0 7)
+                                  (tilify-string s (if (slotted id) 88 7) 16))))
                             items)
                [2 2]))
 
 (defmethod draw :inventory [{:keys [screen] :as game} {:keys [dimensions]} offset]
-  (let [{:keys [index reference frame]} (:inventory-menu (receivers/current game))
-        {:keys [inventory]} (world/entity game reference)
-        es (world/entities game)]
-    (selectable-list screen dimensions (map (comp name/name es) inventory) (= frame :inventory) index offset "Inventory")))
+  (let [menu (receivers/current game)
+        {:keys [index reference frame]} (:inventory-menu menu)
+        {:keys [inventory] :as owner} (world/entity game reference)]
+    (selectable-list screen dimensions (map (partial world/entity game) inventory) (slots/slotted-items owner) (= frame :inventory) index offset "Inventory")))
 
 (defmethod draw :floor [{:keys [screen] :as game} {:keys [dimensions]} offset]
   (let [{:keys [index reference frame]} (:inventory-menu (receivers/current game))
         holder (world/entity game reference)
         pickups (inventory/available-pickups game holder)]
-    (selectable-list screen dimensions (map name/name pickups) (= frame :floor) index offset "Floor")))
+    (selectable-list screen dimensions pickups #{} (= frame :floor) index offset "Floor")))
 
 ;; Tile
 
