@@ -35,15 +35,14 @@
 (def crash-state (atom {}))
 
 (defn- run [screen]
-  (try (game/run screen)
+  (try (game/run (game/new-game screen))
        (catch Throwable e
          (if (instance? IExceptionInfo e)
            (let [{:keys [state]} (ex-data e)]
              (println "Crash state available.")
              (swap! crash-state (constantly state))
              (throw (.getCause e)))
-           (throw e)))
-       (finally (sound/cleanup))))
+           (throw e)))))
 
 (defn run-http []
   (let [screen (screen/screen :in (byte-streams/to-input-stream http/stream)

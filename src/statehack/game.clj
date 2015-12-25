@@ -67,18 +67,17 @@
   (-> game transition/system memory/system layout/system graphics/system))
 
 (defn run
-  ([screen game]
-     (doall (take-while identity (repeatedly #(screen/read-input screen))))
-     (sound/init)
-     (screen/in-screen screen
-       (loop [input nil game (-> game memory/system layout/system sound/music-system (viewport/center-on (unique/unique-entity game :player)) graphics/system)]
-         (screen/probe-resize screen)
-         (let [[game {:keys [quit time]}] (-> game (player/system input) turn (util/separate :quit :time))]
-           (when-not quit
-             (let [game (sound/music-system (if time (-> game ai/system turn) game))
-                   player (unique/unique-entity game :player)]
-               (if (combat/dead? player)
-                 (game-over game)
-                 (recur (screen/read-input-blocking screen) game))))))))
-  ([screen]
-     (run screen (new-game screen))))
+  [{:keys [screen] :as game}]
+  (doall (take-while identity (repeatedly #(screen/read-input screen))))
+  (sound/init)
+  (try (screen/in-screen screen
+         (loop [input nil game (-> game memory/system layout/system sound/music-system (viewport/center-on (unique/unique-entity game :player)) graphics/system)]
+           (screen/probe-resize screen)
+           (let [[game {:keys [quit time]}] (-> game (player/system input) turn (util/separate :quit :time))]
+             (when-not quit
+               (let [game (sound/music-system (if time (-> game ai/system turn) game))
+                     player (unique/unique-entity game :player)]
+                 (if (combat/dead? player)
+                   (game-over game)
+                   (recur (screen/read-input-blocking screen) game)))))))
+       (finally (sound/cleanup))))
