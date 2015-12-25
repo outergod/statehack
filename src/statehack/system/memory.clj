@@ -15,7 +15,8 @@
 
 (ns statehack.system.memory
   "Memory system"
-  (:require [statehack.system.levels :as levels]
+  (:require [statehack.entity :as entity]
+            [statehack.system.levels :as levels]
             [statehack.system.sight :as sight]
             [statehack.system.world :as world]
             [statehack.util :as util]
@@ -38,15 +39,18 @@
      (update-memory-floor game e (:floor (levels/entity-floor game e)) f)))
 
 (defn remember-view [game e]
-  {:pre [(:sight e) (:memory e) (:floor e)]}
+  {:pre [(entity/capable? e :sight :memory :floor)]}
   (let [{:keys [floor]} (levels/entity-floor game e)
         mask (sight/visible-mask game e)
-        es (dissoc (util/index-by :id (sight/visible-entities game floor mask)) (e :id))]
+        es (dissoc (util/index-by :id (sight/visible-entities game floor mask)) (e :id))
+        forget (map :id (filter #(mask (:position %))
+                                (vals (:entities (entity-floor-memory e)))))]
     (update-memory-floor game e floor
-                         #(-> %
-                              (update-in [:entities] merge es)
-                              (update-in [:coordinates] set/union mask)))))
+                         (fn [memory]
+                           (-> memory
+                               (update-in [:entities] #(apply dissoc % forget))
+                               (update-in [:entities] merge es)
+                               (update-in [:coordinates] set/union mask))))))
 
 (defn system [game]
-  (let [es (world/capable-entities game :memory :sight :floor)]
-    (reduce remember-view game es)))
+  (reduce remember-view game (world/capable-entities game :memory :sight :floor)))
