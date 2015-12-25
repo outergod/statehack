@@ -33,11 +33,11 @@
 (defn entity [game id]
   ((entities game) id))
 
-(defn >> [game [& ids] & updates]
-  (reduce (fn [game f]
-            (let [es (map (partial entity game) ids)]
-              (or (apply f game es) game)))
-          game updates))
+(defmacro >> [game [& ids] [& bindings] & updates]
+  {:pre [(= (count bindings) (count ids))]}
+  `(reduce (fn [~game f#] (or (apply f# ~game (map (partial entity ~game) [~@ids])) ~game))
+           ~game
+           [~@(map (fn [body] `(fn [~game ~@bindings] ~body)) updates)]))
 
 (defn dup-world-state [game]
   (let [world (:world game)

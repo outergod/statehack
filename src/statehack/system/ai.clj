@@ -92,21 +92,21 @@
 (defmethod act :serv-bot [game e]
   (let [[type player] (player-known? game e)
         melee (skills/any-type-skill e :melee)]
-    (world/>> game [(:id e)]
-              #(when (and (= type :sight) (not (:player-spotted? (memory/entity-memory %2))))
-                 (-> %1
-                     (transition/transition (transition/sound :serv-bot-spot))
-                     (memory/update-memory %2 assoc :player-spotted? true)))
-              #(when (= (:position %2) (:position player))
-                 (forget-player %1 %2 player))
-              #(cond (some-> %1 (player-nearby? %2) combat/attackable?) (combat/melee %1 %2 melee player)
-                     (= type :sight) (-> %1
-                                         (move-melee-range %2 player)
-                                         (memory/update-memory %2 assoc :player player))
-                     (= type :memory) (if-let [path (path-to %1 %2 player)]
-                                        (movement/relocate %1 %2 (first path))
-                                        (forget-player %1 %2 player))
-                     :default (move-random %1 %2)))))
+    (world/>> game [(:id e)] [bot]
+              (when (and (= type :sight) (not (:player-spotted? (memory/entity-memory bot))))
+                (-> game
+                    (transition/transition (transition/sound :serv-bot-spot))
+                    (memory/update-memory bot assoc :player-spotted? true)))
+              (when (= (:position bot) (:position player))
+                (forget-player game bot player))
+              (cond (some-> game (player-nearby? bot) combat/attackable?) (combat/melee game bot melee player)
+                    (= type :sight) (-> game
+                                        (move-melee-range bot player)
+                                        (memory/update-memory bot assoc :player player))
+                    (= type :memory) (if-let [path (path-to game bot player)]
+                                       (movement/relocate game bot (first path))
+                                       (forget-player game bot player))
+                    :default (move-random game bot)))))
 
 (defn system [game]
   (let [es (world/capable-entities game :ai)]

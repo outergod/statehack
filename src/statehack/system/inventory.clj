@@ -33,16 +33,16 @@
 
 (defn pick-up-item [game e1 e2]
   {:pre [(:inventory e1) (:pickup e2)]}
-  (world/>> game [(:id e1) (:id e2)]
-            (fn [game actor item] (world/update-entity-component game actor :inventory conj (:id item)))
-            (fn [game _ item] (world/remove-entity-component game item :position :floor))))
+  (world/>> game [(:id e1) (:id e2)] [actor item]
+            (world/update-entity-component game actor :inventory conj (:id item))
+            (world/remove-entity-component game item :position :floor)))
 
 (defn drop-item [game e1 e2]
   {:pre [(in-inventory? e1 e2)]}
-  (world/>> game [(:id e1) (:id e2)]
-            slots/unslot-item
-            (fn [game actor item] (world/update-entity-component game actor :inventory (partial remove #{(:id item)})))
-            (fn [game actor item] (world/add-entity-component game item (c/position (:position actor)) (c/floor (:floor actor))))))
+  (world/>> game [(:id e1) (:id e2)] [actor item]
+            (slots/unslot-item actor item)
+            (world/update-entity-component game actor :inventory (partial remove #{(:id item)}))
+            (world/add-entity-component game item (c/position (:position actor)) (c/floor (:floor actor)))))
 
 (defn available-pickups [game e]
   (entity/filter-capable [:pickup] (world/entities-at game e)))
@@ -106,9 +106,9 @@
 (defmethod change-frame :default [game _ _] game)
 
 (defn- change-frame-common [game menu frame]
-  (world/>> game [(:id menu)]
-            #(world/update-entity-component %1 %2 [:inventory-menu :frame] (constantly frame))
-            #(change-index %1 %2 identity)))
+  (world/>> game [(:id menu)] [menu]
+            (world/update-entity-component game menu [:inventory-menu :frame] (constantly frame))
+            (change-index game menu identity)))
 
 (defmethod change-frame [:pickup :left] [game menu _]
   (change-frame-common game menu :floor))
