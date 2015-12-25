@@ -54,11 +54,9 @@
                                         lab))}]}))
 
 (defn load-game [screen world]
-  (let [game {:screen screen
-              :graphics (screen/text-graphics screen)
-              :world world}
-        player (unique/unique-entity game :player)]
-    (viewport/center-on game player)))
+  {:screen screen
+   :graphics (screen/text-graphics screen)
+   :world world})
 
 (defn game-over [game]
   (let [{:keys [screen]} game]
