@@ -69,12 +69,14 @@
 (defn blit
   "Evaluate to the entity with higher blit order"
   [e1 e2]
-  (let [[r1 r2] (map :renderable [e1 e2])
-        rs (blit-order #{r1 r2})]
-    (condp = rs ; case does never match; why??
-      r1 e1
-      r2 e2
-      (throw (ex-info "Blit order of entities undefined" {:entities [e1 e2]})))))
+  (let [[r1 r2] (map :renderable [e1 e2])]
+    (if (= r1 r2)
+      e1
+      (let [rs (blit-order #{r1 r2})]
+        (condp = rs
+          r1 e1
+          r2 e2
+          (throw (ex-info "Blit order of entities undefined" {:entities [e1 e2]})))))))
 
 (def tiles
   "Mapping of tile keywords to characters"
