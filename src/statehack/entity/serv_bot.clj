@@ -25,7 +25,6 @@
    (c/category :serv-bot)
    (c/mobile :wheels)
    (c/renderable :serv-bot)
-   (c/soundset :serv-bot)
    (c/obstacle)
    (c/vulnerable 20)
    (c/armor 20)
