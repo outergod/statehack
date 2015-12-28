@@ -20,9 +20,9 @@
 (defn dart-gun
   [[x y z]]
   (entity
-   (c/name "SV-23 Dart Gun")
+   (c/name "SV-23 Dart Pistol")
    (c/position [x y])
    (c/floor z)
    (c/pickup :slot-weapon)
-   (c/weapon :gun 10)
+   (c/weapon :semi-automatic 20 20 2 :dart-gun)
    (c/renderable :weapon)))

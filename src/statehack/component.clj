@@ -68,6 +68,16 @@
   {:hp {:current hp
         :max hp}})
 
+(defn armor
+  "Armor component
+
+  Armor reduces damage done in combat.
+
+  Related systems: combat"
+  [armor]
+  {:pre [(pos? armor)]}
+  {:armor armor})
+
 (defn alive
   "Life component
 
@@ -297,6 +307,9 @@
   "Weapon component
 
   Stats for a weapon"
-  [type strength]
+  [type damage penetration offense transition]
   {:weapon {:type type
-            :strength strength}})
+            :damage damage
+            :penetration penetration
+            :offense offense
+            :transition transition}})

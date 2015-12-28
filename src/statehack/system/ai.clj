@@ -91,7 +91,7 @@
 
 (defmethod act :serv-bot [game e]
   (let [[type player] (player-known? game e)
-        melee (skills/any-type-skill e :melee)]
+        melee (skills/skill e :melee)]
     (world/>> game [(:id e)] [bot]
               (when (and (= type :sight) (not (:player-spotted? (memory/entity-memory bot))))
                 (-> game

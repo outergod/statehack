@@ -43,6 +43,8 @@
    :airlock-door "00204.wav"
    :blast-door "00268.wav"
 
+   :lead-pipe-hit "00222.wav"
+   :lead-pipe-miss "00225.wav"
    :ion-rifle "00296.wav"
    :gauss-rifle "00230.wav"
    :dart "00287.wav"
@@ -54,6 +56,7 @@
    :plasma "00298.wav"
    :magpulse "00246.wav"
 
+   :bot-die "00211.wav"
    :serv-bot-spot "00275.wav"
    :vmail "00293.wav"
    :radiation "00203.wav"

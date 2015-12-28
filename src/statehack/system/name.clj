@@ -24,4 +24,4 @@
 (defn name [e]
   (cond (entity/capable? e :name) (:name e)
         (entity/capable? e :category) (category-names (:category e))
-        :default "WTF"))
+        :default "Unknown"))

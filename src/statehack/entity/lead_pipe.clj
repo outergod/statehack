@@ -13,27 +13,16 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.entity.serv-bot
+(ns statehack.entity.lead-pipe
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn serv-bot [[x y z]]
+(defn lead-pipe
+  [[x y z]]
   (entity
+   (c/name "Lead Pipe")
    (c/position [x y])
    (c/floor z)
-   (c/alive true)
-   (c/category :serv-bot)
-   (c/mobile :wheels)
-   (c/renderable :serv-bot)
-   (c/soundset :serv-bot)
-   (c/obstacle)
-   (c/vulnerable 20)
-   (c/armor 20)
-   (c/ai :serv-bot)
-   (c/sight :sensors 5)
-   #_(c/sight :omniscience nil)
-   (c/memory)
-   (c/skillset :melee (apply merge
-                             (c/name "Appendages")
-                             (c/weapon :melee 8 0 1 :appendages)))
-   (c/inventory)))
+   (c/pickup :slot-weapon)
+   (c/weapon :melee 15 40 3 :lead-pipe)
+   (c/renderable :weapon)))

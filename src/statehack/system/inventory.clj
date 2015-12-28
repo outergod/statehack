@@ -40,7 +40,7 @@
 (defn drop-item [game e1 e2]
   {:pre [(in-inventory? e1 e2)]}
   (world/>> game [(:id e1) (:id e2)] [actor item]
-            (slots/unslot-item actor item)
+            (slots/unslot game actor item)
             (world/update-entity-component game actor :inventory (partial remove #{(:id item)}))
             (world/add-entity-component game item (c/position (:position actor)) (c/floor (:floor actor)))))
 
@@ -81,7 +81,7 @@
         {:keys [type]} weapon
         {:keys [slots]} actor]
     (if ((slots/available-slots actor) type)
-      (slots/slot-item game actor item type)
+      (slots/slot game actor item type)
       (messages/log game (format "%s cannot use %s" (name/name actor) (name/name item))))))
 
 (defn activate-item [game {:keys [inventory-menu] :as menu}]
