@@ -63,11 +63,10 @@ html {
     justify-content: center;
     height: 100%;
 }
-
 .terminal {
     float: none;
     border: 0;
-    font-family: Inconsolata;
+    font-family: DejaVu Sans Mono;
     font-size: 16px;
     color: #f0f0f0;
     background: #000000;
