@@ -35,6 +35,25 @@
             [clojure.walk :as walk]
             [clojure.set :as set]))
 
+(def colors
+  {:black 16
+   :red 1
+   :green 2
+   :yellow 3
+   :blue 4
+   :magenta 5
+   :cyan 6
+   :gray 7
+
+   :lightblack 8
+   :lightred 9
+   :lightgreen 10
+   :lightyellow 11
+   :lightblue 12
+   :lightmagenta 13
+   :lightcyan 14
+   :white 15})
+
 (def render-hierarchy "Hierarchy for `render`" (make-hierarchy))
 
 (defn render-dispatch
@@ -135,7 +154,7 @@
   character/color vectors."
   [canvas]
   (mapv #(mapv (fn [{:keys [tile color background char]}]
-                 [(if tile (tiles tile) (str char)) color (or background 16)]) %)
+                 [(if tile (tiles tile) (str char)) (colors color) (colors (or background :black))]) %)
         canvas))
 
 (defn dye
@@ -225,7 +244,7 @@
   `dimensions`. `offset` leaves a margin on the blitting target."
   [canvas dimensions viewport offset]
   (let [[[x0 y0] [x1 y1]] viewport]
-    (canvas-blit (rect :nihil 0 dimensions)
+    (canvas-blit (rect :nihil :black dimensions)
                  (subvec (mapv #(subvec % x0 x1) canvas) y0 y1)
                  offset)))
 
@@ -246,14 +265,14 @@
   (let [{:keys [floor foundation]} (levels/entity-floor game e)
         {:keys [entities coordinates]} (memory/entity-floor-memory e floor)
         canvas (reduce #(canvas-update %1 %2 (constantly {:tile :empty}))
-                       (rect :nihil 0 foundation) coordinates)
+                       (rect :nihil :black foundation) coordinates)
         es (vals entities)]
-    (dye (reduce-entities game canvas es) 8)))
+    (dye (reduce-entities game canvas es) :lightblack)))
 
 (defn visible-world
   "Render the visible world of `e`"
   [game e]
-  (let [canvas (space 7 (:foundation (levels/entity-floor game e)))
+  (let [canvas (space :gray (:foundation (levels/entity-floor game e)))
         mask (sight/visible-mask game e)
         es (entity/filter-capable [:position :renderable] (levels/floor-entities game (:floor e)))]
     (mask-canvas (reduce-entities game canvas es) mask)))
@@ -272,7 +291,7 @@
 
   With optional background color `b`."
   ([s c]
-   (tilify-string s c 16))
+   (tilify-string s c :black))
   ([s c b]
    (mapv (fn [chr] {:char chr :color c :background b}) s)))
 
@@ -284,7 +303,7 @@
          s (if title (str "|" title "|") "")
          length (count s)]
      (apply concat
-            [[(flatten [(tile :tlcorner) (tilify-string s 7) (repeat (- w 2 length) (tile :hwall)) (tile :trcorner)])]
+            [[(flatten [(tile :tlcorner) (tilify-string s :gray) (repeat (- w 2 length) (tile :hwall)) (tile :trcorner)])]
              (repeat (- h 2) (flatten [(tile :vwall) (repeat (- w 2) (tile :nihil)) (tile :vwall)]))
              [(flatten [(tile :blcorner) (repeat (- w 2) (tile :hwall)) (tile :brcorner)])]])))
   ([[w h] color] (window [w h] color {})))
@@ -294,9 +313,9 @@
   `e` at coordinates `[x y]`, proportions `[w h]`."
   [canvas e [x y] [w h]]
   (-> canvas
-      (canvas-blit (window 7 [w h]) [x y])
-      (canvas-update (util/matrix-add [x y] [1 1]) (constantly {:tile :dialog-indicator :color 7}))
-      (canvas-blit (tilify-string (messages/current e) 7) (util/matrix-add [x y] [2 1]))))
+      (canvas-blit (window :gray [w h]) [x y])
+      (canvas-update (util/matrix-add [x y] [1 1]) (constantly {:tile :dialog-indicator :color :gray}))
+      (canvas-blit (tilify-string (messages/current e) :gray) (util/matrix-add [x y] [2 1]))))
 
 (defmethod render :box [game {:keys [alignment children]} offset]
   (let [[step merge]
@@ -337,15 +356,15 @@
 
 (defmethod draw :messages [game {:keys [dimensions]} _]
   (let [log (unique/unique-entity game :log)
-        canvas (rect :nihil 0 dimensions)]
-    (canvas-blit canvas (map #(tilify-string % 7) (messages/recent log 5)))))
+        canvas (rect :nihil :black dimensions)]
+    (canvas-blit canvas (map #(tilify-string % :gray) (messages/recent log 5)))))
 
 ;; Status
 
 (defmethod draw :status [game {:keys [dimensions]} _]
   (let [player (unique/unique-entity game :player)
-        canvas (rect :nihil 0 dimensions)]
-    (canvas-blit canvas [(tilify-string (status/text game player) 7)])))
+        canvas (rect :nihil :black dimensions)]
+    (canvas-blit canvas [(tilify-string (status/text game player) :gray)])))
 
 ;; Menu
 
@@ -353,12 +372,12 @@
   "Make a selectable list from `items`"
   [screen [w h] items slotted active? index offset title]
   (when active? (screen/move-cursor screen (util/matrix-add [0 index] [1 2] offset)))
-  (canvas-blit (window [w h] 7 {:title title})
+  (canvas-blit (window [w h] :gray {:title title})
                (map-indexed (fn [i {:keys [id] :as item}]
                               (let [s (str (name/name item) (if (slotted id) " (slotted)" ""))]
                                 (if (and active? (= index i))
-                                  (tilify-string (format (str "%-" (- w 4) "s") s) 0 7)
-                                  (tilify-string s (if (slotted id) 88 7) 16))))
+                                  (tilify-string (format (str "%-" (- w 4) "s") s) :black :gray)
+                                  (tilify-string s (if (slotted id) :red :gray) :black))))
                             items)
                [2 2]))
 
@@ -376,11 +395,11 @@
 
 ;; Tile
 
-(defmethod tile :humanoid [& _] {:tile :humanoid :color 7})
-(defmethod tile :serv-bot [& _] {:tile :serv-bot :color 160})
-(defmethod tile :corpse [& _] {:tile :corpse :color 88})
-(defmethod tile :camera [& _] {:tile :camera :color 7})
-(defmethod tile :battery [& _] {:tile :battery :color 7})
+(defmethod tile :humanoid [& _] {:tile :humanoid :color :gray})
+(defmethod tile :serv-bot [& _] {:tile :serv-bot :color :lightred})
+(defmethod tile :corpse [& _] {:tile :corpse :color :red})
+(defmethod tile :camera [& _] {:tile :camera :color :gray})
+(defmethod tile :battery [& _] {:tile :battery :color :gray})
 
 (doseq [d [:hdoor :vdoor]]
   (derive-tile d :door))
@@ -415,14 +434,14 @@
            #{[1 0]} :hwall #{[-1 0]} :hwall
            #{[0 -1]} :vwall #{[0 1]} :vwall
            :swall)
-   :color 15})
+   :color :white})
 
 (defmethod tile :door [game {:keys [open] :as door}]
   {:tile (condp set/subset? (set (map #(world/entity-delta % door) (entity/filter-capable [:room] (world/entity-neighbors game door))))
            #{[1 0] [-1 0]} :hdoor
            #{[0 1] [0 -1]} :vdoor
            :door)
-   :color (if open 8 15)})
+   :color (if open :lightblack :white)})
 
 (blit-precedence :humanoid :door)
 (blit-precedence :humanoid :corpse)
@@ -439,7 +458,7 @@
 
 (defmethod tile :weapon [game e]
   {:tile :weapon
-   :color 15})
+   :color :white})
 
 ;; System
 
