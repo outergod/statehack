@@ -18,7 +18,7 @@
       }
     });
     term.on('key', function (key, e) {
-      if (e.keyIdentifier === 'Enter') {
+      if (e.keyCode === 13) {
         socket.send('\n');
       }
     });
