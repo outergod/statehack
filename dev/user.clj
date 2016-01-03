@@ -41,7 +41,7 @@
            (let [{:keys [state]} (ex-data e)]
              (println "Crash state available.")
              (swap! crash-state (constantly state))
-             (throw (.getCause e)))
+             (throw e))
            (throw e)))))
 
 (defn run-http []
