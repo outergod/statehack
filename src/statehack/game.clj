@@ -19,7 +19,6 @@
             [statehack.system.layout :as layout]
             [statehack.system.graphics :as graphics]
             [statehack.entity.floor :as floor]
-            [statehack.entity.player :as player-entity]
             [statehack.entity.status-bar :as status]
             [statehack.entity.serv-bot :as serv-bot]
             [statehack.entity.cursor :as cursor]
@@ -33,6 +32,8 @@
             [statehack.system.levels :as levels]
             [statehack.system.memory :as memory]
             [statehack.system.sound :as sound]
+            [statehack.system.input.receivers :as receivers]
+            [statehack.system.unique :as unique]
             [statehack.util :as util]
             [halo.screen :as screen]))
 
@@ -40,18 +41,16 @@
   (let [;level (levels/load "level-0" 1)
         lab (levels/load-room "starting-lab" [0 0] 1)
         [w h] (levels/dimensions lab)
-        {:keys [id] :as player} (player-entity/player "Malefeitor" [12 7 1] 100)]
-    {:screen screen
-     :graphics (screen/text-graphics screen)
-     :world [{:receivers [id]
-              :entities (util/index-by :id
-                                       (concat
-                                        [player
-                                         (floor/floor 1 [w h])
-                                         (status/status-bar)
-                                         (cursor/cursor)
-                                         (log/log)]
-                                        lab))}]}))
+        game {:screen screen
+              :graphics (screen/text-graphics screen)
+              :world [{:entities (util/index-by :id
+                                                (concat
+                                                 [(floor/floor 1 [w h])
+                                                  (status/status-bar)
+                                                  (cursor/cursor)
+                                                  (log/log)]
+                                                 lab))}]}]
+    (receivers/push-control game (unique/unique-entity game :player))))
 
 (defn load-game [screen world]
   {:screen screen

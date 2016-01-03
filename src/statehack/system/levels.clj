@@ -16,6 +16,7 @@
 (ns statehack.system.levels
   (:refer-clojure :exclude [load])
   (:require [statehack.entity :as entity]
+            [statehack.entity.player :as player]
             [statehack.entity.room :as room]
             [statehack.entity.serv-bot :as serv-bot]
             [statehack.entity.dart-gun :as dart-gun]
@@ -26,7 +27,8 @@
             [clojure.string :as str]
             [clojure.java.io :as io]))
 
-(def rooms {"starting-lab" {:tiles {\X #(room/wall %&)
+(def rooms {"starting-lab" {:tiles {\@ #(player/player "Malefeitor" %& 100)
+                                    \X #(room/wall %& :lightblue)
                                     \o #(room/door %& false)
                                     \O #(room/door %& true)
                                     \b #(serv-bot/serv-bot %&)

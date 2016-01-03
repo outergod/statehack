@@ -17,9 +17,10 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn wall [[x y z]]
+(defn wall [[x y z] color]
   (entity
    (c/renderable :wall)
+   (c/color color)
    (c/position [x y])
    (c/floor z)
    (c/room)

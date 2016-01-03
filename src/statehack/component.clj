@@ -219,6 +219,11 @@
   [type]
   {:renderable type})
 
+(defn color
+  "Color component"
+  [color]
+  {:color color})
+
 (defn messages
   "Message component
 

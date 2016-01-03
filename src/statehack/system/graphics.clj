@@ -434,7 +434,7 @@
            #{[1 0]} :hwall #{[-1 0]} :hwall
            #{[0 -1]} :vwall #{[0 1]} :vwall
            :swall)
-   :color :white})
+   :color (or (:color wall) :white)})
 
 (defmethod tile :door [game {:keys [open] :as door}]
   {:tile (condp set/subset? (set (map #(world/entity-delta % door) (entity/filter-capable [:room] (world/entity-neighbors game door))))
