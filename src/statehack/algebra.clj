@@ -77,18 +77,32 @@
           (recur x y (inc (* 2 y)) (conj acc points))
           (recur (dec x) y (* 2 (inc (- y x))) (conj acc points)))))))
 
-(defn visible-lines
-  "Collection of all possible lines from `[x0 y0]` to a circle around
-  that point with radius `r`. Duplicates are not removed."
-  [[x0 y0] r]
+(defn- visible-lines-origin
+  "Collection of all distinct possible lines from `[0 0]` to a circle around
+  that point with radius `r`."
+  [r]
   (let [turn (* Math/PI 2)
         segments (Math/ceil (* r r turn))]
-    (for [rad (range 0 turn (/ turn segments))]
-      (distinct
-       (for [r (range 1 (inc r))]
-         (util/matrix-add [x0 y0]
-                          [(Math/round (* r (Math/cos rad)))
-                           (Math/round (* r (Math/sin rad)))]))))))
+    (distinct
+      (for [rad (range 0 turn (/ turn segments))]
+        (distinct
+          (for [r (range 1 (inc r))]
+            [(Math/round (* r (Math/cos rad)))
+             (Math/round (* r (Math/sin rad)))]))))))
+
+(def visible-lines-seq
+  "Infinite lazy sequence of visible lines around `[0 0]`"
+  (map visible-lines-origin (iterate inc 1)))
+
+;; Calculate the first ten radii around `[0 0]`
+(take 10 visible-lines-seq)
+
+(defn visible-lines
+  "Collection of all possible lines from `[x0 y0]` to a circle around
+  that point with radius `r`."
+  [[x0 y0] r]
+  (for [line (nth visible-lines-seq (dec r))]
+    (map (partial util/matrix-add [x0 y0]) line)))
 
 (defn- octant-projection
   "Determine parameters for a projection of a bresenham line from
