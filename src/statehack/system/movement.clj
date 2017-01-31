@@ -28,21 +28,34 @@
             [statehack.algebra :as algebra]
             [clojure.set :as set]))
 
-(def move-hierarchy (make-hierarchy))
+(def move-hierarchy
+  "Hierarchy used for `available-moves`"
+  (make-hierarchy))
 
-(defn- available-moves-dispatch [game e]
+(defn- available-moves-dispatch
+  "Dispatcher for `available-moves`"
+  [game e]
   (-> e :mobile :type))
 
-(defmulti available-moves #'available-moves-dispatch :hierarchy #'move-hierarchy)
+(defmulti available-moves
+  "Available moves determines where an entity can move to based on its `mobility`"
+  #'available-moves-dispatch :hierarchy #'move-hierarchy)
+
 (defmethod available-moves :default [& _] nil)
 
-(defn move [game e [x y]]
+(defn move
+  "Move entity `e` by `[x y z]`"
+  [game e [x y]]
   (world/update-entity-component game e :position util/matrix-add [x y]))
 
-(defn relocate [game e [x y]]
+(defn relocate
+  "Relocate entity `e` to `[x y z]`"
+  [game e [x y]]
   (world/update-entity-component game e :position (constantly [x y])))
 
-(defn inbound-moves [game e]
+(defn inbound-moves
+  "Set of all possible inbound moves for `e`"
+  [game e]
   (let [{:keys [foundation]} (levels/floor game (:floor e))]
     (set (filter #(levels/in-bounds? foundation (util/matrix-add (:position e) %))
                  algebra/neighbor-deltas))))
@@ -54,17 +67,21 @@
     (into {} (map (fn [pos] [pos #(move % e pos)])
                   (set/difference (inbound-moves game e) ds)))))
 
+;;; Bipedal movement. Obstructed only by obstacle entities.
 (defmethod available-moves :bipedal [game e]
   (let [es (obstacle/filter-obstacles (world/entity-neighbors game e))]
     (available-moves-common game e es)))
 
+;;; Wheel movement. Can't move across doors.
 (defmethod available-moves :wheels [game e]
   (let [es (world/entity-neighbors game e)
         os (set (obstacle/filter-obstacles (world/entity-neighbors game e)))
         doors (set (door/filter-doors es))]
     (available-moves-common game e (set/union os doors))))
 
-(defn move-next [game sel]
+(defn move-next
+  "Move selector entity `sel` to next possible target"
+  [game sel]
   (let [{:keys [targets]} (:mobile sel)
         es (:entities (world/state game))
         targets (concat (rest targets) [(first targets)])
@@ -73,13 +90,17 @@
         (world/update-entity-component sel :mobile assoc :targets targets)
         (relocate sel (:position e)))))
 
-(defn unavailable-moves [game e]
+(defn unavailable-moves
+  "Mapping of unavailable movements to log messages"
+  [game e]
   (let [os (obstacle/filter-obstacles (world/entity-neighbors game e))
         cs (set/difference algebra/neighbor-deltas (inbound-moves game e))]
     (merge (into {} (map (fn [o] [(world/entity-delta o e) #(messages/log % "There's an obstacle in the way.")]) os))
            (into {} (map (fn [c] [c #(messages/log % "Somehow, you can't move here...")]) cs)))))
 
-(defn update-cursor [game]
+(defn update-cursor
+  "Update the cursor position based on the current input receiver"
+  [game]
   (let [{:keys [entities receivers]} (world/state game)
         r (receivers/current game)
         e (unique/unique-entity game :cursor)
