@@ -59,28 +59,28 @@
       (move game)
       game)))
 
-(defn path-to [game e target]
+(defn path-to [game e target limit]
   (let [{:keys [foundation]} (levels/entity-floor game e)
         es (vals (dissoc (:entities (memory/entity-floor-memory e)) (:id target)))
         os (set (map :position es))]
-    (next (algebra/a* (:position e) (:position target) foundation os))))
+    (next (algebra/a* (:position e) (:position target) foundation os limit))))
 
-(defn move-towards [game e target]
+(defn move-towards [game e target limit]
   (let [{:keys [foundation]} (levels/entity-floor game e)
         es (vals (dissoc (:entities (memory/entity-floor-memory e)) (:id target)))
         os (set (map :position es))
-        path (algebra/a* (:position e) (:position target) foundation os)]
+        path (algebra/a* (:position e) (:position target) foundation os limit)]
     (if (> (count path) 1)
       (movement/relocate game e (fnext path))
       game)))
 
-(defn move-melee-range [game e target]
+(defn move-melee-range [game e target limit]
   (let [{:keys [foundation]} (levels/entity-floor game e)
         es (vals (:entities (memory/entity-floor-memory e)))
         os (set (map :position es))
         paths (sort algebra/PathComparator
                     (remove nil?
-                            (pmap #(algebra/a* (:position e) % foundation os)
+                            (pmap #(algebra/a* (:position e) % foundation os limit)
                                   (algebra/neighbors (:position target)))))]
     (if-let [path (first paths)]
       (movement/relocate game e (fnext path))
@@ -101,9 +101,9 @@
                 (forget-player game bot player))
               (cond (some-> game (player-nearby? bot) combat/attackable?) (combat/melee game bot melee player)
                     (= type :sight) (-> game
-                                        (move-melee-range bot player)
-                                        (memory/update-memory bot assoc :player player))
-                    (= type :memory) (if-let [path (path-to game bot player)]
+                                      (move-melee-range bot player 100)
+                                      (memory/update-memory bot assoc :player player))
+                    (= type :memory) (if-let [path (path-to game bot player 100)]
                                        (movement/relocate game bot (first path))
                                        (forget-player game bot player))
                     :default (move-random game bot)))))

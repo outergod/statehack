@@ -161,11 +161,8 @@
   (set/union (set (mapcat (fn [x] [[x -1] [x h]]) (range -1 (inc w))))
              (set (mapcat (fn [y] [[-1 y] [w y]]) (range -1 (inc h))))))
 
-(defn a*
-  "Calculate a path from `[x0 y0]` to `[x1 y1]` within bounds `[w h]`
-  using the A* algorithm, given obstacle coordinates `os`
-
-  `nil` if no path can be determined."
+(defn- a*-seq
+  "Lazy sequence of A* iterations"
   [[x0 y0] [x1 y1] [w h] os]
   (let [os (set/union os (frame [w h]))]
     (if (os [x1 y1])
@@ -183,16 +180,26 @@
                             (when-not (and prev-cost (<= prev-cost cost))
                               [[x y] [cost g parents]])))
                         (set/difference (neighbors [x y]) os closed))))]
-        (loop [fringe (priority-map-keyfn first [x0 y0] [(h [x0 y0]) 0 []])
-               closed #{}
-               goal (priority-map-keyfn first)]
-          (let [[[x y] [cost distance parents] :as node] (peek fringe)
-                [[x-goal y-goal] [cost-goal _ parents-goal] :as node-goal] (peek goal)]
-            (cond (= [x y] [x1 y1]) (recur (pop fringe) closed (conj goal node))
-                  (and (not-empty node-goal)
+        (iterate
+          (fn [[state fringe closed goal]]
+            (if (= state :stop)
+              [state fringe closed goal]
+              (let [[[x y] [cost distance parents] :as node] (peek fringe)
+                   [[x-goal y-goal] [cost-goal _ parents-goal] :as node-goal] (peek goal)]
+               (cond (= [x y] [x1 y1]) [:continue (pop fringe) closed (conj goal node)]
+                     (and (not-empty node-goal)
                        (or (empty? node)
-                           (< cost-goal cost))) (conj parents-goal [x-goal y-goal])
-                  node (recur (into (pop fringe) (n [x y] distance parents fringe closed)) (conj closed [x y]) goal))))))))
+                         (< cost-goal cost))) [:stop (conj parents-goal [x-goal y-goal])]
+                     node [:continue (into (pop fringe) (n [x y] distance parents fringe closed)) (conj closed [x y]) goal]))))
+          [:continue
+           (priority-map-keyfn first [x0 y0] [(h [x0 y0]) 0 []])
+           #{}
+           (priority-map-keyfn first)])))))
+
+(defn a*
+  [[x0 y0] [x1 y1] [w h] os limit]
+  (let [[state path] (last (take limit (a*-seq [x0 y0] [x1 y1] [w h] os)))]
+    (if (= state :stop) path nil)))
 
 (defn path-shortcuts
   "Count the number of diagonal moves in `path`
