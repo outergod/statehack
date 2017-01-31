@@ -1,5 +1,7 @@
 ;;;; This file is part of statehack.
 ;;;;
+;;;; Copyright © 2014-2017 Alexander Kahl <ak@sodosopa.io>
+;;;;
 ;;;; statehack is free software: you can redistribute it and/or modify
 ;;;; it under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
