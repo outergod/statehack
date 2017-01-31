@@ -16,22 +16,36 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity
+  "Entities are the most basic unit in ECS"
   (:require [clojure.set :as set]))
 
-(defn uuid [] (java.util.UUID/randomUUID))
+(defn uuid
+  "Generate a new, random UUIDv4"
+  []
+  (java.util.UUID/randomUUID))
 
-(defn entity [& components]
+(defn entity
+  "Generate a new entity with the given `components`"
+  [& components]
   (apply merge {:id (uuid)} components))
 
-(defn components [e]
+(defn components
+  "Set of all components of entity"
+  [e]
   (set (keys e)))
 
-(defn capable? [e & cs]
+(defn capable?
+  "Does entity have all given components?"
+  [e & cs]
   (set/subset? (set cs) (components e)))
 
-(defn filter-capable [[& cs] es]
+(defn filter-capable
+  "Filter entities that have all given components"
+  [[& cs] es]
   (filter #(apply capable? % cs) es))
 
-(defn remove-capable [[& cs] es]
+(defn remove-capable
+  "Remove entities that have all given components"
+  [[& cs] es]
   (remove #(apply capable? % cs) es))
 
