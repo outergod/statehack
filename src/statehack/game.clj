@@ -16,6 +16,7 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.game
+  "Main game loop"
   (:require [statehack.system.world :as world]
             [statehack.system.player :as player]
             [statehack.system.layout :as layout]
@@ -39,7 +40,9 @@
             [statehack.util :as util]
             [halo.screen :as screen]))
 
-(defn new-game [screen]
+(defn new-game
+  "Create new game from scratch"
+  [screen]
   (let [;level (levels/load "level-0" 1)
         lab (levels/load-room "starting-lab" [0 0] 1)
         [w h] (levels/dimensions lab)
@@ -54,20 +57,29 @@
                                                  lab))}]}]
     (receivers/push-control game (unique/unique-entity game :player))))
 
-(defn load-game [screen world]
+(defn load-game
+  "Load the game from given `world`"
+  [screen world]
   {:screen screen
    :graphics (screen/text-graphics screen)
    :world world})
 
-(defn game-over [game]
+(defn game-over
+  "Transition the game to game over state"
+  [game]
   (let [{:keys [screen]} game]
     (-> game (messages/log "Game Over. Whatever that means..") graphics/system)
     (screen/read-input-blocking screen)))
 
-(defn turn [game]
+(defn turn
+  "Run all relevant systems after a player or AI action has been processed"
+  [game]
   (-> game transition/system memory/system layout/system graphics/system))
 
 (defn run
+  "Main game loop
+
+  Purge the current input queue, init sound and start the actual game."
   [{:keys [screen] :as game}]
   (doall (take-while identity (repeatedly #(screen/read-input screen))))
   (sound/init)
