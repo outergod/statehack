@@ -22,13 +22,20 @@
 
 (defn defer [game es action]
   (let [e (selector/selector (:position (first es)) action (map :id es))]
-    (-> game (world/add-entity e) (receivers/push-control e))))
+    (world/update game [(:id e)] [e]
+      (world/add-entity game e)
+      (receivers/push-control game e))))
 
 (defn fulfill [game e]
   (let [{:keys [deferred mobile]} e
         es (:entities (world/state game))
         t (es (first (:targets mobile)))]
-    (-> game (world/remove-entity e) receivers/pop-control (deferred t))))
+    (world/update game [(:id e)] [e]
+      (world/remove-entity game e)
+      (receivers/pop-control game)
+      (deferred game t))))
 
 (defn abort [game e]
-  (-> game (world/remove-entity e) receivers/pop-control))
+  (world/update game [(:id e)] [e]
+    (world/remove-entity game e)
+    (receivers/pop-control game)))

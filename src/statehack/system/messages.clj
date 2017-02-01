@@ -16,7 +16,7 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.messages
-  (:refer-clojure :exclude [pop])
+  (:refer-clojure :exclude [update pop])
   (:require [statehack.entity.dialog :as dialog]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.world :as world]
@@ -25,13 +25,15 @@
 
 (defn dialog [game & ms]
   (let [d (apply dialog/dialog ms)]
-    (-> game (world/add-entity d) (receivers/push-control d))))
+    (world/update game
+      (world/add-entity game d)
+      (receivers/push-control game d))))
 
 (defn current [e]
   (first (:messages e)))
 
 (defn update [game e f]
-  (world/update-entity-component game e :messages f))
+  (world/update-entity-component game (:id e) :messages f))
 
 (defn pop [game e]
   (update game e next))

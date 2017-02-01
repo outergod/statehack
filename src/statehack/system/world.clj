@@ -16,53 +16,90 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.world
+  "World manipulation"
+  (:refer-clojure :exclude [update])
   (:require [statehack.util :as util]
             [statehack.entity :as entity]
             [statehack.algebra :as algebra]))
 
-(def store (atom {}))
+;;; In order to implement the idea of a purely functional ECS, the current state
+;;; of the world is always represented as a head of a sequence. Whenever a
+;;; player action causes a new round in the game to start, the current world
+;;; state is duplicated and this duplicate manipulated subsequently.
 
-(defn save [game]
+(def store
+  "Storage for world state"
+  (atom {}))
+
+(defn save
+  "Store the current world state into `store`"
+  [game]
   (swap! store (constantly (:world game)))
   game)
 
-(defn state [game]
+(defn state
+  "Current world state"
+  [game]
   (-> game :world first))
 
-(defn entities [game]
+(defn entities
+  "All entities of current world state"
+  [game]
   (:entities (state game)))
 
-(defn entity [game id]
+(defn entity
+  "Lookup entity identified by `id` in current world state"
+  [game id]
   ((entities game) id))
 
-(defmacro >> [game [& ids] [& bindings] & updates]
-  {:pre [(= (count bindings) (count ids))]}
-  `(reduce (fn [~game f#] (or (apply f# ~game (map (partial entity ~game) [~@ids])) ~game))
-           ~game
-           [~@(map (fn [body] `(fn [~game ~@bindings] ~body)) updates)]))
+(defmacro update
+  "Convenience macro to manipulate entities"
+  {:arglists '([game [& ids] [& bindings] & updates] [game & updates])}
+  [game & args]
+  (let [[ids bindings & updates] (if (vector? (first args)) args (concat [nil nil] args))]
+    `(reduce (fn [~game f#] (or (apply f# ~game (map (partial entity ~game) [~@ids])) ~game))
+       ~game
+       [~@(map (fn [body] `(fn [~game ~@bindings] ~body)) updates)])))
 
-(defn dup-world-state [game]
+(defn dup-world-state
+  "Duplicate and cons the current world state onto the state list"
+  [game]
   (let [world (:world game)
         state (first world)]
     (assoc game :world (cons state world))))
 
-(defn update-world-state [game f & args]
+(defn update-world-state
+  "Update the current world state by running `apply f state args` against it"
+  [game f & args]
   (update-in game [:world] (fn [[x & xs]] (cons (apply f x args) xs))))
 
-(defn update-in-world-state [game [& ks] f & args]
+(defn update-in-world-state
+  "Run `update-in` with key sequence `ks` against the current world state"
+  [game [& ks] f & args]
   (update-world-state game #(apply update-in % ks f args)))
 
-(defn update-entity [game e f & args]
-  (apply update-in-world-state game [:entities (:id e)] f args))
+(defn update-entity
+  "Update entity identified by `id` in current state with `apply f entity args`"
+  [game id f & args]
+  (apply update-in-world-state game [:entities id] f args))
 
-(defn remove-entity-component [game e c & cs]
-  (update-in-world-state game [:entities (:id e)] #(apply dissoc % c cs)))
+(defn remove-entity-component
+  "Remove entity components from entity"
+  [game id c & cs]
+  (update-in-world-state game [:entities id] #(apply dissoc % c cs)))
 
-(defn update-entity-component [game e c f & args]
+(defn update-entity-component
+  "Update entity components in entity
+
+  `c` may be a sequence with additional keys, in which case the component itself
+  is travesed and updated."
+  [game id c f & args]
   (let [c (if (sequential? c) c [c])]
-    (apply update-in-world-state game (concat [:entities (:id e)] c) f args)))
+    (apply update-in-world-state game (concat [:entities id] c) f args)))
 
-(defn add-entity-component [game e c & cs]
+(defn add-entity-component
+  "Add entity components"
+  [game e c & cs]
   (update-in-world-state game [:entities (:id e)] #(apply merge % c cs)))
 
 (defn update-entities [game f & args]

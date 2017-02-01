@@ -30,9 +30,9 @@
   (transition/transition game (transition/sound :door)))
 
 (defn open-door [game e]
-  (-> game
-      (world/update-entity-component e :open (constantly true))
-      door-sound))
+  (world/update game [(:id e)] [e]
+    (world/update-entity-component game (:id e) :open (constantly true))
+    (door-sound game)))
 
 (defn available-open [game e]
   (let [es (filter #(and (entity/capable? % :open)
@@ -41,12 +41,15 @@
     (into {} (map (fn [door] [(world/entity-delta door e) #(open-door % door)]) es))))
 
 (defn close-door [game e]
-  (-> game (world/update-entity-component e :open (constantly false)) (transition/transition (transition/sound :door)) time/pass-time))
+  (world/update game [(:id e)] [{:keys [id]}]
+    (world/update-entity-component game id :open (constantly false))
+    (transition/transition game (transition/sound :door))
+    (time/pass-time game)))
 
 (defn available-close [game e]
   (let [es (filter #(and (entity/capable? % :open)
-                         (:open %))
-                   (world/entity-neighbors game e))]
+                      (:open %))
+             (world/entity-neighbors game e))]
     (into {} (map (fn [door] [(world/entity-delta door e) #(close-door % door)]) es))))
 
 (defn close [game e]

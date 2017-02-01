@@ -28,7 +28,7 @@
   [e] (:memory e))
 
 (defn update-memory [game e f & args]
-  (apply world/update-entity-component game e :memory f args))
+  (apply world/update-entity-component game (:id e) :memory f args))
 
 (defn entity-floor-memory
   ([e n] (get-in e [:memory :floors n] {:entities {} :coordinates []}))

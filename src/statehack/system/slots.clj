@@ -30,11 +30,11 @@
 
 (defn slot [game actor item slot]
   {:pre [((available-slots actor) slot)]}
-  (world/update-entity-component game actor [:slots slot] (constantly (:id item))))
+  (world/update-entity-component game (:id actor) [:slots slot] (constantly (:id item))))
 
 (defn unslot [game actor item]
   (if-let [slot (slotted? actor item)]
-    (world/update-entity-component game actor [:slots slot] (constantly nil))
+    (world/update-entity-component game (:id actor) [:slots slot] (constantly nil))
     game))
 
 (defn slotted-items [actor]
@@ -44,4 +44,3 @@
 (defn slot-item [game actor slot]
   {:pre [(entity/capable? actor :slots)]}
   (world/entity game (get-in actor [:slots slot])))
-

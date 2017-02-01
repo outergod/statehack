@@ -44,14 +44,14 @@
 (defmethod available-moves :default [& _] nil)
 
 (defn move
-  "Move entity `e` by `[x y z]`"
+  "Move entity `e` by `[x y]`"
   [game e [x y]]
-  (world/update-entity-component game e :position util/matrix-add [x y]))
+  (world/update-entity-component game (:id e) :position util/matrix-add [x y]))
 
 (defn relocate
-  "Relocate entity `e` to `[x y z]`"
+  "Relocate entity `e` to `[x y]`"
   [game e [x y]]
-  (world/update-entity-component game e :position (constantly [x y])))
+  (world/update-entity-component game (:id e) :position (constantly [x y])))
 
 (defn inbound-moves
   "Set of all possible inbound moves for `e`"
@@ -86,9 +86,9 @@
         es (:entities (world/state game))
         targets (concat (rest targets) [(first targets)])
         e (es (first targets))]
-    (-> game
-        (world/update-entity-component sel :mobile assoc :targets targets)
-        (relocate sel (:position e)))))
+    (world/update game [(:id sel) (:id e)] [sel e]
+      (world/update-entity-component game (:id sel) :mobile assoc :targets targets)
+      (relocate game sel (:position e)))))
 
 (defn unavailable-moves
   "Mapping of unavailable movements to log messages"
@@ -107,4 +107,4 @@
         [x y] (if (entity/capable? r :messages)
                 [(+ (count (first (:messages r))) 2) 1]
                 (:position r))]
-    (world/update-entity-component game e :position (constantly [x y]))))
+    (world/update-entity-component game (:id e) :position (constantly [x y]))))

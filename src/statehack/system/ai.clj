@@ -94,21 +94,21 @@
 (defmethod act :serv-bot [game e]
   (let [[type player] (player-known? game e)
         melee (skills/skill e :melee)]
-    (world/>> game [(:id e)] [bot]
-              (when (and (= type :sight) (not (:player-spotted? (memory/entity-memory bot))))
-                (-> game
-                    (transition/transition (transition/sound :serv-bot-spot))
-                    (memory/update-memory bot assoc :player-spotted? true)))
-              (when (= (:position bot) (:position player))
-                (forget-player game bot player))
-              (cond (some-> game (player-nearby? bot) combat/attackable?) (combat/melee game bot melee player)
-                    (= type :sight) (-> game
-                                      (move-melee-range bot player 100)
-                                      (memory/update-memory bot assoc :player player))
-                    (= type :memory) (if-let [path (path-to game bot player 100)]
-                                       (movement/relocate game bot (first path))
-                                       (forget-player game bot player))
-                    :default (move-random game bot)))))
+    (world/update game [(:id e)] [bot]
+      (when (and (= type :sight) (not (:player-spotted? (memory/entity-memory bot))))
+        (-> game
+          (transition/transition (transition/sound :serv-bot-spot))
+          (memory/update-memory bot assoc :player-spotted? true)))
+      (when (= (:position bot) (:position player))
+        (forget-player game bot player))
+      (cond (some-> game (player-nearby? bot) combat/attackable?) (combat/melee game bot melee player)
+            (= type :sight) (-> game
+                              (move-melee-range bot player 100)
+                              (memory/update-memory bot assoc :player player))
+            (= type :memory) (if-let [path (path-to game bot player 100)]
+                               (movement/relocate game bot (first path))
+                               (forget-player game bot player))
+            :default (move-random game bot)))))
 
 (defn system [game]
   (let [es (world/capable-entities game :ai)]
