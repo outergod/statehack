@@ -99,8 +99,8 @@
 
 (defn add-entity-component
   "Add entity components"
-  [game e c & cs]
-  (update-in-world-state game [:entities (:id e)] #(apply merge % c cs)))
+  [game id c & cs]
+  (update-in-world-state game [:entities id] #(apply merge % c cs)))
 
 (defn update-entities
   "Update game entities with `apply f entities args`"
