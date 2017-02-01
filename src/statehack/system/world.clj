@@ -102,38 +102,57 @@
   [game e c & cs]
   (update-in-world-state game [:entities (:id e)] #(apply merge % c cs)))
 
-(defn update-entities [game f & args]
+(defn update-entities
+  "Update game entities with `apply f entities args`"
+  [game f & args]
   (apply update-in-world-state game [:entities] f args))
 
-(defn update-entities-component [game c f args]
+(defn update-entities-component
+  "Update component in all entities"
+  [game c f args]
   (update-entities game #(into {} (map (fn [[k v]] [k (apply update-in c f args)]) %))))
 
-(defn add-entity [game e]
+(defn add-entity
+  "Add entity to game"
+  [game e]
   (update-entities game #(assoc % (:id e) e)))
 
-(defn remove-entity [game e]
-  (update-entities game #(dissoc % (:id e))))
+(defn remove-entity
+  "Remove identity from game"
+  [game id]
+  (update-entities game #(dissoc % id)))
 
-(defn pop-world-state [game]
+(defn pop-world-state
+  "Pop the current state of the world, if more than one exists"
+  [game]
   (update-in game [:world] #(if (> (count %) 1) (next %) %)))
 
 (defn entities-at
+  "Matching entities at given `floor` and `coords`"
   ([game floor coords]
    (let [entities (entities game)
          coords (set coords)]
      (filter #(and (= (:floor %) floor) (coords (:position %)))
-             (vals entities))))
+       (vals entities))))
   ([game e]
    (entities-at game (:floor e) [(:position e)])))
 
-(defn direct-neighbors [game [x y] floor]
-  (entities-at game floor (algebra/neighbors [x y])))
+(defn direct-neighbors
+  "Neighbor entities at given `floor` around `coords`"
+  [game coords floor]
+  (entities-at game floor (algebra/neighbors coords)))
 
-(defn entity-neighbors [game e]
+(defn entity-neighbors
+  "Neighbor entities of `e`"
+  [game e]
   (direct-neighbors game (:position e) (:floor e)))
 
-(defn capable-entities [game & cs]
+(defn capable-entities
+  "Find entities owning components"
+  [game & cs]
   (entity/filter-capable cs (vals (entities game))))
 
-(defn entity-delta [e1 e2]
+(defn entity-delta
+  "Calculate delta between `e1` and `e2`"
+  [e1 e2]
   (util/matrix-subtract (:position e1) (:position e2)))
