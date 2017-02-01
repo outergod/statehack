@@ -92,7 +92,7 @@
   "Update entity components in entity
 
   `c` may be a sequence with additional keys, in which case the component itself
-  is travesed and updated."
+  is traversed and updated."
   [game id c f & args]
   (let [c (if (sequential? c) c [c])]
     (apply update-in-world-state game (concat [:entities id] c) f args)))
