@@ -141,7 +141,9 @@
 
 (defmethod input/receive :inventory-menu [game menu input]
   (case (:key input)
-    :escape (-> game receivers/pop-control (world/remove-entity menu))
+    :escape (world/update game
+              (receivers/pop-control game)
+              (world/remove-entity game (:id menu)))
     \w (change-index game menu inc)
     \x (change-index game menu dec)
     \a (change-frame game menu :left)

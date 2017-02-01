@@ -95,7 +95,8 @@
 
 (defmethod input/receive :dialog [game dialog input]
   (case (:key input)
-    (:enter \ ) (if (> (count (:messages dialog)) 1)
-                  (messages/pop dialog)
-                  (-> game receivers/pop-control (world/remove-entity dialog)))
+    (:enter \ ) (world/update game
+                  (if (> (count (:messages dialog)) 1)
+                    (messages/pop game dialog)
+                    (-> game receivers/pop-control (world/remove-entity (:id dialog)))))
     game))

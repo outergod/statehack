@@ -30,12 +30,12 @@
   (let [{:keys [deferred mobile]} e
         es (:entities (world/state game))
         t (es (first (:targets mobile)))]
-    (world/update game [(:id e)] [e]
-      (world/remove-entity game e)
+    (world/update game
+      (world/remove-entity game (:id e))
       (receivers/pop-control game)
       (deferred game t))))
 
 (defn abort [game e]
-  (world/update game [(:id e)] [e]
-    (world/remove-entity game e)
+  (world/update game
+    (world/remove-entity game (:id e))
     (receivers/pop-control game)))
