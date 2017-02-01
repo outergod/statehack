@@ -41,10 +41,10 @@
 
 (defn drop-item [game e1 e2]
   {:pre [(in-inventory? e1 e2)]}
-  (world/update game [(:id e1) (:id e2)] [{actor-id :id :as actor} {item-id :id :as item}]
+  (world/update game [(:id e1) (:id e2)] [{actor-id :id :keys [floor position] :as actor} {item-id :id :as item}]
     (slots/unslot game actor item)
     (world/update-entity-component game actor-id :inventory (partial remove #{item-id}))
-    (world/add-entity-component game item-id (c/position (:position actor)) (c/floor (:floor actor)))))
+    (world/add-entity-component game item-id (c/position position) (c/floor floor))))
 
 (defn available-pickups [game e]
   (entity/filter-capable [:pickup] (world/entities-at game e)))
@@ -137,7 +137,7 @@
 
 (defn open [game player type]
   (let [i (inventory-menu/inventory (:id player) type (default-frame type))]
-    (-> game (world/add-entity i) (receivers/push-control i))))
+    (world/update game (world/add-entity game i) (receivers/push-control game i))))
 
 (defmethod input/receive :inventory-menu [game menu input]
   (case (:key input)
