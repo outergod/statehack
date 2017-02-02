@@ -35,13 +35,13 @@
 
 (defn pick-up-item [game e1 e2]
   {:pre [(:inventory e1) (:pickup e2)]}
-  (world/update game [(:id e1) (:id e2)] [{actor-id :id} {item-id :id}]
+  (world/update game [{actor-id :id} (:id e1) {item-id :id} (:id e2)]
     (world/update-entity-component game actor-id :inventory conj item-id)
     (world/remove-entity-component game item-id :position :floor)))
 
 (defn drop-item [game e1 e2]
   {:pre [(in-inventory? e1 e2)]}
-  (world/update game [(:id e1) (:id e2)] [{actor-id :id :keys [floor position] :as actor} {item-id :id :as item}]
+  (world/update game [{actor-id :id :keys [floor position] :as actor} (:id e1) {item-id :id :as item} (:id e2)]
     (slots/unslot game actor item)
     (world/update-entity-component game actor-id :inventory (partial remove #{item-id}))
     (world/add-entity-component game item-id (c/position position) (c/floor floor))))
@@ -108,7 +108,7 @@
 (defmethod change-frame :default [game _ _] game)
 
 (defn- change-frame-common [game menu frame]
-  (world/update game [(:id menu)] [{:keys [id] :as menu}]
+  (world/update game [{:keys [id] :as menu} (:id menu)]
     (world/update-entity-component game id [:inventory-menu :frame] (constantly frame))
     (change-index game menu identity)))
 
@@ -137,11 +137,11 @@
 
 (defn open [game player type]
   (let [i (inventory-menu/inventory (:id player) type (default-frame type))]
-    (world/update game (world/add-entity game i) (receivers/push-control game i))))
+    (world/update game [] (world/add-entity game i) (receivers/push-control game i))))
 
 (defmethod input/receive :inventory-menu [game menu input]
   (case (:key input)
-    :escape (world/update game
+    :escape (world/update game []
               (receivers/pop-control game)
               (world/remove-entity game (:id menu)))
     \w (change-index game menu inc)

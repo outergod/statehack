@@ -25,7 +25,7 @@
 
 (defn dialog [game & ms]
   (let [d (apply dialog/dialog ms)]
-    (world/update game
+    (world/update game []
       (world/add-entity game d)
       (receivers/push-control game d))))
 

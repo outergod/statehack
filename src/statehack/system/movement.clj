@@ -83,10 +83,9 @@
   "Move selector entity `sel` to next possible target"
   [game sel]
   (let [{:keys [targets]} (:mobile sel)
-        es (:entities (world/state game))
         targets (concat (rest targets) [(first targets)])
-        e (es (first targets))]
-    (world/update game [(:id sel) (:id e)] [sel e]
+        e (world/entity game (first targets))]
+    (world/update game [sel (:id sel) e (:id e)]
       (world/update-entity-component game (:id sel) :mobile assoc :targets targets)
       (relocate game sel (:position e)))))
 

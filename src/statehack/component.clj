@@ -154,8 +154,9 @@
   A door can be open or closed and behave differently depending on that.
 
   Related systems: door, obstacle, levels, render"
-  [open?]
-  {:open open?})
+  [type open?]
+  {:door {:type type
+          :open open?}})
 
 (defn room
   "Room component
@@ -320,3 +321,18 @@
             :penetration penetration
             :offense offense
             :transition transition}})
+
+(defn compound
+  "Compound component
+
+  Compounds glue together entities by reference."
+  [parents children]
+  {:compound {:parents parents
+              :children children}})
+
+(defn label
+  "Label component
+
+  Used to post-process entities in `levels`."
+  [label]
+  {:label label})

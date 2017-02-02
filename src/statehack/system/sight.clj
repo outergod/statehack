@@ -21,7 +21,7 @@
             [statehack.system.world :as world]
             [statehack.system.levels :as levels]
             [statehack.entity :as entity]
-            [statehack.system.levels :as levels]
+            [statehack.system.door :as door]
             [statehack.util :as util]))
 
 ;;; opaque? multimethod
@@ -46,7 +46,7 @@
 (defmethod opaque? true [_] true)
 (defmethod opaque? false [_] false)
 
-(defmethod opaque? :door [e] (not (:open e)))
+(defmethod opaque? :door [e] (not (door/open? e)))
 
 (defn filter-opaques
   "Filter opaques from `es`"

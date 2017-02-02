@@ -43,7 +43,7 @@
   (get-in e [:hp :current]))
 
 (defn die-common [game e]
-  (world/update game [(:id e)] [{:keys [id] :as e}]
+  (world/update game [{:keys [id] :as e} (:id e)]
     (world/remove-entity-component game id :mobile :obstacle :ai)
     (world/update-entity-component game id :alive (constantly false))
     (world/update-entity-component game id :renderable (constantly :corpse))
@@ -66,7 +66,7 @@
                  (hurt target))]
     (if (pos? hp)
       (world/update-entity-component game (:id target) [:hp :current] - damage)
-      (world/update game [(:id target)] [target]
+      (world/update game [target (:id target)]
         (messages/log game (cl-format nil "~a dies from ~d overdamage" (name/name target) (Math/abs hp)))
         (die-common game target)))))
 

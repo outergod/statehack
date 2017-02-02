@@ -16,7 +16,8 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.obstacle
-  "Obstacle facility")
+  "Obstacle facility"
+  (:require [statehack.system.door :as door]))
 
 (def obstacle?-hierarchy "Hierarchy for `obstacle?`" (make-hierarchy))
 
@@ -38,7 +39,7 @@
 (defmethod obstacle? true [_] true)
 (defmethod obstacle? false [_] false)
 
-(defmethod obstacle? :door [e] (not (:open e)))
+(defmethod obstacle? :door [e] (not (door/open? e)))
 
 (defn filter-obstacles [es]
   (filter obstacle? es))

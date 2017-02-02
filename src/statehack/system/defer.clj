@@ -21,21 +21,21 @@
             [statehack.system.input.receivers :as receivers]))
 
 (defn defer [game es action]
-  (let [e (selector/selector (:position (first es)) action (map :id es))]
-    (world/update game [(:id e)] [e]
-      (world/add-entity game e)
+  (let [sel (selector/selector (:position (first es)) action (map :id es))]
+    (world/update game [e (:id sel)]
+      (world/add-entity game sel)
       (receivers/push-control game e))))
 
 (defn fulfill [game e]
   (let [{:keys [deferred mobile]} e
         es (:entities (world/state game))
         t (es (first (:targets mobile)))]
-    (world/update game
+    (world/update game []
       (world/remove-entity game (:id e))
       (receivers/pop-control game)
       (deferred game t))))
 
 (defn abort [game e]
-  (world/update game
+  (world/update game []
     (world/remove-entity game (:id e))
     (receivers/pop-control game)))

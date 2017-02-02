@@ -37,12 +37,15 @@
    (c/obstacle)
    (c/opaque)))
 
-(defn door [[x y z] open?]
+(defn door [[x y z] type open?]
   (entity
    (c/renderable :door)
    (c/position [x y])
    (c/floor z)
-   (c/door open?)
+   (c/door type open?)
    (c/room)
    (c/obstacle :door)
    (c/opaque :door)))
+
+(defn blast-door [open?]
+  (entity (c/door :blast open?)))

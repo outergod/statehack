@@ -31,6 +31,7 @@
             [statehack.system.input.receivers :as receivers]
             [statehack.system.inventory :as inventory]
             [statehack.system.slots :as slots]
+            [statehack.system.door :as door]
             [statehack.util :as util]
             [statehack.entity :as entity]
             [statehack.algebra :as algebra]
@@ -438,12 +439,12 @@
            :swall)
    :color (or (:color wall) :white)})
 
-(defmethod tile :door [game {:keys [open] :as door}]
+(defmethod tile :door [game door]
   {:tile (condp set/subset? (set (map #(world/entity-delta % door) (entity/filter-capable [:room] (world/entity-neighbors game door))))
            #{[1 0] [-1 0]} :hdoor
            #{[0 1] [0 -1]} :vdoor
            :door)
-   :color (if open :lightblack :white)})
+   :color (if (door/open? door) :lightblack :white)})
 
 (blit-precedence :humanoid :door)
 (blit-precedence :humanoid :corpse)

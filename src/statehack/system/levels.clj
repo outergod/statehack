@@ -18,25 +18,41 @@
 (ns statehack.system.levels
   (:refer-clojure :exclude [load])
   (:require [statehack.entity :as entity]
+            [statehack.component :as c]
             [statehack.entity.player :as player]
             [statehack.entity.room :as room]
             [statehack.entity.serv-bot :as serv-bot]
             [statehack.entity.dart-gun :as dart-gun]
             [statehack.entity.lead-pipe :as lead-pipe]
             [statehack.entity.music :as music]
+            [statehack.system.compound :as compound]
             [statehack.system.world :as world]
             [statehack.util :as util]
             [clojure.string :as str]
             [clojure.java.io :as io]))
 
+(defn label
+  "Add label component to `e`"
+  [e label]
+  (merge e (c/label label)))
+
 (def rooms {"starting-lab" {:tiles {\@ #(player/player "Malefeitor" %& 100)
                                     \X #(room/wall %& :lightblue)
-                                    \o #(room/door %& false)
-                                    \O #(room/door %& true)
+                                    \o #(room/door %& :simple false)
+                                    \O #(room/door %& :simple true)
                                     \b #(serv-bot/serv-bot %&)
                                     \l (fn [& coords] [(dart-gun/dart-gun coords)
-                                                       (lead-pipe/lead-pipe coords)])}
-                            :music :medical}})
+                                                       (lead-pipe/lead-pipe coords)])
+                                    \- #(label (room/door %& :blast false) :blast-door)}
+                            :post (fn [{:keys [blast-door]}]
+                                    (compound/group (room/blast-door false) blast-door))
+                            :music :medical}
+            "hallway" {:tiles {\X #(room/wall %& :lightblue)
+                               \o #(room/door %& :simple false)
+                               \- #(label (room/door %& :blast false) :blast-door)}
+                       :post (fn [{:keys [blast-door]}]
+                               (compound/group (room/blast-door false) blast-door))
+                       :music :medical}})
 
 (defn extract-room [s tiles [x0 y0] floor]
   (let [token (fn [c] (get tiles c (constantly nil)))]
@@ -58,12 +74,15 @@
      (inc (apply max (map second ps)))]))
 
 (defn load-room [name [x0 y0] floor]
-  (let [{:keys [tiles music]} (rooms name)
+  (let [{:keys [tiles post music]} (rooms name)
         room (extract-room (slurp (load-room-resource name)) tiles [x0 y0] floor)
-        [x1 y1] (util/matrix-add [x0 y0] (dimensions room))]
-    (concat room
-            (for [x (range x0 x1) y (range y0 y1)]
-              (music/music music [x y floor])))))
+        [x1 y1] (util/matrix-add [x0 y0] (dimensions room))
+        labeled (group-by :label room)]
+    (concat (if post
+              (concat (get labeled nil) (post (dissoc labeled nil)))
+              room)
+      (for [x (range x0 x1) y (range y0 y1)]
+        (music/music music [x y floor])))))
 
 (defn floor [game n]
   (let [es (world/capable-entities game :foundation)]

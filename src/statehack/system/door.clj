@@ -24,41 +24,101 @@
             [statehack.system.world :as world]
             [statehack.system.time :as time]
             [statehack.system.transition :as transition]
+            [statehack.system.compound :as compound]
             [clojure.set :as set]))
 
-(defn door-sound [game]
+(defn open?
+  "Is the door open?"
+  [door]
+  (get-in door [:door :open]))
+
+(defn- operate-door
+  "Common code for opening/closing doors"
+  [game door state]
+  (world/update-entity-component game (:id door) [:door :open] (constantly state)))
+
+(def door-hierarchy
+  "Hierarchy of door types"
+  (make-hierarchy))
+
+(defn derive-door
+  "Derive for `door-hierarchy`"
+  [tag parent]
+  (alter-var-root #'door-hierarchy derive tag parent))
+
+(defn- door-dispatch
+  "Dispatch for door multimethods`"
+  [game door]
+  (get-in door [:door :type]))
+
+(defmulti door-sound "Door sound transition" #'door-dispatch
+  :hierarchy #'door-hierarchy)
+
+(defmethod door-sound :default [game _]
   (transition/transition game (transition/sound :door)))
 
-(defn open-door [game e]
-  (world/update game [(:id e)] [e]
-    (world/update-entity-component game (:id e) :open (constantly true))
-    (door-sound game)))
+(defmethod door-sound :blast [game _]
+  (transition/transition game (transition/sound :blast-door)))
 
-(defn available-open [game e]
-  (let [es (filter #(and (entity/capable? % :open)
-                         (not (:open %)))
-                   (world/entity-neighbors game e))]
+(defmulti open-door "Open a door" #'door-dispatch
+  :hierarchy #'door-hierarchy)
+
+(defn- open-close-door-default-common
+  "Common open/close default code"
+  [game door state]
+  (world/update game [door (:id door)]
+    (operate-door game door state)
+    (door-sound game door)))
+
+(defn- open-close-door-compound-common
+  "Common open/close compound code"
+  [game door state]
+  (let [parent (compound/parent game door)]
+    (world/update game [parent (:id parent)
+                        doors (conj (map :id (compound/children game parent)) (:id parent))]
+      (reduce #(operate-door %1 %2 state) game doors)
+      (door-sound game parent))))
+
+(defmethod open-door :default [game door]
+  (open-close-door-default-common game door true))
+
+(defmethod open-door :compound [game door]
+  (open-close-door-compound-common game door true))
+
+(defmulti close-door "Close a door" #'door-dispatch
+  :hierarchy #'door-hierarchy)
+
+(defmethod close-door :default [game door]
+  (open-close-door-default-common game door false))
+
+(defmethod close-door :compound [game door]
+  (open-close-door-compound-common game door false))
+
+(defn- available-open-close-common
+  "Available open/close common code"
+  [game e f]
+  (let [es (filter #(and (entity/capable? % :door) (f %))
+             (world/entity-neighbors game e))]
     (into {} (map (fn [door] [(world/entity-delta door e) #(open-door % door)]) es))))
 
-(defn close-door [game e]
-  (world/update game [(:id e)] [{:keys [id]}]
-    (world/update-entity-component game id :open (constantly false))
-    (transition/transition game (transition/sound :door))
-    (time/pass-time game)))
+(defn available-open [game e]
+  (available-open-close-common game e (complement open?)))
 
 (defn available-close [game e]
-  (let [es (filter #(and (entity/capable? % :open)
-                      (:open %))
-             (world/entity-neighbors game e))]
-    (into {} (map (fn [door] [(world/entity-delta door e) #(close-door % door)]) es))))
+  (available-open-close-common game e open?))
 
 (defn close [game e]
-  (let [es (filter #(and (entity/capable? % :open) (:open %))
-                   (world/entity-neighbors game e))]
+  (let [es (filter #(and (entity/capable? % :door) (open? %))
+             (world/entity-neighbors game e))]
     (case (count es)
       0 (messages/log game "No open door nearby.")
       1 (close-door game (first es))
       (defer/defer game es close-door))))
 
 (defn filter-doors [es]
-  (entity/filter-capable [:open] es))
+  (entity/filter-capable [:door] es))
+
+;;; Hierarchy
+
+;; Blast doors are compound doors
+(derive-door :blast :compound)

@@ -76,13 +76,14 @@
     \. (act game player identity)
     \i (inventory/open game player :inventory)
     \, (inventory/open game player :pickup)
-    \C (door/close game player)
+    \C (-> game (door/close player) time/pass-time)
     :backspace (-> game world/pop-world-state (viewport/center-on player))
     :enter (world/save game)
     :escape (assoc game :quit true)
     game))
 
 (defmethod input/receive :selector [game selector input]
+  (println (:key input))
   (case (:key input)
     :arrow-up (viewport game :up)
     :arrow-down (viewport game :down)
@@ -95,7 +96,7 @@
 
 (defmethod input/receive :dialog [game dialog input]
   (case (:key input)
-    (:enter \ ) (world/update game
+    (:enter \ ) (world/update game []
                   (if (> (count (:messages dialog)) 1)
                     (messages/pop game dialog)
                     (-> game receivers/pop-control (world/remove-entity (:id dialog)))))

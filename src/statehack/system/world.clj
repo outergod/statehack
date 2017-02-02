@@ -52,14 +52,25 @@
   [game id]
   ((entities game) id))
 
+(defn lookup-entities
+  "Lookup single or multiple entities"
+  [game x]
+  (if (seq? x)
+    (map #(entity game %) x)
+    (entity game x)))
+
 (defmacro update
   "Convenience macro to manipulate entities"
-  {:arglists '([game [& ids] [& bindings] & updates] [game & updates])}
-  [game & args]
-  (let [[ids bindings & updates] (if (vector? (first args)) args (concat [nil nil] args))]
-    `(reduce (fn [~game f#] (or (apply f# ~game (map (partial entity ~game) [~@ids])) ~game))
-       ~game
-       [~@(map (fn [body] `(fn [~game ~@bindings] ~body)) updates)])))
+  {:arglists '([game [bindings*] updates*])}
+  [game bindings & updates]
+  {:pre [(vector? bindings) (even? (count bindings))]}
+  (let [pairs (partition 2 bindings)
+        symbols (map first pairs)
+        forms (map second pairs)]
+    `(let [ids# [~@forms]]
+       (reduce (fn [~game f#] (or (apply f# ~game (map #(lookup-entities ~game %) ids#)) ~game))
+         ~game
+         [~@(map (fn [body] `(fn [~game ~@symbols] ~body)) updates)]))))
 
 (defn dup-world-state
   "Duplicate and cons the current world state onto the state list"
