@@ -84,7 +84,7 @@
               (concat (get labeled nil) (post (dissoc labeled nil)))
               room)
       (for [x (range x0 x1) y (range y0 y1)]
-        (music/music music [x y floor])))))
+        (position (music/music music) [x y] floor)))))
 
 (defn floor [game n]
   (let [es (world/capable-entities game :foundation)]
