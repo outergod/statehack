@@ -1,4 +1,4 @@
-;(function() {
+;(function () {
   var socket = new WebSocket('ws://' + this.location.host + '/socket');
   var term = new Terminal({
     cols: 80,
@@ -18,8 +18,13 @@
       }
     });
     term.on('key', function (key, e) {
-      if (e.keyCode === 13) {
+      switch (e.keyCode) {
+      case 9:
+        socket.send('\t');
+        break;
+      case 13:
         socket.send('\n');
+        break;
       }
     });
   });
