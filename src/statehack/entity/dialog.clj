@@ -19,7 +19,9 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn dialog [& ms]
+(defn dialog
+  "Dialog entity"
+  [& ms]
   (entity
    (c/unique :dialog)
    (c/renderable :dialog)

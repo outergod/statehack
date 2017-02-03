@@ -19,12 +19,12 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn player [name [x y z] hp]
+(defn player
+  "Player entity"
+  [name hp]
   (entity
    (c/unique :player)
    (c/alive true)
-   (c/position [x y])
-   (c/floor z)
    (c/name name)
    (c/category :human)
    (c/adaptive 0 0)
@@ -36,5 +36,5 @@
    #_(c/sight :omniscience nil)
    (c/sight :eyes 10)
    (c/memory)
-   (c/inventory)
+   (c/inventory [])
    (c/slots :melee nil :gun nil)))

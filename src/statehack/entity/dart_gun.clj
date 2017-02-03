@@ -20,11 +20,10 @@
             [statehack.component :as c]))
 
 (defn dart-gun
-  [[x y z]]
+  "SV-23 Dart Pistol entity"
+  []
   (entity
    (c/name "SV-23 Dart Pistol")
-   (c/position [x y])
-   (c/floor z)
    (c/pickup :slot-weapon)
    (c/weapon :semi-automatic 20 20 2 :dart-gun)
    (c/renderable :weapon)))

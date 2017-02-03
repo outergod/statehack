@@ -1,6 +1,6 @@
 ;;;; This file is part of statehack.
 ;;;;
-;;;; Copyright © 2014-2017 Alexander Kahl <ak@sodosopa.io>
+;;;; Copyright © 2017 Alexander Kahl <ak@sodosopa.io>
 ;;;;
 ;;;; statehack is free software: you can redistribute it and/or modify
 ;;;; it under the terms of the GNU General Public License as published by
@@ -15,14 +15,14 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.entity.floor
+(ns statehack.entity.container
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn floor
-  "Floor entity"
-  [n [w h]]
+(defn crate
+  "Crate entity"
+  [items]
   (entity
-   (c/renderable :floor)
-   (c/floor n)
-   (c/foundation [w h])))
+    (c/name "Crate")
+    (c/renderable :crate)
+    (c/inventory items)))

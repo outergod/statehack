@@ -19,7 +19,9 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn log []
+(defn log
+  "Log entity"
+  []
   (entity
    (c/unique :log)
    (c/renderable :log)

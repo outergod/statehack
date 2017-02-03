@@ -273,8 +273,8 @@
   "Inventory component
 
   Anything with an inventory can carry stuff around."
-  [& items]
-  {:inventory (or items [])})
+  [items]
+  {:inventory items})
 
 (defn inventory-menu
   "Inventory menu component

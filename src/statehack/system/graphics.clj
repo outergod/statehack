@@ -124,6 +124,7 @@
    :swall "▢"
    :dialog-indicator "⌐"
    :weapon ")"
+   :crate "☒"
    
    ; not in use
    :spell-up "⁀"
@@ -403,6 +404,7 @@
 (defmethod tile :corpse [& _] {:tile :corpse :color :red})
 (defmethod tile :camera [& _] {:tile :camera :color :gray})
 (defmethod tile :battery [& _] {:tile :battery :color :gray})
+(defmethod tile :crate [& _] {:tile :crate :color :gray})
 
 (doseq [d [:hdoor :vdoor]]
   (derive-tile d :door))
@@ -458,6 +460,10 @@
 
 (blit-precedence :camera :weapon)
 (blit-precedence :humanoid :camera)
+
+(blit-precedence :humanoid :crate)
+(blit-precedence :crate :corpse)
+(blit-precedence :crate :weapon)
 
 (defmethod tile :weapon [game e]
   {:tile :weapon

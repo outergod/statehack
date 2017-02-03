@@ -21,6 +21,7 @@
             [statehack.component :as c]
             [statehack.entity.player :as player]
             [statehack.entity.room :as room]
+            [statehack.entity.container :as container]
             [statehack.entity.serv-bot :as serv-bot]
             [statehack.entity.dart-gun :as dart-gun]
             [statehack.entity.lead-pipe :as lead-pipe]
@@ -32,37 +33,39 @@
             [clojure.java.io :as io]))
 
 (defn label
-  "Add label component to `e`"
+  "Add label component to entity"
   [e label]
   (merge e (c/label label)))
 
-(def rooms {"starting-lab" {:tiles {\@ #(player/player "Malefeitor" %& 100)
-                                    \X #(room/wall %& :lightblue)
-                                    \o #(room/door %& :simple false)
-                                    \O #(room/door %& :simple true)
-                                    \b #(serv-bot/serv-bot %&)
-                                    \l (fn [& coords] [(dart-gun/dart-gun coords)
-                                                       (lead-pipe/lead-pipe coords)])
-                                    \- #(label (room/door %& :blast false) :blast-door)}
+(defn position
+  "Position entity at floor and coordinates"
+  [e [x y] floor]
+  (merge e (c/position [x y]) (c/floor floor)))
+
+(def rooms {"starting-lab" {:tiles {\@ #(player/player "Malefeitor" 100)
+                                    \X #(room/wall :lightblue)
+                                    \o #(room/door :simple false)
+                                    \O #(room/door :simple true)
+                                    \b #(serv-bot/serv-bot)
+                                    \l #(lead-pipe/lead-pipe)
+                                    \- #(label (room/door :blast false) :blast-door)
+                                    \c #(container/crate (dart-gun/dart-gun))}
                             :post (fn [{:keys [blast-door]}]
                                     (compound/group (room/blast-door false) blast-door))
                             :music :medical}
-            "hallway" {:tiles {\X #(room/wall %& :lightblue)
-                               \o #(room/door %& :simple false)
-                               \- #(label (room/door %& :blast false) :blast-door)}
+            "hallway" {:tiles {\X #(room/wall :lightblue)
+                               \o #(room/door :simple false)
+                               \- #(label (room/door :blast false) :blast-door)}
                        :post (fn [{:keys [blast-door]}]
                                (compound/group (room/blast-door false) blast-door))
                        :music :medical}})
 
 (defn extract-room [s tiles [x0 y0] floor]
-  (let [token (fn [c] (get tiles c (constantly nil)))]
-    (filter identity
-            (flatten
-             (for [[y row] (util/enumerate (str/split-lines s))
-                   [x c] (util/enumerate row)]
-               (let [[x1 y1] (util/matrix-add [x0 y0] [x y])
-                     f (token c)]
-                 (f x1 y1 floor)))))))
+  (flatten
+    (for [[y row] (util/enumerate (str/split-lines s))
+          [x c] (util/enumerate row)
+          :let [f (tiles c)] :when f]
+      (position (f) (util/matrix-add [x0 y0] [x y]) floor))))
 
 (defn load-room-resource [name]
   (or (io/resource (str "rooms/" name))

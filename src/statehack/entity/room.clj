@@ -19,33 +19,35 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn wall [[x y z] color]
+(defn wall
+  "Wall entity"
+  [color]
   (entity
    (c/renderable :wall)
    (c/color color)
-   (c/position [x y])
-   (c/floor z)
    (c/room)
    (c/obstacle)
    (c/opaque)))
 
-(defn solid [[x y z]]
+(defn solid
+  "Solid entity"
+  []
   (entity
    (c/renderable {:tile :nihil :color 0})
-   (c/position [x y])
-   (c/floor z)
    (c/obstacle)
    (c/opaque)))
 
-(defn door [[x y z] type open?]
+(defn door
+  "Door entity"
+  [type open?]
   (entity
    (c/renderable :door)
-   (c/position [x y])
-   (c/floor z)
    (c/door type open?)
    (c/room)
    (c/obstacle :door)
    (c/opaque :door)))
 
-(defn blast-door [open?]
+(defn blast-door
+  "Blast door entity"
+  [open?]
   (entity (c/door :blast open?)))

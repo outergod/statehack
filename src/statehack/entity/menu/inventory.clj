@@ -19,7 +19,9 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn inventory [id type frame]
+(defn inventory
+  "Menu inventory entity"
+  [id type frame]
   (entity
    (c/inventory-menu id type frame)
    (c/input :inventory-menu)))

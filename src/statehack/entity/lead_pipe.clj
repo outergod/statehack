@@ -20,11 +20,10 @@
             [statehack.component :as c]))
 
 (defn lead-pipe
-  [[x y z]]
+  "Lead Pipe entity"
+  []
   (entity
-   (c/name "Lead Pipe")
-   (c/position [x y])
-   (c/floor z)
-   (c/pickup :slot-weapon)
-   (c/weapon :melee 15 40 3 :lead-pipe)
-   (c/renderable :weapon)))
+    (c/name "Lead Pipe")
+    (c/pickup :slot-weapon)
+    (c/weapon :melee 15 40 3 :lead-pipe)
+    (c/renderable :weapon)))

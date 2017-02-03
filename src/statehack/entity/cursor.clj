@@ -19,7 +19,9 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn cursor []
+(defn cursor
+  "Cursor entity"
+  []
   (entity
    (c/unique :cursor)
    (c/position [0 0])

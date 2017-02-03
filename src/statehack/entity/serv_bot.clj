@@ -19,22 +19,21 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn serv-bot [[x y z]]
+(defn serv-bot []
   (entity
-   (c/position [x y])
-   (c/floor z)
-   (c/alive true)
-   (c/category :serv-bot)
-   (c/mobile :wheels)
-   (c/renderable :serv-bot)
-   (c/obstacle)
-   (c/vulnerable 20)
-   (c/armor 20)
-   (c/ai :serv-bot)
-   (c/sight :sensors 5)
-   #_(c/sight :omniscience nil)
-   (c/memory)
-   (c/skillset :melee (apply merge
-                             (c/name "Appendages")
-                             (c/weapon :melee 8 0 1 :appendages)))
-   (c/inventory)))
+    (c/name "Serv-Bot")
+    (c/alive true)
+    (c/category :serv-bot)
+    (c/mobile :wheels)
+    (c/renderable :serv-bot)
+    (c/obstacle)
+    (c/vulnerable 20)
+    (c/armor 20)
+    (c/ai :serv-bot)
+    (c/sight :sensors 5)
+    #_(c/sight :omniscience nil)
+    (c/memory)
+    (c/skillset :melee (apply merge
+                         (c/name "Appendages")
+                         (c/weapon :melee 8 0 1 :appendages)))
+    (c/inventory [])))

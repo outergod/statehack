@@ -19,8 +19,7 @@
   (:require [statehack.entity :refer :all]
             [statehack.component :as c]))
 
-(defn music [name [x y z]]
-  (entity
-   (c/position [x y])
-   (c/floor z)
-   (c/music name)))
+(defn music
+  "Music entity"
+  [name]
+  (entity (c/music name)))
