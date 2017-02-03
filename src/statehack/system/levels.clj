@@ -42,23 +42,22 @@
   [e [x y] floor]
   (merge e (c/position [x y]) (c/floor floor)))
 
-(def rooms {"starting-lab" {:tiles {\@ #(player/player "Malefeitor" 100)
-                                    \X #(room/wall :lightblue)
-                                    \o #(room/door :simple false)
-                                    \O #(room/door :simple true)
-                                    \b #(serv-bot/serv-bot)
-                                    \l #(lead-pipe/lead-pipe)
-                                    \- #(label (room/door :blast false) :blast-door)
-                                    \c #(container/crate (dart-gun/dart-gun))}
+(def common-tiles
+  {\X #(room/wall :lightblue)
+   \o #(room/door :simple false)
+   \O #(room/door :simple true)
+   \b #(serv-bot/serv-bot)
+   \- #(label (room/door :blast false) :blast-door)
+   \| #(label (room/door :blast false) :blast-door)})
+
+(def rooms {"starting-lab" {:tiles (merge common-tiles
+                                     {\@ #(player/player "Malefeitor" 100)
+                                      \l #(lead-pipe/lead-pipe)
+                                      \- #(label (room/door :blast false) :blast-door)
+                                      \c #(container/crate (dart-gun/dart-gun))})
                             :post (fn [{:keys [blast-door]}]
                                     (compound/group (room/blast-door false) blast-door))
-                            :music :medical}
-            "hallway" {:tiles {\X #(room/wall :lightblue)
-                               \o #(room/door :simple false)
-                               \- #(label (room/door :blast false) :blast-door)}
-                       :post (fn [{:keys [blast-door]}]
-                               (compound/group (room/blast-door false) blast-door))
-                       :music :medical}})
+                            :music :medical}})
 
 (defn extract-room [s tiles [x0 y0] floor]
   (flatten
