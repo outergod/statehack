@@ -11,6 +11,12 @@
         <link rel="stylesheet" href="css/fonts.css">
         <link rel="stylesheet" href="css/main.css">
 
+        <script>
+          window.nodeRequire = require;
+          delete window.require;
+          delete window.exports;
+          delete window.module;
+        </script>
         <script src="/js/vendor/modernizr-2.8.3.min.js"></script>
         <script src="/js/vendor/term.js/src/term.js"></script>
     </head>
