@@ -83,7 +83,6 @@
     game))
 
 (defmethod input/receive :selector [game selector input]
-  (println (:key input))
   (case (:key input)
     :arrow-up (viewport game :up)
     :arrow-down (viewport game :down)
