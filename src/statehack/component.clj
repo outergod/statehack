@@ -21,7 +21,8 @@
             [statehack.util :as util]))
 
 (s/def ::type keyword?)
-(s/def ::distance util/pos-int-or-zero?)
+(s/def ::pos-int-or-zero (s/and int? util/pos-int-or-zero?))
+(s/def ::distance ::pos-int-or-zero)
 
 ;;; ID component
 ;;;
@@ -51,13 +52,8 @@
 ;;; at the same location.
 ;;;
 ;;; Related systems: movement, levels, defer, render, sight, viewport, world
-
-(defn- coordinate?
-  "Is `x` a valid coordinate?"
-  [x]
-  (util/pos-int-or-zero? x))
-
-(s/def ::position (s/tuple coordinate? coordinate?))
+(s/def ::coordinate ::pos-int-or-zero)
+(s/def ::position (s/tuple ::coordinate ::coordinate))
 
 ;;; Category component
 ;;;
@@ -72,7 +68,7 @@
 ;;; A vulnerable entity can be damaged and has a notion of health.
 ;;;
 ;;; Related systems: combat, status
-(s/def ::hp util/pos-int-or-zero?)
+(s/def ::hp ::pos-int-or-zero)
 (s/def ::max pos-int?)
 (s/def ::vulnerable (s/keys :req [::hp ::max]))
 
@@ -97,8 +93,8 @@
 ;;; upon its experience.
 ;;;
 ;;; Related systems: status
-(s/def ::xp util/pos-int-or-zero?)
-(s/def ::level util/pos-int-or-zero?)
+(s/def ::xp ::pos-int-or-zero)
+(s/def ::level ::pos-int-or-zero)
 (s/def ::adaptive (s/keys :req [::xp ::level]))
 
 ;;; Skillset component
@@ -186,7 +182,7 @@
 ;;; Custom color for rendering.
 ;;;
 ;;; Related systems: render
-(s/def ::color util/pos-int-or-zero?)
+(s/def ::color ::pos-int-or-zero)
 
 ;;; Renderable component
 ;;;
@@ -263,9 +259,9 @@
 ;;; Stats for a weapon.
 ;;;
 ;;; Related systems: combat
-(s/def ::damage pos-int-or-zero?)
-(s/def ::penetration pos-int-or-zero?)
-(s/def ::offense pos-int-or-zero?)
+(s/def ::damage ::pos-int-or-zero)
+(s/def ::penetration ::pos-int-or-zero)
+(s/def ::offense ::pos-int-or-zero)
 (s/def ::transition ::type)
 (s/def ::weapon
   (s/keys :req [::type ::damage ::penetration ::offense ::transition]))
