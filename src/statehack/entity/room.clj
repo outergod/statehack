@@ -16,26 +16,29 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.room
-  (:require [statehack.entity :refer [uuid]]
-            [statehack.component :as c]))
+  "Room-related entities"
+  (:require [statehack.entity :refer [entity uuid]]
+            [statehack.component :as c]
+            [clojure.spec :as s]))
 
 (defn wall
   "Wall entity"
   [color]
-  #::c{:id (uuid) :renderable :wall :color color :room true :obstacle true :opaque true})
+  (entity #::c{:id (uuid) :renderable :wall :color color :room true :obstacle true :opaque true}))
 
 (defn solid
   "Solid entity"
   []
-  #::c{:id (uuid) :renderable #::c{:tile :nihil :color 0} :obstacle true :opaque true})
+  (entity #::c{:id (uuid) :renderable #::c{:tile :nihil :color 0} :obstacle true :opaque true}))
 
 (defn door
   "Door entity"
   [type open?]
-  #::c{:id (uuid) :renderable :door :obstacle :door :opaque :door :room true
-       :door #::c{:type type :open? open?}})
+  (entity
+    #::c{:id (uuid) :renderable :door :obstacle :door :opaque :door :room true
+         :door #::c{:type type :open? open?}}))
   
 (defn blast-door
   "Blast door entity"
   [open?]
-  #::c{:door #::c{:type :blas :open? open?}})
+  (entity #::c{:door #::c{:type :blas :open? open?}}))

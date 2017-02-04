@@ -56,3 +56,85 @@
   [[& cs] es]
   (remove #(apply capable? % cs) es))
 
+;;; Entities
+
+(defn entity
+  "Conform `x` to `:statehack/entity`"
+  [x]
+  (s/conform :statehack/entity x))
+
+(defn cursor
+  "Cursor entity"
+  []
+  (entity #::c{:id (uuid) :unique :cursor :position [0 0] :mobile #::c{:type :cursor}}))
+
+(defn dialog
+  "Dialog entity"
+  [& ms]
+  (entity #::c{:id (uuid) :unique :dialog :renderable :dialog :input :dialog :messages ms}))
+
+(defn floor
+  "Floor entity"
+  [n [w h]]
+  (entity #::c{:id (uuid) :renderable :floor :floor n :foundation [w h]}))
+
+(defn log
+  "Log entity"
+  []
+  (entity #::c{:id (uuid) :unique :log :renderable :log :messages []}))
+
+(defn music
+  "Music entity"
+  [name]
+  (entity #::c{:id (uuid) :music name}))
+
+(defn player
+  "Player entity"
+  [name hp]
+  (entity
+    #::c{:id (uuid)
+         :name name
+         :category :human
+         :renderable :humanoid
+         :input :player
+         :obstacle true
+         :memory {}
+         :inventory []
+         :mobile #::c{:type :pipedal}
+         :adaptive #::c{:xp 0 :level 0}
+         :vulnerable #::c{:hp hp :max hp}
+         :sight #::c{:type :eyes :distance 10}}))
+
+(defn selector
+  "Cursor-based selector
+
+  Uses deferred `action` on selected target."
+  [[x y] action targets]
+  (entity #::c{:id (uuid) :position [x y] :input :selector :deferred action
+               :mobile #::c{:type :selector :targets targets}}))
+
+(defn serv-bot
+  "Serv-Bot entity"
+  []
+  (entity
+    #::c{:id (uuid)
+         :name "Serv-Bot"
+         :category :serv-bot
+         :renderable :serv-bot
+         :alive true
+         :obstacle true
+         :memory {}
+         :inventory []
+         :ai :serv-bot
+         :armor 20
+         :mobile #::c{:type :wheels}
+         :vulnerable #::c{:hp 20 :max 20}
+         :sight #::c{:type :sensors :distance 5}
+         :skillset {:melee #::c{:name "Appendages"
+                                :weapon #::c{:type :melee :transition :appendages
+                                             :damage 8 :penetration 0 :offense 1}}}}))
+
+(defn status-bar
+  "Status bar entity"
+  []
+  (entity #::c{:id (uuid) :renderable :status}))

@@ -15,26 +15,16 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.entity.serv-bot
-  (:require [statehack.entity :refer [uuid]]
-            [statehack.component :as c]))
+(ns statehack.entity.menu
+  (:require [statehack.entity :refer [entity uuid]]
+            [statehack.component :as c]
+            [statehack.component.menu :as cm]
+            [clojure.spec :as s]))
 
-(defn serv-bot
-  "Serv-Bot entity"
-  []
-  #::c{:id (uuid)
-       :name "Serv-Bot"
-       :category :serv-bot
-       :renderable :serv-bot
-       :alive true
-       :obstacle true
-       :memory {}
-       :inventory []
-       :ai :serv-bot
-       :armor 20
-       :mobile #::c{:type :wheels}
-       :vulnerable #::c{:hp 20 :max 20}
-       :sight #::c{:type :sensors :distance 5}
-       :skillset {:melee #::c{:name "Appendages"
-                              :weapon #::c{:type :melee :transition :appendages
-                                           :damage 8 :penetration 0 :offense 1}}}})
+(defn inventory
+  "Menu inventory entity"
+  [id type frame]
+  (entity
+    #::c {:id (uuid) :input :inventory-menu
+          ::cm/inventory-menu #::cm{::inventory-type type ::inventory-reference id
+                                    ::inventory-index 0 ::inventory-frame frame}}))

@@ -15,11 +15,25 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.entity.floor
+(ns statehack.entity.weapon
   (:require [statehack.entity :refer [uuid]]
-            [statehack.component :as c]))
+            [statehack.component :as c]
+            [clojure.spec :as s]))
 
-(defn floor
-  "Floor entity"
-  [n [w h]]
-  #::c{:id (uuid) :renderable :floor :floor n :foundation [w h]})
+(defn dart-gun
+  "SV-23 Dart Pistol entity"
+  []
+  (s/conform :statehack/entity
+    #::c {:id (uuid) :name "SV-23 Dart Pistol"
+          :pickup :slot-weapon
+          :weapon #::c{:type :semi-automatic :transition :dart-gun
+                       :damage 20 :penetration 20 :offense 2}
+          :renderable :weapon}))
+
+(defn lead-pipe
+  "Lead Pipe entity"
+  []
+  (s/conform :statehack/entity
+    #::c {:id (uuid) :name "Lead Pipe" :pickup :slot-weapon :renderable :weapon
+          :weapon #::c{:type :melee :transition :lead-pipe
+                       :damage 15 :penetration 40 :offense 3}}))
