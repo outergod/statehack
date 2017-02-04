@@ -27,13 +27,14 @@
 (defn group
   "Group together `parent` and `children` by means of the `compound` component"
   [parent children]
-  (cons (merge parent (c/compound nil (map :id children)))
-    (map #(merge % (c/compound [(:id parent)] nil)) children)))
+  (cons (merge parent {::c/compound #::c{:parents nil :children (map :id children)}})
+    (map #(merge % {::c/compound #::c{:parents [(:id parent)] :children nil}})
+      children)))
 
 (defn parents
   "Compound parents of entity"
   [game e]
-  (map (world/entities game) (get-in e [:compound :parents])))
+  (map (world/entities game) (get-in e [::c/compound ::c/parents])))
 
 (defn parent
   "Compound single parent of entity"
@@ -43,4 +44,4 @@
 (defn children
   "Compound children of entity"
   [game e]
-  (map (world/entities game) (get-in e [:compound :children])))
+  (map (world/entities game) (get-in e [::c/compound ::c/children])))

@@ -19,9 +19,9 @@
   (:require [statehack.system.world :as world]
             [statehack.component :as c]
             [statehack.entity :as entity]
+            [statehack.entity.menu :as menu]
             [statehack.system.input :as input]
             [statehack.system.input.receivers :as receivers]
-            [statehack.entity.menu.inventory :as inventory-menu]
             [statehack.system.messages :as messages]
             [statehack.system.name :as name]
             [statehack.system.slots :as slots]))
@@ -44,7 +44,7 @@
   (world/update game [{actor-id :id :keys [floor position] :as actor} (:id e1) {item-id :id :as item} (:id e2)]
     (slots/unslot game actor item)
     (world/update-entity-component game actor-id :inventory (partial remove #{item-id}))
-    (world/add-entity-component game item-id (c/position position) (c/floor floor))))
+    (world/add-entity-component game item-id #::c{:position position :floor floor})))
 
 (defn available-pickups [game e]
   (entity/filter-capable [:pickup] (world/entities-at game e)))
@@ -136,7 +136,7 @@
   (activate-item game menu))
 
 (defn open [game player type]
-  (let [i (inventory-menu/inventory (:id player) type (default-frame type))]
+  (let [i (menu/inventory (:id player) type (default-frame type))]
     (world/update game [] (world/add-entity game i) (receivers/push-control game i))))
 
 (defmethod input/receive :inventory-menu [game menu input]

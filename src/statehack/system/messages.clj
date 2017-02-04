@@ -17,14 +17,14 @@
 
 (ns statehack.system.messages
   (:refer-clojure :exclude [update pop])
-  (:require [statehack.entity.dialog :as dialog]
+  (:require [statehack.entity :as entity]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.world :as world]
             [statehack.system.unique :as unique]
             [clojure.pprint :refer [cl-format]]))
 
 (defn dialog [game & ms]
-  (let [d (apply dialog/dialog ms)]
+  (let [d (apply entity/dialog ms)]
     (world/update game []
       (world/add-entity game d)
       (receivers/push-control game d))))

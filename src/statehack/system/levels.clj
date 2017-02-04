@@ -19,13 +19,9 @@
   (:refer-clojure :exclude [load])
   (:require [statehack.entity :as entity]
             [statehack.component :as c]
-            [statehack.entity.player :as player]
             [statehack.entity.room :as room]
             [statehack.entity.container :as container]
-            [statehack.entity.serv-bot :as serv-bot]
-            [statehack.entity.dart-gun :as dart-gun]
-            [statehack.entity.lead-pipe :as lead-pipe]
-            [statehack.entity.music :as music]
+            [statehack.entity.weapon :as weapon]
             [statehack.system.compound :as compound]
             [statehack.system.world :as world]
             [statehack.util :as util]
@@ -35,26 +31,26 @@
 (defn label
   "Add label component to entity"
   [e label]
-  (merge e (c/label label)))
+  (merge e {::c/label label}))
 
 (defn position
   "Position entity at floor and coordinates"
   [e [x y] floor]
-  (merge e (c/position [x y]) (c/floor floor)))
+  (merge e #::c{:position [x y] :floor floor}))
 
 (def common-tiles
   {\X #(room/wall :lightblue)
    \o #(room/door :simple false)
    \O #(room/door :simple true)
-   \b #(serv-bot/serv-bot)
+   \b #(entity/serv-bot)
    \- #(label (room/door :blast false) :blast-door)
    \| #(label (room/door :blast false) :blast-door)})
 
 (def rooms {"starting-lab" {:tiles (merge common-tiles
-                                     {\@ #(player/player "Malefeitor" 100)
-                                      \l #(lead-pipe/lead-pipe)
+                                     {\@ #(entity/player "Malefeitor" 100)
+                                      \l #(weapon/lead-pipe)
                                       \- #(label (room/door :blast false) :blast-door)
-                                      \c #(container/crate (dart-gun/dart-gun))})
+                                      \c #(container/crate (weapon/dart-gun))})
                             :post (fn [{:keys [blast-door]}]
                                     (compound/group (room/blast-door false) blast-door))
                             :music :medical}})
@@ -84,7 +80,7 @@
               (concat (get labeled nil) (post (dissoc labeled nil)))
               room)
       (for [x (range x0 x1) y (range y0 y1)]
-        (position (music/music music) [x y] floor)))))
+        (position (entity/music music) [x y] floor)))))
 
 (defn floor [game n]
   (let [es (world/capable-entities game :foundation)]

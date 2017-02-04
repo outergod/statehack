@@ -16,12 +16,12 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.defer
-  (:require [statehack.entity.selector :as selector]
+  (:require [statehack.entity :as entity]
             [statehack.system.world :as world]
             [statehack.system.input.receivers :as receivers]))
 
 (defn defer [game es action]
-  (let [sel (selector/selector (:position (first es)) action (map :id es))]
+  (let [sel (entity/selector (:position (first es)) action (map :id es))]
     (world/update game [e (:id sel)]
       (world/add-entity game sel)
       (receivers/push-control game e))))

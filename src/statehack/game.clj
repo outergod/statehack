@@ -21,11 +21,7 @@
             [statehack.system.player :as player]
             [statehack.system.layout :as layout]
             [statehack.system.graphics :as graphics]
-            [statehack.entity.floor :as floor]
-            [statehack.entity.status-bar :as status]
-            [statehack.entity.serv-bot :as serv-bot]
-            [statehack.entity.cursor :as cursor]
-            [statehack.entity.log :as log]
+            [statehack.entity :as entity]
             [statehack.system.ai :as ai]
             [statehack.system.viewport :as viewport]
             [statehack.system.unique :as unique]
@@ -50,11 +46,11 @@
               :graphics (screen/text-graphics screen)
               :world [{:entities (util/index-by :id
                                                 (concat
-                                                 [(floor/floor 1 [w h])
-                                                  (status/status-bar)
-                                                  (cursor/cursor)
-                                                  (log/log)]
-                                                 lab))}]}]
+                                                  [(entity/floor 1 [w h])
+                                                   (entity/status-bar)
+                                                   (entity/cursor)
+                                                   (entity/log)]
+                                                  lab))}]}]
     (receivers/push-control game (unique/unique-entity game :player))))
 
 (defn load-game

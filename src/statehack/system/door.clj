@@ -17,7 +17,6 @@
 
 (ns statehack.system.door
   (:require [statehack.entity :as entity]
-            [statehack.entity.selector :as selector]
             [statehack.system.messages :as messages]
             [statehack.system.defer :as defer]
             [statehack.system.input.receivers :as receivers]
