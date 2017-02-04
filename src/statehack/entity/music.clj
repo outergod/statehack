@@ -16,10 +16,10 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.music
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn music
   "Music entity"
   [name]
-  (entity (c/music name)))
+  #::c{:id (uuid) :music name})

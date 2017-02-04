@@ -17,322 +17,271 @@
 
 (ns statehack.component
   "All statehack components"
-  (:refer-clojure :exclude [name]))
-
-(defn unique
-  "Unique entity component
-
-  Every `type` must only exist at most once among all entities.
-
-  Related systems: unique"
-  [type]
-  {:unique type})
-
-(defn name
-  "Name component
-
-  Gives an entity the name `s`.
-
-  Related systems: name, status"
-  [s]
-  {:name s})
-
-(defn position
-  "Position component
-
-  Entities with this component exist on a linear plane at the current
-  coordinates. This does not imply they are visible or can't coexist
-  at the same location.
-
-  Related systems: movement, levels, defer, render, sight, viewport, world"
-  [[x y]]
-  {:pre [(>= x 0) (>= y 0)]}
-  {:position [x y]})
-
-(defn category
-  "Category component
-
-  Simply used to further specify the `type` of an entity to influence
-  rendering and, possibly, other systems.
-
-  Related systems: name"
-  [type]
-  {:category type})
-
-(defn vulnerable
-  "Vulnerability component
-
-  A vulnerable entity can be damaged and has a notion of health.
-
-  Related systems: combat, status"
-  [hp]
-  {:pre [(pos? hp)]}
-  {:hp {:current hp
-        :max hp}})
-
-(defn armor
-  "Armor component
-
-  Armor reduces damage done in combat.
-
-  Related systems: combat"
-  [armor]
-  {:pre [(pos? armor)]}
-  {:armor armor})
-
-(defn alive
-  "Life component
-
-  Determines whether an entity can be any of the two states of alive
-  and dead.
-
-  Related systems: combat"
-  [alive?]
-  {:alive alive?})
-
-(defn adaptive
-  "Adaptivity component
-
-  An adaptive component learns by accomplishing things and can improve
-  upon its experience.
-
-  Related systems: status"
-  [xp lvl]
-  {:pre [(>= xp 0) (>= lvl 0)]}
-  {:adaptive {:xp xp
-              :level lvl}})
-
-(defn skillset
-  "Skillset component
-
-  A skilled entity can perform actions other than movement.
-
-  Related systems: skills, combat"
-  [& skills]
-  {:post [(map? %) (every? keyword? (keys %)) (every? map? (vals %))]}
-  {:skillset (apply hash-map skills)})
-
-(defn obstacle
-  "Obstacle component
-
-  Entities that are also obstacles can't co-exist at the same
-  position, i.e. they obstruct each other. Typical obstacles include
-  walls, closed doors, force fields, enemies, the player. 
-  This component gets dynamically dispatched, so `type` can take other
-  values than `true` and `false`.
-
-  Related systems: obstacle"
-  ([type] {:obstacle type})
-  ([] (obstacle true)))
-
-(defn opaque
-  "Opacity component
-
-  Opaque entities can simply not be looked through, i.e. they obstruct the line
-  of view. Can but doesn't need to be combined with `obstacle`.
-  This component gets dynamically dispatched, so `type` can take other
-  values than `true` and `false`.
-
-  Related systems: sight"
-  ([type] {:opaque type})
-  ([] (opaque true)))
-
-(defn sight
-  "Sight component
-
-  Seeing entities can detect the presence or absence of other entities
-  within `distance`, as dispatch on `type` determines.
-
-  Related systems: sight, memory, render"
-  [type distance]
-  {:sight {:type type
-           :distance distance}})
-
-(defn door
-  "Door component
-
-  A door can be open or closed and behave differently depending on that.
-
-  Related systems: door, obstacle, levels, render"
-  [type open?]
-  {:door {:type type
-          :open open?}})
-
-(defn room
-  "Room component
-
-  Entities which are considered part of a room automatically \"glue\"
-  which each other in a visual manner.
-
-  Related systems: render"
-  []
-  {:room true})
-
-(defn input
-  "Input component
-
-  An entity with this component can receive input of some
-  `type`. Dispatch determines further behavior.
-
-  Related systems: input, player"
-  [type]
-  {:input type})
-
-(defn mobile
-  "Mobility component
-
-  Mobile entities have some notion of moving around. Dispatch
-  determines further behavior.
-
-  Related systems: movement, defer, combat"
-  [type & opts]
-  {:mobile (merge (apply hash-map opts)
-                  {:type type})})
-
-(defn floor
-  "Floor component
-
-  Entities with this component exist only on the current floor denoted
-  by `n`. This is complementary to but not dependent on `position`.
-
-  Related systems: levels, movement, render, sight, viewport, world"
-  [n]
-  {:pre [(integer? n)]}
-  {:floor n})
-
-(defn foundation
-  "Foundation component
-
-  This component is specifically made for floors, so each foundation
-  must also be \"on\" a floor on which it also has to be unique.
-  `[w h]` denotes the proportions of the floor.
-
-  Related systems: levels, movement, render, viewport"
-  [[w h]]
-  {:pre [(>= w 0) (>= h 0)]}
-  {:foundation [w h]})
-
-(defn renderable
-  "Renderable component
-
-  A renderable entity an have a visual appearance, further determined
-  by dispatch against `type` and other components.
-
-  Related systems: render, combat"
-  [type]
-  {:renderable type})
-
-(defn color
-  "Color component"
-  [color]
-  {:color color})
-
-(defn messages
-  "Message component
-
-  An entity bearing messages. Used for logs, dialogs, emails and the like.
-
-  Related systems: messages, combat, door, movement, player, render, status"
-  [& ms]
-  {:pre [(every? string? ms)]}
-  {:messages ms})
-
-(defn deferred
-  "Deferred action component
-
-  This component is used for temporary entities that exist to fulfill
-  complex input patterns on behalf of the player entity,
-  e.g. selection mechanisms.
-
-  Related systems: defer, player, door"
-  [action]
-  {:deferred action})
-
-(defn ai
-  "AI component
-
-  Entities with this component are being controlled by computer
-  intelligence and act on their own behalf. Dispatch on `type`
-  determines further behavior.
-
-  Related systems: ai"
-  [type]
-  {:ai {:type type}})
-
-(defn memory
-  "Memory component
-
-  Entities with a memory and remember things, such as the location of
-  formerly seen entities, also including the layout of levels.
-
-  Related systems: sight, memory, render"
-  []
-  {:memory {}})
-
-(defn inventory
-  "Inventory component
-
-  Anything with an inventory can carry stuff around."
-  [items]
-  {:inventory items})
-
-(defn inventory-menu
-  "Inventory menu component
-
-  References other entity `id`"
-  [id type frame]
-  {:inventory-menu {:index 0
-                    :frame frame
-                    :type type
-                    :reference id}})
-
-(defn pickup
-  "Pickup component
-
-  A pickup can be carried around in an `inventory`.
-  Activation type might require other component(s) present."
-  ([activate]
-   {:pickup activate})
-  ([]
-   (pickup :none)))
-
-(defn music
-  "Music component
-
-  Triggers the playback of music"
-  [name]
-  {:music name})
-
-(defn slots
-  "Slots component
-
-  Enables slotting equipment"
-  [& slots]
-  {:post [(map? %) (every? keyword? (keys %))]}
-  {:slots (apply hash-map slots)})
-
-(defn weapon
-  "Weapon component
-
-  Stats for a weapon"
-  [type damage penetration offense transition]
-  {:weapon {:type type
-            :damage damage
-            :penetration penetration
-            :offense offense
-            :transition transition}})
-
-(defn compound
-  "Compound component
-
-  Compounds glue together entities by reference."
-  [parents children]
-  {:compound {:parents parents
-              :children children}})
-
-(defn label
-  "Label component
-
-  Used to post-process entities in `levels`."
-  [label]
-  {:label label})
+  (:require [clojure.spec :as s]
+            [statehack.util :as util]))
+
+(s/def ::type keyword?)
+(s/def ::distance util/pos-int-or-zero?)
+
+;;; ID component
+;;;
+;;; A unique identifier is the bare minimum for any entity to exist.
+;;;
+;;; Related systems: all
+(s/def ::id uuid?)
+
+;;; Unique entity component
+;;; 
+;;; Every type must only exist at most once among all entities.
+;;;
+;;; Related systems: unique
+(s/def ::unique keyword?)
+
+;;; Name component
+;;;
+;;; Gives an entity a name.
+;;;
+;;; Related systems: name, status
+(s/def ::name string?)
+
+;;; Position component
+;;; 
+;;; Entities with this component exist on a linear plane at the current
+;;; coordinates. This does not imply they are visible or can't coexist
+;;; at the same location.
+;;;
+;;; Related systems: movement, levels, defer, render, sight, viewport, world
+
+(defn- coordinate?
+  "Is `x` a valid coordinate?"
+  [x]
+  (util/pos-int-or-zero? x))
+
+(s/def ::position (s/tuple coordinate? coordinate?))
+
+;;; Category component
+;;;
+;;; Simply used to further specify the type of an entity to influence
+;;; rendering and, possibly, other systems.
+;;;
+;;; Related systems: name
+(s/def ::category keyword?)
+
+;;; Vulnerability component
+;;;
+;;; A vulnerable entity can be damaged and has a notion of health.
+;;;
+;;; Related systems: combat, status
+(s/def ::hp util/pos-int-or-zero?)
+(s/def ::max pos-int?)
+(s/def ::vulnerable (s/keys :req [::hp ::max]))
+
+;;; Armor component
+;;;
+;;; Armor reduces damage done in combat.
+;;;
+;;; Related systems: combat
+(s/def ::armor pos-int?)
+
+;;; Life component
+;;;
+;;; Determines whether an entity can be any of the two states of alive
+;;; and dead.
+;;;
+;;; Related systems: combat
+(s/def ::alive boolean?)
+
+;;; Adaptivity component
+;;;
+;;; An adaptive component learns by accomplishing things and can improve
+;;; upon its experience.
+;;;
+;;; Related systems: status
+(s/def ::xp util/pos-int-or-zero?)
+(s/def ::level util/pos-int-or-zero?)
+(s/def ::adaptive (s/keys :req [::xp ::level]))
+
+;;; Skillset component
+;;;
+;;; A skilled entity can perform actions other than movement.
+;;;
+;;; Related systems: skills, combat
+(s/def ::skillset (s/every-kv keyword? :statehack/entity))
+
+;;; Obstacle component
+;;;
+;;; Entities that are also obstacles can't co-exist at the same
+;;; position, i.e. they obstruct each other. Typical obstacles include
+;;; walls, closed doors, force fields, enemies, the player. 
+;;;
+;;; Related systems: obstacle"
+(s/def ::obstacle keyword?)
+
+;;; Opacity component
+;;;
+;;; Opaque entities can simply not be looked through, i.e. they obstruct the line
+;;; of view. Can but doesn't need to be combined with `obstacle`.
+;;;
+;;; Related systems: sight
+(s/def ::opaque keyword?)
+
+;;; Sight component
+;;;
+;;; Seeing entities can detect the presence or absence of other entities
+;;; within `distance`, as dispatch on `type` determines.
+;;;
+;;; Related systems: sight, memory, render
+(s/def ::sight (s/keys :req [::type ::distance]))
+
+;;; Door component
+;;;
+;;; A door can be open or closed and behave differently depending on that.
+;;;
+;;; Related systems: door, obstacle, levels, render
+(s/def ::open? boolean?)
+(s/def ::door (s/keys :req [::type ::open?]))
+
+;;; Room component
+;;;
+;;; Entities which are considered part of a room automatically "glue"
+;;; which each other in a visual manner.
+;;;
+;;; Related systems: render
+(s/def ::room boolean?)
+
+;;; Input component
+;;;
+;;; An entity with this component can receive input of some
+;;; type. Dispatch determines further behavior.
+;;;
+;;; Related systems: input, player
+(s/def ::input keyword?)
+
+;;; Mobility component
+;;;
+;;; Mobile entities have some notion of moving around. Dispatch
+;;; determines further behavior.
+;;;
+;;; Related systems: movement, defer, combat
+(s/def ::mobile (s/keys :req [::type]))
+
+;;; Floor component
+;;;
+;;; Entities with this component exist only on the current floor denoted.
+;;; This is complementary to but not dependent on position.
+;;;
+;;; Related systems: levels, movement, render, sight, viewport, world
+(s/def ::floor integer?)
+
+;;; Foundation component
+;;;
+;;; This component is specifically made for floors, so each foundation
+;;; must also be on a floor on which it also has to be unique.
+;;;
+;;; Related systems: levels, movement, render, viewport
+(s/def ::foundation (s/tuple pos-int? pos-int?))
+
+;;; Color component
+;;;
+;;; Custom color for rendering.
+;;;
+;;; Related systems: render
+(s/def ::color util/pos-int-or-zero?)
+
+;;; Renderable component
+;;;
+;;; A renderable entity an have a visual appearance, further determined
+;;; by dispatch and other components.
+;;;
+;;; Related systems: render, combat
+(s/def ::renderable (s/or :type ::type :tile (s/keys :req [::type ::color])))
+
+;;; Messages component
+;;;
+;;; An entity bearing messages. Used for logs, dialogs, emails and the like.
+;;;
+;;; Related systems: messages, combat, door, movement, player, render, status
+(s/def ::messages (s/coll-of string?))
+
+;;; Deferred action component
+;;;
+;;; This component is used for temporary entities that exist to fulfill
+;;; complex input patterns on behalf of the player entity,
+;;; e.g. selection mechanisms.
+;;;
+;;; Related systems: defer, player, door
+(s/def ::deferred fn?)
+
+;;; AI component
+;;;
+;;; Entities with this component are being controlled by computer
+;;; intelligence and act on their own behalf. Dispatch determines further
+;;; behavior.
+;;;
+;;; Related systems: ai
+(s/def ::ai keyword?)
+
+;;; Memory component
+;;;
+;;; Entities with a memory and remember things, such as the location of
+;;; formerly seen entities, also including the layout of levels.
+;;;
+;;; Related systems: sight, memory, render
+(s/def ::memory map?)
+
+;;; Inventory component
+;;;
+;;; Anything with an inventory can carry stuff around.
+;;;
+;;; Related systems: inventory
+(s/def ::inventory (s/coll-of ::id :into #{}))
+
+;;; Pickup component
+;;;
+;;; A pickup can be carried around in an `inventory`.
+;;; Activation type might require other component(s) present.
+;;;
+;;; Related systems: inventory
+(s/def ::pickup keyword?)
+
+;;; Music component
+;;;
+;;; Used to trigger the playback of music.
+;;;
+;;; Related systems: levels, sound
+(s/def ::music keyword?)
+
+;;; Slots component
+;;;
+;;; Enables slotting equipment.
+;;;
+;;; Related systems:
+(s/def ::slots (s/every-kv keyword? ::id))
+
+;;; Weapon component
+;;;
+;;; Stats for a weapon.
+;;;
+;;; Related systems: combat
+(s/def ::damage pos-int-or-zero?)
+(s/def ::penetration pos-int-or-zero?)
+(s/def ::offense pos-int-or-zero?)
+(s/def ::transition ::type)
+(s/def ::weapon
+  (s/keys :req [::type ::damage ::penetration ::offense ::transition]))
+
+;;; Compound component
+;;;
+;;; Compounds glue together entities by reference.
+;;;
+;;; Related systems: all
+(s/def ::parents (s/coll-of ::id :into #{}))
+(s/def ::children (s/coll-of ::id :into #{}))
+(s/def ::compound (s/keys :opt [::parents ::children]))
+
+;;; Label component
+;;;
+;;; Used to post-process entities in `levels`.
+;;;
+;;; Related systems: levels
+(s/def ::label keyword?)

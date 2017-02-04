@@ -35,10 +35,8 @@
   {:arglists '([e])}
   #'obstacle?-dispatch :hierarchy #'obstacle?-hierarchy)
 
-(defmethod obstacle? :default [_] false)
-(defmethod obstacle? true [_] true)
-(defmethod obstacle? false [_] false)
-
+(defmethod obstacle? :default [_] true)
+(defmethod obstacle? nil [_] false)
 (defmethod obstacle? :door [e] (not (door/open? e)))
 
 (defn filter-obstacles [es]

@@ -16,14 +16,14 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.dart-gun
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn dart-gun
   "SV-23 Dart Pistol entity"
   []
-  (entity
-   (c/name "SV-23 Dart Pistol")
-   (c/pickup :slot-weapon)
-   (c/weapon :semi-automatic 20 20 2 :dart-gun)
-   (c/renderable :weapon)))
+  #::c{:id (uuid) :name "SV-23 Dart Pistol"
+       :pickup :slot-weapon
+       :weapon #::c{:type :semi-automatic :transition :dart-gun
+                    :damage 20 :penetration 20 :offense 2}
+       :renderable :weapon})

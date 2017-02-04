@@ -16,14 +16,12 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.lead-pipe
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn lead-pipe
   "Lead Pipe entity"
   []
-  (entity
-    (c/name "Lead Pipe")
-    (c/pickup :slot-weapon)
-    (c/weapon :melee 15 40 3 :lead-pipe)
-    (c/renderable :weapon)))
+  #::c{:id (uuid) :name "Lead Pipe" :pickup :slot-weapon :renderable :weapon
+       :weapon #::c{:type :melee :transition :lead-pipe
+                    :damage 15 :penetration 40 :offense 3}})

@@ -42,10 +42,8 @@
   {:arglists '([e])}
   #'opaque?-dispatch :hierarchy #'opaque?-hierarchy)
 
-(defmethod opaque? :default [_] false)
-(defmethod opaque? true [_] true)
-(defmethod opaque? false [_] false)
-
+(defmethod opaque? :default [_] true)
+(defmethod opaque? nil [_] false)
 (defmethod opaque? :door [e] (not (door/open? e)))
 
 (defn filter-opaques

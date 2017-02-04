@@ -16,14 +16,10 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.dialog
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn dialog
   "Dialog entity"
   [& ms]
-  (entity
-   (c/unique :dialog)
-   (c/renderable :dialog)
-   (c/input :dialog)
-   (apply c/messages ms)))
+  #::c{:id (uuid) :unique :dialog :renderable :dialog :input :dialog :messages ms})

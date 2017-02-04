@@ -16,12 +16,13 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.selector
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
-(defn selector [[x y] action targets]
-  (entity
-   (c/position [x y])
-   (c/mobile :selector :targets targets)
-   (c/input :selector)
-   (c/deferred action)))
+(defn selector
+  "Cursor-based selector
+
+  Uses deferred `action` on selected target."
+  [[x y] action targets]
+  #::c{:id (uuid) :position [x y] :input :selector :deferred action
+       :mobile #::c{:type :selector :targets targets}})

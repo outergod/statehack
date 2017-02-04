@@ -16,9 +16,10 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.status-bar
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
-(defn status-bar []
-  (entity
-   (c/renderable :status)))
+(defn status-bar
+  "Status bar entity"
+  []
+  #::c{:id (uuid) :renderable :status})

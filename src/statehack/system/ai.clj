@@ -31,8 +31,7 @@
 
 (def act-hierarchy (make-hierarchy))
 
-(defn act-dispatch [game e]
-  (-> e :ai :type))
+(defn act-dispatch [game e] (:ai e))
 
 (defmulti act #'act-dispatch :hierarchy #'act-hierarchy)
 

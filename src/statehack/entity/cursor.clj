@@ -16,13 +16,10 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.cursor
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn cursor
   "Cursor entity"
   []
-  (entity
-   (c/unique :cursor)
-   (c/position [0 0])
-   (c/mobile :cursor)))
+  #::c{:id (uuid) :unique :cursor :position [0 0] :mobile #::c{:type :cursor}})

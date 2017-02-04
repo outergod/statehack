@@ -16,13 +16,10 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.container
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn crate
   "Crate entity"
-  [items]
-  (entity
-    (c/name "Crate")
-    (c/renderable :crate)
-    (c/inventory items)))
+  []
+  #::c{:id (uuid) :name "Crate" :renderable :crate :inventory []})

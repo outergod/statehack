@@ -57,3 +57,8 @@
    (when-let [s (seq coll)]
      (let [c (first s)]
        (cons c (when (pred c) (take-while-including pred (rest s))))))))
+
+(defn pos-int-or-zero?
+  "Is `x` a positive integer or zero?"
+  [x]
+  (or (pos-int? x) (zero? x)))

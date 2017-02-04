@@ -16,25 +16,21 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.player
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn player
   "Player entity"
   [name hp]
-  (entity
-   (c/unique :player)
-   (c/alive true)
-   (c/name name)
-   (c/category :human)
-   (c/adaptive 0 0)
-   (c/mobile :bipedal)
-   (c/renderable :humanoid)
-   (c/input :player)
-   (c/obstacle)
-   (c/vulnerable hp)
-   #_(c/sight :omniscience nil)
-   (c/sight :eyes 10)
-   (c/memory)
-   (c/inventory [])
-   (c/slots :melee nil :gun nil)))
+  #::c{:id (uuid)
+       :name name
+       :category :human
+       :renderable :humanoid
+       :input :player
+       :obstacle true
+       :memory {}
+       :inventory []
+       :mobile #::c{:type :pipedal}
+       :adaptive #::c{:xp 0 :level 0}
+       :vulnerable #::c{:hp hp :max hp}
+       :sight #::c{:type :eyes :distance 10}})

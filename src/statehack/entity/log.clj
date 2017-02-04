@@ -16,13 +16,10 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.log
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn log
   "Log entity"
   []
-  (entity
-   (c/unique :log)
-   (c/renderable :log)
-   (c/messages)))
+  #::c{:id (uuid) :unique :log :renderable :log :messages []})

@@ -16,24 +16,25 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.serv-bot
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
-(defn serv-bot []
-  (entity
-    (c/name "Serv-Bot")
-    (c/alive true)
-    (c/category :serv-bot)
-    (c/mobile :wheels)
-    (c/renderable :serv-bot)
-    (c/obstacle)
-    (c/vulnerable 20)
-    (c/armor 20)
-    (c/ai :serv-bot)
-    (c/sight :sensors 5)
-    #_(c/sight :omniscience nil)
-    (c/memory)
-    (c/skillset :melee (apply merge
-                         (c/name "Appendages")
-                         (c/weapon :melee 8 0 1 :appendages)))
-    (c/inventory [])))
+(defn serv-bot
+  "Serv-Bot entity"
+  []
+  #::c{:id (uuid)
+       :name "Serv-Bot"
+       :category :serv-bot
+       :renderable :serv-bot
+       :alive true
+       :obstacle true
+       :memory {}
+       :inventory []
+       :ai :serv-bot
+       :armor 20
+       :mobile #::c{:type :wheels}
+       :vulnerable #::c{:hp 20 :max 20}
+       :sight #::c{:type :sensors :distance 5}
+       :skillset {:melee #::c{:name "Appendages"
+                              :weapon #::c{:type :melee :transition :appendages
+                                           :damage 8 :penetration 0 :offense 1}}}})

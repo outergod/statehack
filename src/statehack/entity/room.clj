@@ -16,38 +16,26 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.room
-  (:require [statehack.entity :refer :all]
+  (:require [statehack.entity :refer [uuid]]
             [statehack.component :as c]))
 
 (defn wall
   "Wall entity"
   [color]
-  (entity
-   (c/renderable :wall)
-   (c/color color)
-   (c/room)
-   (c/obstacle)
-   (c/opaque)))
+  #::c{:id (uuid) :renderable :wall :color color :room true :obstacle true :opaque true})
 
 (defn solid
   "Solid entity"
   []
-  (entity
-   (c/renderable {:tile :nihil :color 0})
-   (c/obstacle)
-   (c/opaque)))
+  #::c{:id (uuid) :renderable #::c{:tile :nihil :color 0} :obstacle true :opaque true})
 
 (defn door
   "Door entity"
   [type open?]
-  (entity
-   (c/renderable :door)
-   (c/door type open?)
-   (c/room)
-   (c/obstacle :door)
-   (c/opaque :door)))
-
+  #::c{:id (uuid) :renderable :door :obstacle :door :opaque :door :room true
+       :door #::c{:type type :open? open?}})
+  
 (defn blast-door
   "Blast door entity"
   [open?]
-  (entity (c/door :blast open?)))
+  #::c{:door #::c{:type :blas :open? open?}})

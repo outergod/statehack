@@ -15,11 +15,21 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.entity.floor
-  (:require [statehack.entity :refer [uuid]]
-            [statehack.component :as c]))
+(ns statehack.component.menu
+  "statehack menu components"
+  (:require [clojure.spec :as s]
+            [statehack.component :as c]
+            [statehack.util :as util]))
 
-(defn floor
-  "Floor entity"
-  [n [w h]]
-  #::c{:id (uuid) :renderable :floor :floor n :foundation [w h]})
+;;; Inventory menu component
+;;;
+;;; References other entity `id`"
+;;;
+;;; Related systems: inventory
+(s/def ::index util/pos-int-or-zero?)
+(s/def ::frame keyword?)
+(s/def ::type keyword?)
+(s/def ::reference ::c/id)
+(s/def ::inventory
+  (s/keys :req [::index ::frame
+                ::type  ::reference]))
