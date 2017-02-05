@@ -109,7 +109,7 @@
   (walk/postwalk #(if (map? %) (eval-bindings game %) %) layout))
 
 (defn by-id [layout]
-  (util/index-by ::c/id (filter ::c/id (map zip/node (take-while (complement zip/end?) (iterate zip/next (layout-zipper layout)))))))
+  (util/index-by :id (filter :id (map zip/node (take-while (complement zip/end?) (iterate zip/next (layout-zipper layout)))))))
 
 (defn system
   "Determine the layout dimensions"

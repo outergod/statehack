@@ -33,7 +33,7 @@
 (defn- operate-door
   "Common code for opening/closing doors"
   [game door state]
-  (world/update-entity-component game (::c/id door) [::c/door ::c/open?] (constantly state)))
+  (world/update-in-entity-component game (::c/id door) ::c/door [::c/open?] (constantly state)))
 
 (def door-hierarchy
   "Hierarchy of door types"

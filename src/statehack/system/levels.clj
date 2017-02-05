@@ -49,17 +49,20 @@
                                      {\@ #(entity/player "Malefeitor" 100)
                                       \l #(weapon/lead-pipe)
                                       \- #(label (room/door :blast false) :blast-door)
-                                      \c #(container/crate (weapon/dart-gun))})
-                            :post (fn [{:keys [blast-door]}]
-                                    (compound/group (room/blast-door false) blast-door))
+                                      \c #(label (container/crate) :crate)})
+                            :post (fn [{:keys [blast-door crate]}]
+                                    
+                                    (concat
+                                      (compound/group (room/blast-door false) blast-door)
+                                      (let [loot (weapon/dart-gun)]
+                                        [loot (update (first crate) [::c/inventory] conj (::c/id loot))])))
                             :music :medical}})
 
 (defn extract-room [s tiles [x0 y0] floor]
-  (flatten
-    (for [[y row] (util/enumerate (str/split-lines s))
-          [x c] (util/enumerate row)
-          :let [f (tiles c)] :when f]
-      (position (f) (util/matrix-add [x0 y0] [x y]) floor))))
+  (for [[y row] (util/enumerate (str/split-lines s))
+        [x c] (util/enumerate row)
+        :let [f (tiles c)] :when f]
+    (position (f) (util/matrix-add [x0 y0] [x y]) floor)))
 
 (defn load-room-resource [name]
   (or (io/resource (str "rooms/" name))

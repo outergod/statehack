@@ -65,7 +65,7 @@
 (defn visible-mask-dispatch
   "Dispatch for `visible-mask`"
   [game e]
-  (-> e ::c/sight :type))
+  (-> e ::c/sight ::c/type))
 
 (defmulti visible-mask
   "Is entity visible-mask"
@@ -76,7 +76,7 @@
   "Shared implementation of `visible-mask` for organic and sensoric sighted entities"
   [game e]
   (let [[x y] (::c/position e)
-        r (-> e ::c/sight :distance)
+        r (-> e ::c/sight ::c/distance)
         ps (set (map ::c/position (filter-opaques (levels/on-floor (::c/floor e) (entity/filter-capable [::c/position ::c/floor] (vals (world/entities game)))))))]
     (conj (set (mapcat (partial util/take-while-including (complement ps))
                        (algebra/visible-lines [x y] r)))

@@ -37,7 +37,7 @@
 (defn- available-moves-dispatch
   "Dispatcher for `available-moves`"
   [game e]
-  (-> e ::c/mobile ::c/type))
+  (get-in e [::c/mobile ::c/type]))
 
 (defmulti available-moves
   "Available moves determines where an entity can move to based on its `mobility`"

@@ -51,8 +51,9 @@
 
 (defn action [game player dir]
   (let [[x y] (player-moves dir)
-        moves (apply merge (map #(% game player)
-                                (reverse [combat/available-melee door/available-open movement/available-moves])))
+        moves (apply merge
+                (map #(% game player)
+                  (reverse [combat/available-melee door/available-open movement/available-moves])))
         non-move ((movement/unavailable-moves game player) [x y])]
     (if-let [m (moves [x y])]
       (act game player m)

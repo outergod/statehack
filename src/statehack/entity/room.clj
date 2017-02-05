@@ -24,12 +24,12 @@
 (defn wall
   "Wall entity"
   [color]
-  (conform #::c{:id (uuid) :renderable :wall :color color :room true :obstacle true :opaque true}))
+  (conform #::c{:id (uuid) :renderable :wall :color color :room true :obstacle :always :opaque :always}))
 
 (defn solid
   "Solid entity"
   []
-  (conform #::c{:id (uuid) :renderable #::c{:tile :nihil :color 0} :obstacle true :opaque true}))
+  (conform #::c{:id (uuid) :renderable #::c{:tile :nihil :color 0} :obstacle :always :opaque :always}))
 
 (defn door
   "Door entity"
@@ -41,4 +41,4 @@
 (defn blast-door
   "Blast door entity"
   [open?]
-  (conform #::c{:door #::c{:type :blas :open? open?}}))
+  (conform #::c{:id (uuid) :door #::c{:type :blast :open? open?}}))
