@@ -197,7 +197,7 @@
 ;;; An entity bearing messages. Used for logs, dialogs, emails and the like.
 ;;;
 ;;; Related systems: messages, combat, door, movement, player, render, status
-(s/def ::messages (s/coll-of string?))
+(s/def ::messages (s/coll-of (s/tuple string? pos-int?)))
 
 ;;; Deferred action component
 ;;;
