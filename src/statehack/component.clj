@@ -271,8 +271,8 @@
 ;;; Compounds glue together entities by reference.
 ;;;
 ;;; Related systems: all
-(s/def ::parents (s/coll-of ::id :into #{}))
-(s/def ::children (s/coll-of ::id :into #{}))
+(s/def ::parents (s/nilable (s/coll-of ::id :into #{})))
+(s/def ::children (s/nilable (s/coll-of ::id :into #{})))
 (s/def ::compound (s/keys :opt [::parents ::children]))
 
 ;;; Label component
