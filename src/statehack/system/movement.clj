@@ -19,6 +19,7 @@
   (:require [statehack.entity :as entity]
             [statehack.system.messages :as messages]
             [statehack.system.world :as world]
+            [statehack.system.position :as pos]
             [statehack.system.unique :as unique]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.obstacle :as obstacle]
@@ -63,19 +64,19 @@
 (defn- available-moves-common
   "Shared implementation of `available-moves`, using obstacles `es`"
   [game e es]
-  (let [ds (set (map #(world/entity-delta % e) es))]
+  (let [ds (set (map #(pos/entity-delta % e) es))]
     (into {} (map (fn [pos] [pos #(move % e pos)])
                   (set/difference (inbound-moves game e) ds)))))
 
 ;;; Bipedal movement. Obstructed only by obstacle entities.
 (defmethod available-moves :bipedal [game e]
-  (let [es (obstacle/filter-obstacles (world/entity-neighbors game e))]
+  (let [es (obstacle/filter-obstacles (pos/entity-neighbors game e))]
     (available-moves-common game e es)))
 
 ;;; Wheel movement. Can't move across doors.
 (defmethod available-moves :wheels [game e]
-  (let [es (world/entity-neighbors game e)
-        os (set (obstacle/filter-obstacles (world/entity-neighbors game e)))
+  (let [es (pos/entity-neighbors game e)
+        os (set (obstacle/filter-obstacles (pos/entity-neighbors game e)))
         doors (set (door/filter-doors es))]
     (available-moves-common game e (set/union os doors))))
 
@@ -92,9 +93,9 @@
 (defn unavailable-moves
   "Mapping of unavailable movements to log messages"
   [game e]
-  (let [os (obstacle/filter-obstacles (world/entity-neighbors game e))
+  (let [os (obstacle/filter-obstacles (pos/entity-neighbors game e))
         cs (set/difference algebra/neighbor-deltas (inbound-moves game e))]
-    (merge (into {} (map (fn [o] [(world/entity-delta o e) #(messages/log % "There's an obstacle in the way.")]) os))
+    (merge (into {} (map (fn [o] [(pos/entity-delta o e) #(messages/log % "There's an obstacle in the way.")]) os))
            (into {} (map (fn [c] [c #(messages/log % "Somehow, you can't move here...")]) cs)))))
 
 (defn update-cursor

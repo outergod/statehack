@@ -17,6 +17,7 @@
 
 (ns statehack.system.inventory
   (:require [statehack.system.world :as world]
+            [statehack.system.position :as pos]
             [statehack.component :as c]
             [statehack.entity :as entity]
             [statehack.entity.menu :as menu]
@@ -47,7 +48,7 @@
     (world/add-entity-component game item-id #::c{:position position :floor floor})))
 
 (defn available-pickups [game e]
-  (entity/filter-capable [:pickup] (world/entities-at game e)))
+  (entity/filter-capable [:pickup] (pos/entities-at game e)))
 
 (defn- frame-items [game e frame]
   (if (= frame :floor)

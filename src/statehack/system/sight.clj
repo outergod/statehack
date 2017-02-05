@@ -19,6 +19,7 @@
   "Visual calculation system"
   (:require [statehack.algebra :as algebra]
             [statehack.system.world :as world]
+            [statehack.system.position :as pos]
             [statehack.system.levels :as levels]
             [statehack.entity :as entity]
             [statehack.system.door :as door]
@@ -94,8 +95,8 @@
 (defn visible-entities
   "Visible entities on `floor` within `mask`"
   ([game floor mask]
-     (entity/filter-capable [:renderable] (world/entities-at game floor mask)))
+   (entity/filter-capable [:renderable] (pos/entities-at game floor mask)))
   ([game e]
-     (let [{:keys [floor]} (levels/entity-floor game e)
-           mask (visible-mask game e)]
-       (visible-entities game floor mask))))
+   (let [{:keys [floor]} (levels/entity-floor game e)
+         mask (visible-mask game e)]
+     (visible-entities game floor mask))))

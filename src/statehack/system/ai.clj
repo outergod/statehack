@@ -17,6 +17,7 @@
 
 (ns statehack.system.ai
   (:require [statehack.system.world :as world]
+            [statehack.system.position :as pos]
             [statehack.system.movement :as movement]
             [statehack.system.door :as door]
             [statehack.system.combat :as combat]
@@ -51,7 +52,7 @@
 
 (defn player-nearby? [game e]
   (let [player-id (:id (unique/unique-entity game :player))
-        es (util/index-by :id (world/entity-neighbors game e))]
+        es (util/index-by :id (pos/entity-neighbors game e))]
     (es player-id)))
 
 (defn move-random [game e]

@@ -20,6 +20,7 @@
             [statehack.entity :as entity]
             [statehack.system.name :as name]
             [statehack.system.world :as world]
+            [statehack.system.position :as pos]
             [statehack.system.transition :as transition]
             [statehack.system.messages :as messages]
             [statehack.system.slots :as slots]
@@ -95,6 +96,6 @@
 (defn available-melee [game e]
   (if-let [w (or (slots/slot-item game e :melee)
                  (skills/skill e :melee))]
-    (let [es (filter attackable? (world/entity-neighbors game e))]
-      (into {} (map (fn [t] [(world/entity-delta t e) #(melee % e w t)]) es)))
+    (let [es (filter attackable? (pos/entity-neighbors game e))]
+      (into {} (map (fn [t] [(pos/entity-delta t e) #(melee % e w t)]) es)))
     {}))

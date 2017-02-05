@@ -137,33 +137,8 @@
   [game]
   (update-in game [:world] #(if (> (count %) 1) (next %) %)))
 
-(defn entities-at
-  "Matching entities at given `floor` and `coords`"
-  ([game floor coords]
-   (let [entities (entities game)
-         coords (set coords)]
-     (filter #(and (= (:floor %) floor) (coords (:position %)))
-       (vals entities))))
-  ([game e]
-   (entities-at game (:floor e) [(:position e)])))
-
 ;;; TODO indexes!
 (defn capable-entities
   "Find entities owning components"
   [game & cs]
   (entity/filter-capable cs (vals (entities game))))
-
-(defn direct-neighbors
-  "Neighbor entities at given `floor` around `coords`"
-  [game coords floor]
-  (entities-at game floor (algebra/neighbors coords)))
-
-(defn entity-neighbors
-  "Neighbor entities of `e`"
-  [game e]
-  (direct-neighbors game (:position e) (:floor e)))
-
-(defn entity-delta
-  "Calculate delta between `e1` and `e2`"
-  [e1 e2]
-  (util/matrix-subtract (:position e1) (:position e2)))

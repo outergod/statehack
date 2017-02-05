@@ -20,6 +20,7 @@
   (:require [halo.screen :as screen]
             [halo.graphics :as graphics]
             [statehack.system.world :as world]
+            [statehack.system.position :as pos]
             [statehack.system.layout :as layout]
             [statehack.system.levels :as levels]
             [statehack.system.memory :as memory]
@@ -414,8 +415,8 @@
   (derive-tile w :wall))
 
 (defmethod tile :wall [game wall]
-  {:tile (condp set/subset? (set (map #(world/entity-delta % wall)
-                                      (entity/filter-capable [:room] (world/entity-neighbors game wall))))
+  {:tile (condp set/subset? (set (map #(pos/entity-delta % wall)
+                                      (entity/filter-capable [:room] (pos/entity-neighbors game wall))))
            algebra/neighbor-deltas :nihil
            (set/difference algebra/neighbor-deltas #{[1 -1]}) :blcorner
            (set/difference algebra/neighbor-deltas #{[-1 -1]}) :brcorner
@@ -442,7 +443,7 @@
    :color (or (:color wall) :white)})
 
 (defmethod tile :door [game door]
-  {:tile (condp set/subset? (set (map #(world/entity-delta % door) (entity/filter-capable [:room] (world/entity-neighbors game door))))
+  {:tile (condp set/subset? (set (map #(pos/entity-delta % door) (entity/filter-capable [:room] (pos/entity-neighbors game door))))
            #{[1 0] [-1 0]} :hdoor
            #{[0 1] [0 -1]} :vdoor
            :door)

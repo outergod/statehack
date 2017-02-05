@@ -18,6 +18,7 @@
 (ns statehack.system.sound
   (:require [statehack.system.unique :as unique]
             [statehack.system.world :as world]
+            [statehack.system.position :as pos]
             [statehack.entity :as entity]
             [clojure.java.io :as io]
             [clj-audio.core :as audio]
@@ -188,7 +189,7 @@
 
 (defn music-system [game]
   (let [{:keys [position floor]} (unique/unique-entity game :player)
-        {:keys [music]} (->> (world/entities-at game floor [position])
+        {:keys [music]} (->> (pos/entities-at game floor [position])
                              (entity/filter-capable [:music]) first)]
     (when (and music (not= @current-track music))
       (dosync (ref-set current-track music))

@@ -21,6 +21,7 @@
             [statehack.system.defer :as defer]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.world :as world]
+            [statehack.system.position :as pos]
             [statehack.system.time :as time]
             [statehack.system.transition :as transition]
             [statehack.system.compound :as compound]
@@ -97,8 +98,8 @@
   "Available open/close common code"
   [game e f]
   (let [es (filter #(and (entity/capable? % :door) (f %))
-             (world/entity-neighbors game e))]
-    (into {} (map (fn [door] [(world/entity-delta door e) #(open-door % door)]) es))))
+             (pos/entity-neighbors game e))]
+    (into {} (map (fn [door] [(pos/entity-delta door e) #(open-door % door)]) es))))
 
 (defn available-open [game e]
   (available-open-close-common game e (complement open?)))
@@ -108,7 +109,7 @@
 
 (defn close [game e]
   (let [es (filter #(and (entity/capable? % :door) (open? %))
-             (world/entity-neighbors game e))]
+             (pos/entity-neighbors game e))]
     (case (count es)
       0 (messages/log game "No open door nearby.")
       1 (close-door game (first es))
