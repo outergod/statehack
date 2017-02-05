@@ -20,7 +20,8 @@
   (:refer-clojure :exclude [update])
   (:require [statehack.util :as util]
             [statehack.entity :as entity]
-            [statehack.algebra :as algebra]))
+            [statehack.algebra :as algebra]
+            [statehack.component :as c]))
 
 ;;; In order to implement the idea of a purely functional ECS, the current state
 ;;; of the world is always represented as a head of a sequence. Whenever a
@@ -82,51 +83,49 @@
 (defn update-world-state
   "Update the current world state by running `apply f state args` against it"
   [game f & args]
-  (update-in game [:world] (fn [[x & xs]] (cons (apply f x args) xs))))
+  (clojure.core/update game :world (fn [[x & xs]] (cons (apply f x args) xs))))
 
 (defn update-in-world-state
   "Run `update-in` with key sequence `ks` against the current world state"
-  [game [& ks] f & args]
-  (update-world-state game #(apply update-in % ks f args)))
-
-(defn update-entity
-  "Update entity identified by `id` in current state with `apply f entity args`"
-  [game id f & args]
-  (apply update-in-world-state game [:entities id] f args))
-
-(defn remove-entity-component
-  "Remove entity components from entity"
-  [game id c & cs]
-  (update-in-world-state game [:entities id] #(apply dissoc % c cs)))
-
-(defn update-entity-component
-  "Update entity components in entity
-
-  `c` may be a sequence with additional keys, in which case the component itself
-  is traversed and updated."
-  [game id c f & args]
-  (let [c (if (sequential? c) c [c])]
-    (apply update-in-world-state game (concat [:entities id] c) f args)))
-
-(defn add-entity-component
-  "Add entity components"
-  [game id c & cs]
-  (update-in-world-state game [:entities id] #(apply merge % c cs)))
+  [game ks f & args]
+  (apply update-world-state game update-in ks f args))
 
 (defn update-entities
   "Update game entities with `apply f entities args`"
   [game f & args]
   (apply update-in-world-state game [:entities] f args))
 
-(defn update-entities-component
-  "Update component in all entities"
-  [game c f args]
-  (update-entities game #(into {} (map (fn [[k v]] [k (apply update-in c f args)]) %))))
+(defn update-entity
+  "Update entity identified by `id` in current state with `apply f entity args`
+ 
+  Conform entity to `:statehack/entity` afterwards."
+  [game id f & args]
+  (update-in-world-state game [:entities id] #(entity/conform (apply f % args))))
+
+(defn remove-entity-component
+  "Remove entity components from entity"
+  [game id c & cs]
+  (apply update-entity game id dissoc c cs))
+
+(defn update-entity-component
+  "Update entity's component"
+  [game id c f & args]
+  (apply update-entity game id clojure.core/update c f args))
+
+(defn update-in-entity-component
+  "Update entity component data in entity"
+  [game id c ks f & args]
+  (apply update-entity game id update-in (cons c ks) f args))
+
+(defn add-entity-component
+  "Add components to entity"
+  [game id & args]
+  (apply update-entity game id assoc args))
 
 (defn add-entity
   "Add entity to game"
   [game e]
-  (update-entities game #(assoc % (:id e) e)))
+  (update-entities game assoc (::c/id e) (entity/conform e)))
 
 (defn remove-entity
   "Remove identity from game"
@@ -148,6 +147,12 @@
   ([game e]
    (entities-at game (:floor e) [(:position e)])))
 
+;;; TODO indexes!
+(defn capable-entities
+  "Find entities owning components"
+  [game & cs]
+  (entity/filter-capable cs (vals (entities game))))
+
 (defn direct-neighbors
   "Neighbor entities at given `floor` around `coords`"
   [game coords floor]
@@ -157,11 +162,6 @@
   "Neighbor entities of `e`"
   [game e]
   (direct-neighbors game (:position e) (:floor e)))
-
-(defn capable-entities
-  "Find entities owning components"
-  [game & cs]
-  (entity/filter-capable cs (vals (entities game))))
 
 (defn entity-delta
   "Calculate delta between `e1` and `e2`"
