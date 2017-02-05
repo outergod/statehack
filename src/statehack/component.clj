@@ -206,7 +206,7 @@
 ;;; e.g. selection mechanisms.
 ;;;
 ;;; Related systems: defer, player, door
-(s/def ::deferred fn?)
+(s/def ::deferred ifn?)
 
 ;;; AI component
 ;;;
