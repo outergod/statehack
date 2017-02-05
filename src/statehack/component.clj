@@ -288,3 +288,10 @@
 ;;;
 ;;; Related systems: levels
 (s/def ::label keyword?)
+
+;;; Lootable component
+;;;
+;;; Used for containers. Should usually go together with `inventory`.
+;;;
+;;; Related systems: loot
+(s/def ::lootable boolean?)

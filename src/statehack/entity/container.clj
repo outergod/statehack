@@ -23,4 +23,5 @@
 (defn crate
   "Crate entity"
   []
-  (conform #::c {:id (uuid) :name "Crate" :renderable :crate :inventory []}))
+  (conform #::c {:id (uuid) :name "Crate" :renderable :crate :inventory []
+                 :obstacle :always :lootable true}))
