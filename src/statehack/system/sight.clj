@@ -98,6 +98,6 @@
   ([game floor mask]
    (entity/filter-capable [::c/renderable] (pos/entities-at game floor mask)))
   ([game e]
-   (let [{:keys [floor]} (levels/entity-floor game e)
+   (let [{:keys [::c/floor]} (levels/entity-floor game e)
          mask (visible-mask game e)]
      (visible-entities game floor mask))))

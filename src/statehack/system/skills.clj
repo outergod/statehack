@@ -20,4 +20,4 @@
   (:require [statehack.component :as c]))
 
 (defn skill [e type]
-  (get-in e [::c/skillset ::c/type]))
+  (get-in e [::c/skillset type]))

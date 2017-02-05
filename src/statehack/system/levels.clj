@@ -51,7 +51,6 @@
                                       \- #(label (room/door :blast false) :blast-door)
                                       \c #(label (container/crate) :crate)})
                             :post (fn [{:keys [blast-door crate]}]
-                                    
                                     (concat
                                       (compound/group (room/blast-door false) blast-door)
                                       (let [loot (weapon/dart-gun)]
