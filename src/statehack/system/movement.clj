@@ -16,18 +16,19 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.movement
-  (:require [statehack.entity :as entity]
+  (:require [clojure.set :as set]
+            [statehack.algebra :as algebra]
+            [statehack.component :as c]
+            [statehack.entity :as entity]
+            [statehack.system.door :as door]
+            [statehack.system.input.receivers :as receivers]
+            [statehack.system.levels :as levels]
             [statehack.system.messages :as messages]
-            [statehack.system.world :as world]
+            [statehack.system.obstacle :as obstacle]
             [statehack.system.position :as pos]
             [statehack.system.unique :as unique]
-            [statehack.system.input.receivers :as receivers]
-            [statehack.system.obstacle :as obstacle]
-            [statehack.system.levels :as levels]
-            [statehack.system.door :as door]
-            [statehack.util :as util]
-            [statehack.algebra :as algebra]
-            [clojure.set :as set]))
+            [statehack.system.world :as world]
+            [statehack.util :as util]))
 
 (def move-hierarchy
   "Hierarchy used for `available-moves`"
@@ -36,7 +37,7 @@
 (defn- available-moves-dispatch
   "Dispatcher for `available-moves`"
   [game e]
-  (-> e :mobile :type))
+  (-> e ::c/mobile ::c/type))
 
 (defmulti available-moves
   "Available moves determines where an entity can move to based on its `mobility`"
@@ -47,18 +48,18 @@
 (defn move
   "Move entity `e` by `[x y]`"
   [game e [x y]]
-  (world/update-entity-component game (:id e) :position util/matrix-add [x y]))
+  (world/update-entity-component game (::c/id e) ::c/position util/matrix-add [x y]))
 
 (defn relocate
   "Relocate entity `e` to `[x y]`"
   [game e [x y]]
-  (world/update-entity-component game (:id e) :position (constantly [x y])))
+  (world/update-entity-component game (::c/id e) ::c/position (constantly [x y])))
 
 (defn inbound-moves
   "Set of all possible inbound moves for `e`"
   [game e]
-  (let [{:keys [foundation]} (levels/floor game (:floor e))]
-    (set (filter #(levels/in-bounds? foundation (util/matrix-add (:position e) %))
+  (let [{:keys [::c/foundation]} (levels/floor game (::c/floor e))]
+    (set (filter #(levels/in-bounds? foundation (util/matrix-add (::c/position e) %))
                  algebra/neighbor-deltas))))
 
 (defn- available-moves-common
@@ -83,12 +84,12 @@
 (defn move-next
   "Move selector entity `sel` to next possible target"
   [game sel]
-  (let [{:keys [targets]} (:mobile sel)
+  (let [{:keys [::c/targets]} (::c/mobile sel)
         targets (concat (rest targets) [(first targets)])
         e (world/entity game (first targets))]
-    (world/update game [sel (:id sel) e (:id e)]
-      (world/update-entity-component game (:id sel) :mobile assoc :targets targets)
-      (relocate game sel (:position e)))))
+    (world/update game [sel (::c/id sel) e (::c/id e)]
+      (world/update-entity-component game (::c/id sel) ::c/mobile assoc :targets targets)
+      (relocate game sel (::c/position e)))))
 
 (defn unavailable-moves
   "Mapping of unavailable movements to log messages"
@@ -104,7 +105,7 @@
   (let [{:keys [entities receivers]} (world/state game)
         r (receivers/current game)
         e (unique/unique-entity game :cursor)
-        [x y] (if (entity/capable? r :messages)
-                [(+ (count (first (:messages r))) 2) 1]
-                (:position r))]
-    (world/update-entity-component game (:id e) :position (constantly [x y]))))
+        [x y] (if (entity/capable? r ::c/messages)
+                [(+ (count (first (::c/messages r))) 2) 1]
+                (::c/position r))]
+    (world/update-entity-component game (::c/id e) ::c/position (constantly [x y]))))

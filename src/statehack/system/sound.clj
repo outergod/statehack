@@ -16,14 +16,14 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.sound
-  (:require [statehack.system.unique :as unique]
-            [statehack.system.world :as world]
-            [statehack.system.position :as pos]
-            [statehack.entity :as entity]
-            [clojure.java.io :as io]
-            [clj-audio.core :as audio]
+  (:require [clj-audio.core :as audio]
             [clj-audio.sampled :as sampled]
-            [simple-time.core :as time]))
+            [clojure.java.io :as io]
+            [simple-time.core :as time]
+            [statehack.component :as c]
+            [statehack.entity :as entity]
+            [statehack.system.position :as pos]
+            [statehack.system.unique :as unique]))
 
 (defonce mixer (first (audio/mixers)))
 
@@ -187,10 +187,11 @@
 (defn play-music [name]
   (send music-channels (crossfade (load-music-stream name))))
 
+;;; TODO index
 (defn music-system [game]
-  (let [{:keys [position floor]} (unique/unique-entity game :player)
-        {:keys [music]} (->> (pos/entities-at game floor [position])
-                             (entity/filter-capable [:music]) first)]
+  (let [{:keys [::c/position ::c/floor]} (unique/unique-entity game :player)
+        {:keys [::c/music]} (->> (pos/entities-at game floor [position])
+                              (entity/filter-capable [::c/music]) first)]
     (when (and music (not= @current-track music))
       (dosync (ref-set current-track music))
       (play-music music))

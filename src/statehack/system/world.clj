@@ -18,10 +18,8 @@
 (ns statehack.system.world
   "World manipulation"
   (:refer-clojure :exclude [update])
-  (:require [statehack.util :as util]
-            [statehack.entity :as entity]
-            [statehack.algebra :as algebra]
-            [statehack.component :as c]))
+  (:require [statehack.component :as c]
+            [statehack.entity :as entity]))
 
 ;;; In order to implement the idea of a purely functional ECS, the current state
 ;;; of the world is always represented as a head of a sequence. Whenever a

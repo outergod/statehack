@@ -16,31 +16,33 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.slots
-  (:require [statehack.system.world :as world]
+  "statehack slots system"
+  (:require [clojure.set :as set]
+            [statehack.component :as c]
             [statehack.entity :as entity]
-            [clojure.set :as set]))
+            [statehack.system.world :as world]))
 
 (defn available-slots [e]
-  {:pre [(entity/capable? e :slots)]}
-  (set (keys (:slots e))))
+  {:pre [(entity/capable? e ::c/slots)]}
+  (set (keys (::c/slots e))))
 
 (defn slotted? [actor item]
-  {:pre [(entity/capable? actor :slots)]}
-  ((set/map-invert (:slots actor)) (:id item)))
+  {:pre [(entity/capable? actor ::c/slots)]}
+  ((set/map-invert (::c/slots actor)) (::c/id item)))
 
 (defn slot [game actor item slot]
   {:pre [((available-slots actor) slot)]}
-  (world/update-entity-component game (:id actor) [:slots slot] (constantly (:id item))))
+  (world/update-entity-component game (::c/id actor) [::c/slots slot] (constantly (::c/id item))))
 
 (defn unslot [game actor item]
   (if-let [slot (slotted? actor item)]
-    (world/update-entity-component game (:id actor) [:slots slot] (constantly nil))
+    (world/update-entity-component game (::c/id actor) [::c/slots slot] (constantly nil))
     game))
 
 (defn slotted-items [actor]
-  {:pre [(entity/capable? actor :slots)]}
-  (set (filter identity (vals (:slots actor)))))
+  {:pre [(entity/capable? actor ::c/slots)]}
+  (set (filter identity (vals (::c/slots actor)))))
 
 (defn slot-item [game actor slot]
-  {:pre [(entity/capable? actor :slots)]}
-  (world/entity game (get-in actor [:slots slot])))
+  {:pre [(entity/capable? actor ::c/slots)]}
+  (world/entity game (get-in actor [::c/slots slot])))

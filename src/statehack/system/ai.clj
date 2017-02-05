@@ -16,29 +16,29 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.ai
-  (:require [statehack.system.world :as world]
-            [statehack.system.position :as pos]
-            [statehack.system.movement :as movement]
-            [statehack.system.door :as door]
+  (:require [statehack.algebra :as algebra]
+            [statehack.component :as c]
             [statehack.system.combat :as combat]
-            [statehack.system.memory :as memory]
-            [statehack.system.sight :as sight]
-            [statehack.system.unique :as unique]
-            [statehack.system.transition :as transition]
-            [statehack.system.skills :as skills]
             [statehack.system.levels :as levels]
-            [statehack.algebra :as algebra]
+            [statehack.system.memory :as memory]
+            [statehack.system.movement :as movement]
+            [statehack.system.position :as pos]
+            [statehack.system.sight :as sight]
+            [statehack.system.skills :as skills]
+            [statehack.system.transition :as transition]
+            [statehack.system.unique :as unique]
+            [statehack.system.world :as world]
             [statehack.util :as util]))
 
 (def act-hierarchy (make-hierarchy))
 
-(defn act-dispatch [game e] (:ai e))
+(defn act-dispatch [game e] (::c/ai e))
 
 (defmulti act #'act-dispatch :hierarchy #'act-hierarchy)
 
 (defn known-player-location [game e]
-  (let [visible-es (util/index-by :id (sight/visible-entities game e))]
-    [(visible-es (:id (unique/unique-entity game :player)))
+  (let [visible-es (util/index-by ::c/id (sight/visible-entities game e))]
+    [(visible-es (::c/id (unique/unique-entity game :player)))
      (:player (memory/entity-memory e))]))
 
 (defn first-player-spot? [game e]
@@ -51,8 +51,8 @@
           memory [:memory memory])))
 
 (defn player-nearby? [game e]
-  (let [player-id (:id (unique/unique-entity game :player))
-        es (util/index-by :id (pos/entity-neighbors game e))]
+  (let [player-id (::c/id (unique/unique-entity game :player))
+        es (util/index-by ::c/id (pos/entity-neighbors game e))]
     (es player-id)))
 
 (defn move-random [game e]
@@ -62,28 +62,28 @@
       game)))
 
 (defn path-to [game e target limit]
-  (let [{:keys [foundation]} (levels/entity-floor game e)
-        es (vals (dissoc (:entities (memory/entity-floor-memory e)) (:id target)))
-        os (set (map :position es))]
-    (next (algebra/a* (:position e) (:position target) foundation os limit))))
+  (let [{:keys [::c/foundation]} (levels/entity-floor game e)
+        es (vals (dissoc (:entities (memory/entity-floor-memory e)) (::c/id target)))
+        os (set (map ::c/position es))]
+    (next (algebra/a* (::c/position e) (::c/position target) foundation os limit))))
 
 (defn move-towards [game e target limit]
-  (let [{:keys [foundation]} (levels/entity-floor game e)
-        es (vals (dissoc (:entities (memory/entity-floor-memory e)) (:id target)))
-        os (set (map :position es))
-        path (algebra/a* (:position e) (:position target) foundation os limit)]
+  (let [{:keys [::c/foundation]} (levels/entity-floor game e)
+        es (vals (dissoc (:entities (memory/entity-floor-memory e)) (::c/id target)))
+        os (set (map ::c/position es))
+        path (algebra/a* (::c/position e) (::c/position target) foundation os limit)]
     (if (> (count path) 1)
       (movement/relocate game e (fnext path))
       game)))
 
 (defn move-melee-range [game e target limit]
-  (let [{:keys [foundation]} (levels/entity-floor game e)
+  (let [{:keys [::c/foundation]} (levels/entity-floor game e)
         es (vals (:entities (memory/entity-floor-memory e)))
-        os (set (map :position es))
+        os (set (map ::c/position es))
         paths (sort algebra/PathComparator
                     (remove nil?
-                            (pmap #(algebra/a* (:position e) % foundation os limit)
-                                  (algebra/neighbors (:position target)))))]
+                            (pmap #(algebra/a* (::c/position e) % foundation os limit)
+                                  (algebra/neighbors (::c/position target)))))]
     (if-let [path (first paths)]
       (movement/relocate game e (fnext path))
       game)))
@@ -94,12 +94,12 @@
 (defmethod act :serv-bot [game e]
   (let [[type player] (player-known? game e)
         melee (skills/skill e :melee)]
-    (world/update game [bot (:id e)]
+    (world/update game [bot (::c/id e)]
       (when (and (= type :sight) (not (:player-spotted? (memory/entity-memory bot))))
         (-> game
           (transition/transition (transition/sound :serv-bot-spot))
           (memory/update-memory bot assoc :player-spotted? true)))
-      (when (= (:position bot) (:position player))
+      (when (= (::c/position bot) (::c/position player))
         (forget-player game bot player))
       (cond (some-> game (player-nearby? bot) combat/attackable?) (combat/melee game bot melee player)
             (= type :sight) (-> game
@@ -110,6 +110,7 @@
                                (forget-player game bot player))
             :default (move-random game bot)))))
 
+;;; TODO index
 (defn system [game]
-  (let [es (world/capable-entities game :ai)]
+  (let [es (world/capable-entities game ::c/ai)]
     (reduce act game es)))

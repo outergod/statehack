@@ -17,12 +17,12 @@
 
 (ns statehack.system.layout
   "Layouting facility"
-  (:require [halo.graphics :as graphics]
+  (:require [clojure.walk :as walk]
             [clojure.zip :as zip]
-            [clojure.walk :as walk]
-            [statehack.entity :as entity]
-            [statehack.system.inventory :as inventory]
+            [halo.graphics :as graphics]
+            [statehack.component :as c]
             [statehack.system.input.receivers :as receivers]
+            [statehack.system.inventory :as inventory]
             [statehack.util :as util]))
 
 (def render-hierarchy "Hierarchy for `render`" (make-hierarchy))
@@ -35,7 +35,7 @@
 (defn render-dispatch
   "Dispatch for `render`"
   [e [w h]]
-  (e :type))
+  (:type e))
 
 (defmulti render
   "Render layout element `e`"
@@ -109,7 +109,7 @@
   (walk/postwalk #(if (map? %) (eval-bindings game %) %) layout))
 
 (defn by-id [layout]
-  (util/index-by :id (filter :id (map zip/node (take-while (complement zip/end?) (iterate zip/next (layout-zipper layout)))))))
+  (util/index-by ::c/id (filter ::c/id (map zip/node (take-while (complement zip/end?) (iterate zip/next (layout-zipper layout)))))))
 
 (defn system
   "Determine the layout dimensions"

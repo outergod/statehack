@@ -16,54 +16,56 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.inventory
-  (:require [statehack.system.world :as world]
-            [statehack.system.position :as pos]
-            [statehack.component :as c]
+  (:require [statehack.component :as c]
+            [statehack.component.menu :as cm]
             [statehack.entity :as entity]
             [statehack.entity.menu :as menu]
             [statehack.system.input :as input]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.messages :as messages]
             [statehack.system.name :as name]
-            [statehack.system.slots :as slots]))
+            [statehack.system.position :as pos]
+            [statehack.system.slots :as slots]
+            [statehack.system.world :as world]))
 
 (def default-frame {:pickup :floor
                     :inventory :inventory})
 
 (defn in-inventory? [e1 e2]
-  {:pre [(:inventory e1) (:pickup e2)]}
-  (some #{(:id e2)} (:inventory e1)))
+  {:pre [(::c/inventory e1) (::c/pickup e2)]}
+  (some #{(::c/id e2)} (::c/inventory e1)))
 
 (defn pick-up-item [game e1 e2]
-  {:pre [(:inventory e1) (:pickup e2)]}
-  (world/update game [{actor-id :id} (:id e1) {item-id :id} (:id e2)]
-    (world/update-entity-component game actor-id :inventory conj item-id)
-    (world/remove-entity-component game item-id :position :floor)))
+  {:pre [(::c/inventory e1) (::c/pickup e2)]}
+  (world/update game [{actor-id ::c/id} (::c/id e1) {item-id ::c/id} (::c/id e2)]
+    (world/update-entity-component game actor-id ::c/inventory conj item-id)
+    (world/remove-entity-component game item-id ::c/position ::c/floor)))
 
 (defn drop-item [game e1 e2]
   {:pre [(in-inventory? e1 e2)]}
-  (world/update game [{actor-id :id :keys [floor position] :as actor} (:id e1) {item-id :id :as item} (:id e2)]
+  (world/update game [{actor-id ::c/id :keys [::c/floor ::c/position] :as actor} (::c/id e1)
+                      {item-id ::c/id :as item} (::c/id e2)]
     (slots/unslot game actor item)
-    (world/update-entity-component game actor-id :inventory (partial remove #{item-id}))
+    (world/update-entity-component game actor-id ::c/inventory (partial remove #{item-id}))
     (world/add-entity-component game item-id #::c{:position position :floor floor})))
 
 (defn available-pickups [game e]
-  (entity/filter-capable [:pickup] (pos/entities-at game e)))
+  (entity/filter-capable [::c/pickup] (pos/entities-at game e)))
 
 (defn- frame-items [game e frame]
   (if (= frame :floor)
     (available-pickups game e)
-    (map (partial world/entity game) (:inventory e))))
+    (map (partial world/entity game) (::c/inventory e))))
 
-(defn change-index [game {:keys [inventory-menu id] :as menu} f]
-  (let [{:keys [reference index frame]} inventory-menu
+(defn change-index [game {:keys [::cm/inventory ::c/id] :as menu} f]
+  (let [{:keys [::cm/reference ::cm/index ::cm/frame]} inventory
         player (world/entity game reference)
         max (count (frame-items game player frame))]
-    (world/update-entity-component game id [:inventory-menu :index]
+    (world/update-entity-component game id [::cm/inventory ::cm/index]
       (comp (if (zero? max) (constantly 0) #(mod % max)) f))))
 
-(defn pick-up-or-drop [game {:keys [inventory-menu] :as menu}]
-  (let [{:keys [reference index frame]} inventory-menu
+(defn pick-up-or-drop [game {:keys [::cm/inventory] :as menu}]
+  (let [{:keys [::cm/reference ::cm/index ::cm/frame]} inventory
         actor (world/entity game reference)
         items (frame-items game actor frame)]
     (if (empty? items)
@@ -73,22 +75,22 @@
 
 (defmulti activate
   (fn [game actor item]
-    {:pre [(entity/capable? item :pickup)]}
-    (:pickup item)))
+    {:pre [(entity/capable? item ::c/pickup)]}
+    (::c/pickup item)))
 
 (defmethod activate :none [game _ item]
   (messages/log game (str "Don't know how to activate " (name/name item))))
 
 (defmethod activate :slot-weapon [game actor item]
-  (let [{:keys [weapon]} item
-        {:keys [type]} weapon
-        {:keys [slots]} actor]
+  (let [{:keys [::c/weapon]} item
+        {:keys [::c/type]} weapon
+        {:keys [::c/slots]} actor]
     (if ((slots/available-slots actor) type)
       (slots/slot game actor item type)
       (messages/log game (format "%s cannot use %s" (name/name actor) (name/name item))))))
 
-(defn activate-item [game {:keys [inventory-menu] :as menu}]
-  (let [{:keys [reference index frame]} inventory-menu
+(defn activate-item [game {:keys [::cm/inventory] :as menu}]
+  (let [{:keys [::cm/reference ::cm/index ::cm/frame]} inventory
         actor (world/entity game reference)
         items (frame-items game actor frame)]
     (if (empty? items)
@@ -100,7 +102,7 @@
 
   If applicable."
   [menu]
-  (get-in menu [:inventory-menu :type]))
+  (get-in menu [::cm/inventory ::cm/type]))
 
 (defmulti change-frame
   (fn [_ menu direction]
@@ -109,8 +111,8 @@
 (defmethod change-frame :default [game _ _] game)
 
 (defn- change-frame-common [game menu frame]
-  (world/update game [{:keys [id] :as menu} (:id menu)]
-    (world/update-entity-component game id [:inventory-menu :frame] (constantly frame))
+  (world/update game [{:keys [::c/id] :as menu} (::c/id menu)]
+    (world/update-entity-component game id [::cm/inventory ::cm/frame] (constantly frame))
     (change-index game menu identity)))
 
 (defmethod change-frame [:pickup :left] [game menu _]
@@ -120,14 +122,14 @@
   (change-frame-common game menu :inventory))
 
 (defn inventory-open?
-  "Is the current input receiver an `inventory-menu`?"
+  "Is the current input receiver an `inventory` menu?"
   [game]
-  (entity/capable? (receivers/current game) :inventory-menu))
+  (entity/capable? (receivers/current game) ::cm/inventory))
 
 (defmulti handle-enter
   "Handle the `enter` key
 
-  Depends on the type of `inventory-menu`."
+  Depends on the type of `inventory`."
   (fn [_ menu] (inventory-type menu)))
 
 (defmethod handle-enter :pickup [game menu]
@@ -137,14 +139,14 @@
   (activate-item game menu))
 
 (defn open [game player type]
-  (let [i (menu/inventory (:id player) type (default-frame type))]
+  (let [i (menu/inventory (::c/id player) type (default-frame type))]
     (world/update game [] (world/add-entity game i) (receivers/push-control game i))))
 
 (defmethod input/receive :inventory-menu [game menu input]
   (case (:key input)
     :escape (world/update game []
               (receivers/pop-control game)
-              (world/remove-entity game (:id menu)))
+              (world/remove-entity game (::c/id menu)))
     \w (change-index game menu inc)
     \x (change-index game menu dec)
     \a (change-frame game menu :left)

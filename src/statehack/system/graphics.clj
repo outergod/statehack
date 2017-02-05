@@ -17,27 +17,28 @@
 
 (ns statehack.system.graphics
   "Graphics facility"
-  (:require [halo.screen :as screen]
+  (:require [clojure.set :as set]
+            [clojure.walk :as walk]
             [halo.graphics :as graphics]
-            [statehack.system.world :as world]
-            [statehack.system.position :as pos]
-            [statehack.system.layout :as layout]
-            [statehack.system.levels :as levels]
-            [statehack.system.memory :as memory]
-            [statehack.system.sight :as sight]
-            [statehack.system.unique :as unique]
-            [statehack.system.status :as status]
-            [statehack.system.messages :as messages]
-            [statehack.system.name :as name]
+            [halo.screen :as screen]
+            [statehack.algebra :as algebra]
+            [statehack.component :as c]
+            [statehack.component.menu :as cm]
+            [statehack.entity :as entity]
+            [statehack.system.door :as door]
             [statehack.system.input.receivers :as receivers]
             [statehack.system.inventory :as inventory]
+            [statehack.system.levels :as levels]
+            [statehack.system.memory :as memory]
+            [statehack.system.messages :as messages]
+            [statehack.system.name :as name]
+            [statehack.system.position :as pos]
+            [statehack.system.sight :as sight]
             [statehack.system.slots :as slots]
-            [statehack.system.door :as door]
-            [statehack.util :as util]
-            [statehack.entity :as entity]
-            [statehack.algebra :as algebra]
-            [clojure.walk :as walk]
-            [clojure.set :as set]))
+            [statehack.system.status :as status]
+            [statehack.system.unique :as unique]
+            [statehack.system.world :as world]
+            [statehack.util :as util]))
 
 (def colors
   {:black 16
@@ -92,7 +93,7 @@
 (defn blit
   "Evaluate to the entity with higher blit order"
   [e1 e2]
-  (let [[r1 r2] (map :renderable [e1 e2])]
+  (let [[r1 r2] (map ::c/renderable [e1 e2])]
     (if (= r1 r2)
       e1
       (let [rs (blit-order #{r1 r2})]
@@ -145,14 +146,14 @@
 (defn tile-dispatch
   "Dispatch for `tile`"
   [game e]
-  (e :renderable))
+  (::c/renderable e))
 
 (defmulti tile
   "Determine tile and color for rendering entity `e`"
   {:arglists '([game e])}
   #'tile-dispatch :hierarchy #'tile-hierarchy)
 
-(defmethod tile :default [_ x] (:renderable x))
+(defmethod tile :default [_ x] (::c/renderable x))
 
 (defn transform
   "Transform two-dimensional `canvas` from tile/color mapping to
@@ -196,12 +197,12 @@
 (defn entity-canvas
   "Transform collection of `entities` into a canvas based on their positions."
   [entities]
-  (map (partial reduce blit) (vals (group-by :position entities))))
+  (map (partial reduce blit) (vals (group-by ::c/position entities))))
 
 (defn entity-blit
   "Blit entity `e` onto `canvas`."
   [game canvas e]
-  (let [{:keys [position]} e]
+  (let [{:keys [::c/position]} e]
     (canvas-update canvas position (constantly (tile game e)))))
 
 (defn- reduce-entities
@@ -267,7 +268,7 @@
 (defn memorized-world
   "Render the memorized world of `e`"
   [game e]
-  (let [{:keys [floor foundation]} (levels/entity-floor game e)
+  (let [{:keys [::c/floor ::c/foundation]} (levels/entity-floor game e)
         {:keys [entities coordinates]} (memory/entity-floor-memory e floor)
         canvas (reduce #(canvas-update %1 %2 (constantly {:tile :empty}))
                        (rect :nihil :black foundation) coordinates)
@@ -277,9 +278,9 @@
 (defn visible-world
   "Render the visible world of `e`"
   [game e]
-  (let [canvas (space :gray (:foundation (levels/entity-floor game e)))
+  (let [canvas (space :gray (::c/foundation (levels/entity-floor game e)))
         mask (sight/visible-mask game e)
-        es (entity/filter-capable [:position :renderable] (levels/floor-entities game (:floor e)))]
+        es (entity/filter-capable [::c/position ::c/renderable] (levels/floor-entities game (::c/floor e)))]
     (mask-canvas (reduce-entities game canvas es) mask)))
 
 (defn put-canvas
@@ -349,8 +350,8 @@
         world (canvas-blit (memorized-world game player) (visible-world game player))
         [[x0 y0] [x1 y1]] (canvas-viewport world dimensions viewport)
         co (center-offset (canvas-dimensions world) dimensions)
-        [x y] (:position (unique/unique-entity game :cursor))]
-    (when (entity/capable? (receivers/current game) :position)
+        [x y] (::c/position (unique/unique-entity game :cursor))]
+    (when (entity/capable? (receivers/current game) ::c/position)
       (if (and (<= x0 x x1) (<= y0 y y1))
         (screen/move-cursor screen (util/matrix-add (util/matrix-subtract [x y] [x0 y0])
                                                     co offset))
@@ -378,7 +379,7 @@
   [screen [w h] items slotted active? index offset title]
   (when active? (screen/move-cursor screen (util/matrix-add [0 index] [1 2] offset)))
   (canvas-blit (window [w h] :gray {:title title})
-               (map-indexed (fn [i {:keys [id] :as item}]
+               (map-indexed (fn [i {:keys [::c/id] :as item}]
                               (let [s (str (name/name item) (if (slotted id) " (slotted)" ""))]
                                 (if (and active? (= index i))
                                   (tilify-string (format (str "%-" (- w 4) "s") s) :black :gray)
@@ -388,12 +389,12 @@
 
 (defmethod draw :inventory [{:keys [screen] :as game} {:keys [dimensions]} offset]
   (let [menu (receivers/current game)
-        {:keys [index reference frame]} (:inventory-menu menu)
-        {:keys [inventory] :as owner} (world/entity game reference)]
+        {:keys [::cm/index ::cm/reference ::cm/frame]} (::cm/inventory menu)
+        {:keys [::c/inventory] :as owner} (world/entity game reference)]
     (selectable-list screen dimensions (map (partial world/entity game) inventory) (slots/slotted-items owner) (= frame :inventory) index offset "Inventory")))
 
 (defmethod draw :floor [{:keys [screen] :as game} {:keys [dimensions]} offset]
-  (let [{:keys [index reference frame]} (:inventory-menu (receivers/current game))
+  (let [{:keys [::cm/index ::cm/reference ::cm/frame]} (::cm/inventory (receivers/current game))
         holder (world/entity game reference)
         pickups (inventory/available-pickups game holder)]
     (selectable-list screen dimensions pickups #{} (= frame :floor) index offset "Floor")))
@@ -416,7 +417,7 @@
 
 (defmethod tile :wall [game wall]
   {:tile (condp set/subset? (set (map #(pos/entity-delta % wall)
-                                      (entity/filter-capable [:room] (pos/entity-neighbors game wall))))
+                                      (entity/filter-capable [::c/room] (pos/entity-neighbors game wall))))
            algebra/neighbor-deltas :nihil
            (set/difference algebra/neighbor-deltas #{[1 -1]}) :blcorner
            (set/difference algebra/neighbor-deltas #{[-1 -1]}) :brcorner
@@ -440,10 +441,10 @@
            #{[1 0]} :hwall #{[-1 0]} :hwall
            #{[0 -1]} :vwall #{[0 1]} :vwall
            :swall)
-   :color (or (:color wall) :white)})
+   :color (or (::c/color wall) :white)})
 
 (defmethod tile :door [game door]
-  {:tile (condp set/subset? (set (map #(pos/entity-delta % door) (entity/filter-capable [:room] (pos/entity-neighbors game door))))
+  {:tile (condp set/subset? (set (map #(pos/entity-delta % door) (entity/filter-capable [::c/room] (pos/entity-neighbors game door))))
            #{[1 0] [-1 0]} :hdoor
            #{[0 1] [0 -1]} :vdoor
            :door)

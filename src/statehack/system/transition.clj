@@ -16,15 +16,16 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.transition
-  (:require [statehack.system.sound :as sound]))
+  "statehack transition system"
+  (:require [statehack.component :as c]
+            [statehack.system.sound :as sound]))
 
 (defn sound [name]
   #(future (sound/play-sound name)))
 
 (defn transition [game f]
-  (update-in game [:transition] conj f))
+  (update-in game [::c/transition] conj f))
 
 (defn system [game]
-  (doseq [t (:transition game)]
-    (t))
-  (assoc game :transition []))
+  (doseq [t (::c/transition game)] (t))
+  (assoc game ::c/transition []))

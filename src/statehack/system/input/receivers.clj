@@ -23,7 +23,7 @@
     (entities (first receivers))))
 
 (defn push-control [game e]
-  (world/update-in-world-state game [:receivers] #(cons (:id e) %)))
+  (world/update-in-world-state game [:receivers] #(cons (::c/id e) %)))
 
 (defn pop-control [game]
   (world/update-in-world-state game [:receivers] next))

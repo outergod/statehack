@@ -15,7 +15,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.system.skills)
+(ns statehack.system.skills
+  "statehack skills system"
+  (:require [statehack.component :as c]))
 
 (defn skill [e type]
-  (get-in e [:skillset type]))
+  (get-in e [::c/skillset ::c/type]))

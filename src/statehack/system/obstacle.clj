@@ -16,8 +16,9 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.obstacle
-  "Obstacle facility"
-  (:require [statehack.system.door :as door]))
+  "statehack obstacle system"
+  (:require [statehack.component :as c]
+            [statehack.system.door :as door]))
 
 (def obstacle?-hierarchy "Hierarchy for `obstacle?`" (make-hierarchy))
 
@@ -28,7 +29,7 @@
 
 (def obstacle?-dispatch
   "Dispatch for `obstacle?`"
-  :obstacle)
+  ::c/obstacle)
 
 (defmulti obstacle?
   "Is entity an obstacle?"

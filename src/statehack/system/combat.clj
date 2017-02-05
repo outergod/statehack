@@ -18,22 +18,22 @@
 (ns statehack.system.combat
   (:require [clojure.pprint :refer [cl-format]]
             [statehack.entity :as entity]
-            [statehack.system.name :as name]
-            [statehack.system.world :as world]
-            [statehack.system.position :as pos]
-            [statehack.system.transition :as transition]
             [statehack.system.messages :as messages]
+            [statehack.system.name :as name]
+            [statehack.system.position :as pos]
+            [statehack.system.skills :as skills]
             [statehack.system.slots :as slots]
-            [statehack.system.skills :as skills]))
+            [statehack.system.transition :as transition]
+            [statehack.system.world :as world]))
 
-(defmulti hurt (fn [game actor] (:category actor)))
+(defmulti hurt (fn [game actor] (::c/category actor)))
 
 (defmethod hurt :default [game _] game)
 
 (defmethod hurt :human [game _]
   (transition/transition game (transition/sound :player-hurt)))
 
-(defmulti die (fn [game actor] (:category actor)))
+(defmulti die (fn [game actor] (::c/category actor)))
 
 (defmethod die :default [game _] game)
 
@@ -41,41 +41,41 @@
   (transition/transition game (transition/sound :bot-die)))
 
 (defn target-hp [e]
-  (get-in e [:hp :current]))
+  (get-in e [::c/vulnerable ::c/hp]))
 
 (defn die-common [game e]
-  (world/update game [{:keys [id] :as e} (:id e)]
-    (world/remove-entity-component game id :mobile :obstacle :ai)
-    (world/update-entity-component game id :alive (constantly false))
-    (world/update-entity-component game id :renderable (constantly :corpse))
+  (world/update game [{:keys [::c/id] :as e} (::c/id e)]
+    (world/remove-entity-component game id ::c/mobile ::c/obstacle ::c/ai)
+    (world/update-entity-component game id ::c/alive (constantly false))
+    (world/update-entity-component game id ::c/renderable (constantly :corpse))
     (die game e)))
 
 (defn dead? [e]
-  (not (:alive e)))
+  (not (::c/alive e)))
 
 (defn- reduction [weapon target]
-  (max (- (or (:armor target) 0)
+  (max (- (or (::c/armor target) 0)
           (:penetration weapon))
        0))
 
-(defn damage [game attacker {:keys [weapon] :as item} target]
-  (let [{:keys [damage offense]} weapon
-        armor (or (:armor target) 0)
+(defn damage [game attacker {:keys [::c/weapon] :as item} target]
+  (let [{:keys [::c/damage ::c/offense]} weapon
+        armor (or (::c/armor target) 0)
         hp (- (target-hp target) damage)
         game (-> game
                  (messages/log (cl-format nil "~a attacks ~a with ~a, causing ~d damage" (name/name attacker) (name/name target) (name/name item) damage))
                  (hurt target))]
     (if (pos? hp)
-      (world/update-entity-component game (:id target) [:hp :current] - damage)
-      (world/update game [target (:id target)]
+      (world/update-entity-component game (::c/id target) [::c/vulnerable ::c/hp] - damage)
+      (world/update game [target (::c/id target)]
         (messages/log game (cl-format nil "~a dies from ~d overdamage" (name/name target) (Math/abs hp)))
         (die-common game target)))))
 
 (defn attackable? [e]
-  (and (entity/capable? e :hp)
-       (:alive e)))
+  (and (entity/capable? e ::c/vulnerable)
+       (::c/alive e)))
 
-(defn melee-dispatch [game attacker {:keys [weapon]} target]
+(defn melee-dispatch [game attacker {:keys [::c/weapon]} target]
   (:transition weapon))
 
 (defmulti melee #'melee-dispatch)

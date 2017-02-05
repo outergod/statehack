@@ -17,11 +17,12 @@
 
 (ns statehack.system.messages
   (:refer-clojure :exclude [update pop])
-  (:require [statehack.entity :as entity]
+  (:require [clojure.pprint :refer [cl-format]]
+            [statehack.component :as c]
+            [statehack.entity :as entity]
             [statehack.system.input.receivers :as receivers]
-            [statehack.system.world :as world]
             [statehack.system.unique :as unique]
-            [clojure.pprint :refer [cl-format]]))
+            [statehack.system.world :as world]))
 
 (defn dialog [game & ms]
   (let [d (apply entity/dialog ms)]
@@ -30,10 +31,10 @@
       (receivers/push-control game d))))
 
 (defn current [e]
-  (first (:messages e)))
+  (first (::c/messages e)))
 
 (defn update [game e f]
-  (world/update-entity-component game (:id e) :messages f))
+  (world/update-entity-component game (::c/id e) ::c/messages f))
 
 (defn pop [game e]
   (update game e next))
@@ -52,4 +53,4 @@
   {:pre [(pos? n)]}
   (map (fn [[s n]]
          (cl-format false "~a~:[~; [repeated ~d times]~]" s (> n 1) n))
-       (take n (:messages e))))
+       (take n (::c/messages e))))

@@ -16,17 +16,19 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.player
-  (:require [statehack.system.inventory :as inventory]
-            [statehack.system.input :as input]
-            [statehack.system.input.receivers :as receivers]
-            [statehack.system.world :as world]
-            [statehack.system.viewport :as viewport]
-            [statehack.system.movement :as movement]
-            [statehack.system.door :as door]
+  "statehack player system"
+  (:require [statehack.component :as c]
             [statehack.system.combat :as combat]
             [statehack.system.defer :as defer]
-            [statehack.system.time :as time]
+            [statehack.system.door :as door]
+            [statehack.system.input :as input]
+            [statehack.system.input.receivers :as receivers]
+            [statehack.system.inventory :as inventory]
             [statehack.system.messages :as messages]
+            [statehack.system.movement :as movement]
+            [statehack.system.time :as time]
+            [statehack.system.viewport :as viewport]
+            [statehack.system.world :as world]
             [statehack.util :as util]))
 
 (def player-moves
@@ -44,7 +46,7 @@
     (-> (input/receive game e input) movement/update-cursor)))
 
 (defn act [game e f]
-  (letfn [(center [game] (viewport/center-on game (world/entity game (:id e))))]
+  (letfn [(center [game] (viewport/center-on game (world/entity game (::c/id e))))]
     (-> game world/dup-world-state f center time/pass-time)))
 
 (defn action [game player dir]
@@ -96,7 +98,7 @@
 (defmethod input/receive :dialog [game dialog input]
   (case (:key input)
     (:enter \ ) (world/update game []
-                  (if (> (count (:messages dialog)) 1)
+                  (if (> (count (::c/messages dialog)) 1)
                     (messages/pop game dialog)
-                    (-> game receivers/pop-control (world/remove-entity (:id dialog)))))
+                    (-> game receivers/pop-control (world/remove-entity (::c/id dialog)))))
     game))

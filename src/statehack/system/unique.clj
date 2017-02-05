@@ -16,10 +16,12 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.unique
-  (:require [statehack.system.world :as world]))
+  (:require [statehack.component :as c]
+            [statehack.system.world :as world]))
 
+;;; TODO index
 (defn unique-entity [game type]
-  (let [es (filter #(= (:unique %) type) (vals (world/entities game)))]
+  (let [es (filter #(= (::c/unique %) type) (vals (world/entities game)))]
     (case (count es)
       0 nil
       1 (first es)

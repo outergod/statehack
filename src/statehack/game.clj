@@ -44,7 +44,7 @@
         [w h] (levels/dimensions lab)
         game {:screen screen
               :graphics (screen/text-graphics screen)
-              :world [{:entities (util/index-by :id
+              :world [{:entities (util/index-by ::c/id
                                                 (concat
                                                   [(entity/floor 1 [w h])
                                                    (entity/status-bar)

@@ -27,8 +27,8 @@
 (defn group
   "Group together `parent` and `children` by means of the `compound` component"
   [parent children]
-  (cons (merge parent {::c/compound #::c{:parents nil :children (map :id children)}})
-    (map #(merge % {::c/compound #::c{:parents [(:id parent)] :children nil}})
+  (cons (merge parent {::c/compound #::c{:parents nil :children (map ::c/id children)}})
+    (map #(merge % {::c/compound #::c{:parents [(::c/id parent)] :children nil}})
       children)))
 
 (defn parents

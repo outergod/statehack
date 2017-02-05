@@ -25,6 +25,6 @@
   "Menu inventory entity"
   [id type frame]
   (conform
-    #::c {:id (uuid) :input :inventory-menu
-          ::cm/inventory-menu #::cm{::inventory-type type ::inventory-reference id
-                                    ::inventory-index 0 ::inventory-frame frame}}))
+    #::c{:id (uuid) :input :inventory-menu
+         ::cm/inventory #::cm{:type type :reference id
+                              :index 0 :frame frame}}))

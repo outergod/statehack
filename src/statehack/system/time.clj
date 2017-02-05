@@ -15,7 +15,8 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns statehack.system.time)
+(ns statehack.system.time
+  "statehack time system")
 
 (defn pass-time [game]
   (assoc game :time true))

@@ -17,13 +17,14 @@
 
 (ns statehack.system.name
   (:refer-clojure :exclude [name])
-  (:require [statehack.entity :as entity]))
+  (:require [statehack.component :as c]
+            [statehack.entity :as entity]))
 
 (def category-names
   {:human "Human"
    :serv-bot "Serv-Bot"})
 
 (defn name [e]
-  (cond (entity/capable? e :name) (:name e)
-        (entity/capable? e :category) (category-names (:category e))
+  (cond (entity/capable? e ::c/name) (::c/name e)
+        (entity/capable? e ::c/category) (category-names (::c/category e))
         :default "Unknown"))

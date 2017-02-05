@@ -16,9 +16,9 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.viewport
-  (:require [statehack.system.unique :as unique]
-            [statehack.system.levels :as levels]
+  (:require [statehack.component :as c]
             [statehack.system.layout :as layout]
+            [statehack.system.levels :as levels]
             [statehack.util :as util]))
 
 (defn snap
@@ -35,8 +35,8 @@
 (defn update-viewport [game e f]
   (let [{:keys [layout]} game
         dimensions (get-in (layout/by-id layout) [:world-view :dimensions])
-        {:keys [foundation]} (levels/entity-floor game e)]
-    (update-in game [:viewport] #(snap (f %) dimensions foundation))))
+        {:keys [::c/foundation]} (levels/entity-floor game e)]
+    (update-in game [viewport] #(snap (f %) dimensions foundation))))
 
 (defn center-on [game e]
-  (update-viewport game e (constantly (e :position))))
+  (update-viewport game e (constantly (::c/position e))))

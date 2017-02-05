@@ -16,13 +16,14 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.sight
-  "Visual calculation system"
+  "statehack visual calculation system"
   (:require [statehack.algebra :as algebra]
-            [statehack.system.world :as world]
-            [statehack.system.position :as pos]
-            [statehack.system.levels :as levels]
+            [statehack.component :as c]
             [statehack.entity :as entity]
             [statehack.system.door :as door]
+            [statehack.system.levels :as levels]
+            [statehack.system.position :as pos]
+            [statehack.system.world :as world]
             [statehack.util :as util]))
 
 ;;; opaque? multimethod
@@ -36,7 +37,7 @@
 
 (def opaque?-dispatch
   "Dispatch for `opaque?`"
-  :opaque)
+  ::c/opaque)
 
 (defmulti opaque?
   "Is entity opaque?"
@@ -64,7 +65,7 @@
 (defn visible-mask-dispatch
   "Dispatch for `visible-mask`"
   [game e]
-  (-> e :sight :type))
+  (-> e ::c/sight :type))
 
 (defmulti visible-mask
   "Is entity visible-mask"
@@ -74,9 +75,9 @@
 (defn- visible-mask-common
   "Shared implementation of `visible-mask` for organic and sensoric sighted entities"
   [game e]
-  (let [[x y] (:position e)
-        r (-> e :sight :distance)
-        ps (set (map :position (filter-opaques (levels/on-floor (:floor e) (entity/filter-capable [:position :floor] (vals (world/entities game)))))))]
+  (let [[x y] (::c/position e)
+        r (-> e ::c/sight :distance)
+        ps (set (map ::c/position (filter-opaques (levels/on-floor (::c/floor e) (entity/filter-capable [::c/position ::c/floor] (vals (world/entities game)))))))]
     (conj (set (mapcat (partial util/take-while-including (complement ps))
                        (algebra/visible-lines [x y] r)))
           [x y])))
@@ -88,14 +89,14 @@
   (visible-mask-common game e))
 
 (defmethod visible-mask :omniscience [game e]
-  (let [{:keys [foundation]} (levels/entity-floor game e)
+  (let [{:keys [::c/foundation]} (levels/entity-floor game e)
         [w h] foundation]
     (set (for [x (range w) y (range h)] [x y]))))
 
 (defn visible-entities
   "Visible entities on `floor` within `mask`"
   ([game floor mask]
-   (entity/filter-capable [:renderable] (pos/entities-at game floor mask)))
+   (entity/filter-capable [::c/renderable] (pos/entities-at game floor mask)))
   ([game e]
    (let [{:keys [floor]} (levels/entity-floor game e)
          mask (visible-mask game e)]

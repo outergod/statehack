@@ -16,26 +16,27 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.defer
-  (:require [statehack.entity :as entity]
-            [statehack.system.world :as world]
-            [statehack.system.input.receivers :as receivers]))
+  (:require [statehack.component :as c]
+            [statehack.entity :as entity]
+            [statehack.system.input.receivers :as receivers]
+            [statehack.system.world :as world]))
 
 (defn defer [game es action]
-  (let [sel (entity/selector (:position (first es)) action (map :id es))]
-    (world/update game [e (:id sel)]
+  (let [sel (entity/selector (::c/position (first es)) action (map ::c/id es))]
+    (world/update game [e (::c/id sel)]
       (world/add-entity game sel)
       (receivers/push-control game e))))
 
 (defn fulfill [game e]
-  (let [{:keys [deferred mobile]} e
+  (let [{:keys [::c/deferred ::c/mobile]} e
         es (:entities (world/state game))
         t (es (first (:targets mobile)))]
     (world/update game []
-      (world/remove-entity game (:id e))
+      (world/remove-entity game (::c/id e))
       (receivers/pop-control game)
       (deferred game t))))
 
 (defn abort [game e]
   (world/update game []
-    (world/remove-entity game (:id e))
+    (world/remove-entity game (::c/id e))
     (receivers/pop-control game)))

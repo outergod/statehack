@@ -17,10 +17,10 @@
 
 (ns statehack.system.position
   "Positioning and coordinates"
-  (:require [statehack.system.world :as world]
-            [statehack.util :as util]
-            [statehack.algebra :as algebra]
-            [statehack.component :as c]))
+  (:require [statehack.algebra :as algebra]
+            [statehack.component :as c]
+            [statehack.system.world :as world]
+            [statehack.util :as util]))
 
 (defn entities-at
   "Matching entities at given `floor` and `coords`"

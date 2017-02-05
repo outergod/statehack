@@ -16,26 +16,24 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.door
-  (:require [statehack.entity :as entity]
-            [statehack.system.messages :as messages]
-            [statehack.system.defer :as defer]
-            [statehack.system.input.receivers :as receivers]
-            [statehack.system.world :as world]
-            [statehack.system.position :as pos]
-            [statehack.system.time :as time]
-            [statehack.system.transition :as transition]
+  (:require [statehack.component :as c]
+            [statehack.entity :as entity]
             [statehack.system.compound :as compound]
-            [clojure.set :as set]))
+            [statehack.system.defer :as defer]
+            [statehack.system.messages :as messages]
+            [statehack.system.position :as pos]
+            [statehack.system.transition :as transition]
+            [statehack.system.world :as world]))
 
 (defn open?
   "Is the door open?"
   [door]
-  (get-in door [:door :open]))
+  (get-in door [::c/door ::c/open?]))
 
 (defn- operate-door
   "Common code for opening/closing doors"
   [game door state]
-  (world/update-entity-component game (:id door) [:door :open] (constantly state)))
+  (world/update-entity-component game (::c/id door) [::c/door ::c/open?] (constantly state)))
 
 (def door-hierarchy
   "Hierarchy of door types"
@@ -49,7 +47,7 @@
 (defn- door-dispatch
   "Dispatch for door multimethods`"
   [game door]
-  (get-in door [:door :type]))
+  (get-in door [::c/door :type]))
 
 (defmulti door-sound "Door sound transition" #'door-dispatch
   :hierarchy #'door-hierarchy)
@@ -66,7 +64,7 @@
 (defn- open-close-door-default-common
   "Common open/close default code"
   [game door state]
-  (world/update game [door (:id door)]
+  (world/update game [door (::c/id door)]
     (operate-door game door state)
     (door-sound game door)))
 
@@ -74,8 +72,8 @@
   "Common open/close compound code"
   [game door state]
   (let [parent (compound/parent game door)]
-    (world/update game [parent (:id parent)
-                        doors (conj (map :id (compound/children game parent)) (:id parent))]
+    (world/update game [parent (::c/id parent)
+                        doors (conj (map ::c/id (compound/children game parent)) (::c/id parent))]
       (reduce #(operate-door %1 %2 state) game doors)
       (door-sound game parent))))
 
@@ -97,7 +95,7 @@
 (defn- available-open-close-common
   "Available open/close common code"
   [game e f]
-  (let [es (filter #(and (entity/capable? % :door) (f %))
+  (let [es (filter #(and (entity/capable? % ::c/door) (f %))
              (pos/entity-neighbors game e))]
     (into {} (map (fn [door] [(pos/entity-delta door e) #(open-door % door)]) es))))
 
@@ -108,7 +106,7 @@
   (available-open-close-common game e open?))
 
 (defn close [game e]
-  (let [es (filter #(and (entity/capable? % :door) (open? %))
+  (let [es (filter #(and (entity/capable? % ::c/door) (open? %))
              (pos/entity-neighbors game e))]
     (case (count es)
       0 (messages/log game "No open door nearby.")
@@ -116,7 +114,7 @@
       (defer/defer game es close-door))))
 
 (defn filter-doors [es]
-  (entity/filter-capable [:door] es))
+  (entity/filter-capable [::c/door] es))
 
 ;;; Hierarchy
 

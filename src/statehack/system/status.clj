@@ -17,20 +17,20 @@
 
 (ns statehack.system.status
   (:require [clojure.pprint :refer [cl-format]]
+            [statehack.component :as c]
             [statehack.entity :as entity]
+            [statehack.system.messages :as messages]
             [statehack.system.name :as name]
-            [statehack.system.world :as world]
-            [statehack.system.unique :as unique]
-            [statehack.system.messages :as messages]))
+            [statehack.system.unique :as unique]))
 
 (defn player-status [e]
-  (let [{:keys [adaptive hp]} e
-        {:keys [current max]} hp
+  (let [{:keys [::c/adaptive ::c/vulnerable]} e
+        {:keys [::c/hp ::c/max]} vulnerable
         hp-order (inc (int (Math/log10 max)))]
-    (cl-format nil (str "~a | HP: ~" hp-order "d/~d | XP: ~d | Level: ~d") (name/name e) current max (:xp adaptive) (:level adaptive))))
+    (cl-format nil (str "~a | HP: ~" hp-order "d/~d | XP: ~d | Level: ~d") (name/name e) current max (::c/xp adaptive) (::c/level adaptive))))
 
 (defn text [game e]
   (let [p (unique/unique-entity game :player)]
-    (if (entity/capable? e :messages)
+    (if (entity/capable? e ::c/messages)
       (messages/current e)
       (player-status p))))

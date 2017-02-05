@@ -118,7 +118,6 @@
   []
   (conform
     #::c{:id (uuid)
-         :name "Serv-Bot"
          :category :serv-bot
          :renderable :serv-bot
          :alive true
