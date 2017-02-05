@@ -252,7 +252,7 @@
 ;;; Enables slotting equipment.
 ;;;
 ;;; Related systems:
-(s/def ::slots (s/every-kv keyword? ::id))
+(s/def ::slots (s/every-kv keyword? (s/nilable ::id)))
 
 ;;; Weapon component
 ;;;
