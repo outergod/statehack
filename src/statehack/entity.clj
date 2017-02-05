@@ -17,7 +17,8 @@
 
 (ns statehack.entity
   "Entities are the most basic units in ECS"
-  (:require [clojure.spec :as s]
+  (:require [clojure.pprint :refer [cl-format]]
+            [clojure.spec :as s]
             [clojure.set :as set]
             [statehack.component :as c]))
 
@@ -61,7 +62,12 @@
 (defn conform
   "Conform `x` to `:statehack/entity`"
   [x]
-  (s/conform :statehack/entity x))
+  (let [conformed (s/conform :statehack/entity x)]
+    (if (= conformed ::s/invalid)
+      (throw
+        (ex-info (cl-format nil "~a fails to validate~%~s" x (s/explain-str :statehack/entity x))
+          (s/explain-data :statehack/entity x)))
+      x)))
 
 (defn cursor
   "Cursor entity"
