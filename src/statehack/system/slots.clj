@@ -50,4 +50,5 @@
 
 (defn slot-item [game actor slot]
   {:pre [(entity/capable? actor ::c/slots)]}
-  (world/entity game (get-in actor [::c/slots slot])))
+  (when-let [id (get-in actor [::c/slots slot])]
+    (world/entity game id)))
