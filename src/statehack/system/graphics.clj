@@ -64,7 +64,7 @@
 (defn render-dispatch
   "Dispatch for `render`"
   [game e offset]
-  (e :type))
+  (:type e))
 
 (defmulti render
   "Render layout element `e`"
@@ -202,14 +202,12 @@
 (defn entity-blit
   "Blit entity `e` onto `canvas`."
   [game canvas e]
-  (let [{:keys [::c/position]} e]
-    (canvas-update canvas position (constantly (tile game e)))))
+  (canvas-update canvas (::c/position e) (constantly (tile game e))))
 
 (defn- reduce-entities
   "Reduce entities onto `canvas`"
   [game canvas es]
-  (reduce (partial entity-blit game) canvas
-          (entity-canvas es)))
+  (reduce (partial entity-blit game) canvas (entity-canvas es)))
 
 (defn- splice
   "Splice `source` into `target` at `offset` using blit operation `f`."
