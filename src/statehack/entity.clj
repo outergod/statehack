@@ -103,10 +103,13 @@
          :category :human
          :renderable :humanoid
          :input :player
-         :obstacle true
+         :alive true
+         :unique :player
+         :obstacle :always
          :memory {}
          :inventory []
-         :mobile #::c{:type :pipedal}
+         :slots {:melee nil :gun nil}
+         :mobile #::c{:type :bipedal}
          :adaptive #::c{:xp 0 :level 0}
          :vulnerable #::c{:hp hp :max hp}
          :sight #::c{:type :eyes :distance 10}}))
@@ -127,7 +130,7 @@
          :category :serv-bot
          :renderable :serv-bot
          :alive true
-         :obstacle true
+         :obstacle :always
          :memory {}
          :inventory []
          :ai :serv-bot
@@ -135,7 +138,8 @@
          :mobile #::c{:type :wheels}
          :vulnerable #::c{:hp 20 :max 20}
          :sight #::c{:type :sensors :distance 5}
-         :skillset {:melee #::c{:name "Appendages"
+         :skillset {:melee #::c{:id (uuid)
+                                :name "Appendages"
                                 :weapon #::c{:type :melee :transition :appendages
                                              :damage 8 :penetration 0 :offense 1}}}}))
 
