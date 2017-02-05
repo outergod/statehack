@@ -58,7 +58,7 @@
 
 ;;; Entities
 
-(defn entity
+(defn conform
   "Conform `x` to `:statehack/entity`"
   [x]
   (s/conform :statehack/entity x))
@@ -66,32 +66,32 @@
 (defn cursor
   "Cursor entity"
   []
-  (entity #::c{:id (uuid) :unique :cursor :position [0 0] :mobile #::c{:type :cursor}}))
+  (conform #::c{:id (uuid) :unique :cursor :position [0 0] :mobile #::c{:type :cursor}}))
 
 (defn dialog
   "Dialog entity"
   [& ms]
-  (entity #::c{:id (uuid) :unique :dialog :renderable :dialog :input :dialog :messages ms}))
+  (conform #::c{:id (uuid) :unique :dialog :renderable :dialog :input :dialog :messages ms}))
 
 (defn floor
   "Floor entity"
   [n [w h]]
-  (entity #::c{:id (uuid) :renderable :floor :floor n :foundation [w h]}))
+  (conform #::c{:id (uuid) :renderable :floor :floor n :foundation [w h]}))
 
 (defn log
   "Log entity"
   []
-  (entity #::c{:id (uuid) :unique :log :renderable :log :messages []}))
+  (conform #::c{:id (uuid) :unique :log :renderable :log :messages []}))
 
 (defn music
   "Music entity"
   [name]
-  (entity #::c{:id (uuid) :music name}))
+  (conform #::c{:id (uuid) :music name}))
 
 (defn player
   "Player entity"
   [name hp]
-  (entity
+  (conform
     #::c{:id (uuid)
          :name name
          :category :human
@@ -110,13 +110,13 @@
 
   Uses deferred `action` on selected target."
   [[x y] action targets]
-  (entity #::c{:id (uuid) :position [x y] :input :selector :deferred action
+  (conform #::c{:id (uuid) :position [x y] :input :selector :deferred action
                :mobile #::c{:type :selector :targets targets}}))
 
 (defn serv-bot
   "Serv-Bot entity"
   []
-  (entity
+  (conform
     #::c{:id (uuid)
          :name "Serv-Bot"
          :category :serv-bot
@@ -137,4 +137,4 @@
 (defn status-bar
   "Status bar entity"
   []
-  (entity #::c{:id (uuid) :renderable :status}))
+  (conform #::c{:id (uuid) :renderable :status}))

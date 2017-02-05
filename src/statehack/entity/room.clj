@@ -17,28 +17,28 @@
 
 (ns statehack.entity.room
   "Room-related entities"
-  (:require [statehack.entity :refer [entity uuid]]
+  (:require [statehack.entity :refer [conform uuid]]
             [statehack.component :as c]
             [clojure.spec :as s]))
 
 (defn wall
   "Wall entity"
   [color]
-  (entity #::c{:id (uuid) :renderable :wall :color color :room true :obstacle true :opaque true}))
+  (conform #::c{:id (uuid) :renderable :wall :color color :room true :obstacle true :opaque true}))
 
 (defn solid
   "Solid entity"
   []
-  (entity #::c{:id (uuid) :renderable #::c{:tile :nihil :color 0} :obstacle true :opaque true}))
+  (conform #::c{:id (uuid) :renderable #::c{:tile :nihil :color 0} :obstacle true :opaque true}))
 
 (defn door
   "Door entity"
   [type open?]
-  (entity
+  (conform
     #::c{:id (uuid) :renderable :door :obstacle :door :opaque :door :room true
          :door #::c{:type type :open? open?}}))
   
 (defn blast-door
   "Blast door entity"
   [open?]
-  (entity #::c{:door #::c{:type :blas :open? open?}}))
+  (conform #::c{:door #::c{:type :blas :open? open?}}))

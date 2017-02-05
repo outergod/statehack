@@ -16,11 +16,11 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.container
-  (:require [statehack.entity :refer [entity uuid]]
+  (:require [statehack.entity :refer [conform uuid]]
             [statehack.component :as c]
             [clojure.spec :as s]))
 
 (defn crate
   "Crate entity"
   []
-  (entity #::c {:id (uuid) :name "Crate" :renderable :crate :inventory []}))
+  (conform #::c {:id (uuid) :name "Crate" :renderable :crate :inventory []}))

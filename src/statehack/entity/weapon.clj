@@ -16,14 +16,14 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.weapon
-  (:require [statehack.entity :refer [uuid]]
+  (:require [statehack.entity :refer [conform uuid]]
             [statehack.component :as c]
             [clojure.spec :as s]))
 
 (defn dart-gun
   "SV-23 Dart Pistol entity"
   []
-  (s/conform :statehack/entity
+  (conform
     #::c {:id (uuid) :name "SV-23 Dart Pistol"
           :pickup :slot-weapon
           :weapon #::c{:type :semi-automatic :transition :dart-gun
@@ -33,7 +33,7 @@
 (defn lead-pipe
   "Lead Pipe entity"
   []
-  (s/conform :statehack/entity
+  (conform
     #::c {:id (uuid) :name "Lead Pipe" :pickup :slot-weapon :renderable :weapon
           :weapon #::c{:type :melee :transition :lead-pipe
                        :damage 15 :penetration 40 :offense 3}}))

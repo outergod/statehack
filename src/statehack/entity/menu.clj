@@ -16,7 +16,7 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.entity.menu
-  (:require [statehack.entity :refer [entity uuid]]
+  (:require [statehack.entity :refer [conform uuid]]
             [statehack.component :as c]
             [statehack.component.menu :as cm]
             [clojure.spec :as s]))
@@ -24,7 +24,7 @@
 (defn inventory
   "Menu inventory entity"
   [id type frame]
-  (entity
+  (conform
     #::c {:id (uuid) :input :inventory-menu
           ::cm/inventory-menu #::cm{::inventory-type type ::inventory-reference id
                                     ::inventory-index 0 ::inventory-frame frame}}))
