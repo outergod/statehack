@@ -83,24 +83,19 @@
   {:arglists '([game view offset])}
   #'draw-dispatch :hierarchy #'draw-hierarchy)
 
-(def blit-order "Precedence of blit operations" {})
+(def blit-hierarchy "Hierarchy of blit precedence" (make-hierarchy))
 
-(defn blit-precedence
-  "Define precedence of renderable `r1` over `r2`"
-  [r1 r2]
-  (alter-var-root #'blit-order assoc #{r1 r2} r1))
+(defn derive-blit
+  "Derive for `blit-hierarchy`"
+  [tag parent]
+  (alter-var-root #'blit-hierarchy derive tag parent))
+
+(def blit-order "Order of blit precedence" [:flying :standing :lying :background])
 
 (defn blit
   "Evaluate to the entity with higher blit order"
   [e1 e2]
-  (let [[r1 r2] (map ::c/renderable [e1 e2])]
-    (if (= r1 r2)
-      e1
-      (let [rs (blit-order #{r1 r2})]
-        (condp = rs
-          r1 e1
-          r2 e2
-          (throw (ex-info "Blit order of entities undefined" {:entities [e1 e2]})))))))
+  (first (sort-by #(.indexOf blit-order (first (parents blit-hierarchy (::c/renderable %)))) [e1 e2])))
 
 (def tiles
   "Mapping of tile keywords to characters"
@@ -446,22 +441,11 @@
            :door)
    :color (if (door/open? door) :lightblack :white)})
 
-(blit-precedence :humanoid :door)
-(blit-precedence :humanoid :corpse)
-(blit-precedence :corpse :door)
-
-(blit-precedence :humanoid :weapon)
-(blit-precedence :weapon :corpse)
-
-(blit-precedence :weapon :battery)
-(blit-precedence :humanoid :battery)
-
-(blit-precedence :camera :weapon)
-(blit-precedence :humanoid :camera)
-
-(blit-precedence :humanoid :crate)
-(blit-precedence :crate :corpse)
-(blit-precedence :crate :weapon)
+(derive-blit :humanoid :standing)
+(derive-blit :door :background)
+(derive-blit :corpse :lying)
+(derive-blit :weapon :lying)
+(derive-blit :crate :standing)
 
 (defmethod tile :weapon [game e]
   {:tile :weapon
