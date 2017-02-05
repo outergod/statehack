@@ -47,7 +47,7 @@
 (defn- door-dispatch
   "Dispatch for door multimethods`"
   [game door]
-  (get-in door [::c/door :type]))
+  (get-in door [::c/door ::c/type]))
 
 (defmulti door-sound "Door sound transition" #'door-dispatch
   :hierarchy #'door-hierarchy)
