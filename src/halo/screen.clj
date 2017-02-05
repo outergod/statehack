@@ -44,6 +44,10 @@
   [^TerminalSize size]
   [(.getColumns size) (.getRows size)])
 
+(defn- extract-position
+  [^TerminalPosition size]
+  [(.getColumn size) (.getRow size)])
+
 (defn size
   [^Screen screen]
   (extract-size (.getTerminalSize screen)))
@@ -59,6 +63,10 @@
 (defn hide-cursor
   [^Screen screen]
   (.setCursorPosition screen nil))
+
+(defn read-cursor
+  [^Screen screen]
+  (extract-position (.getCursorPosition screen)))
 
 (defn clear
   [^Screen screen]
