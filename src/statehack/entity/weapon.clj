@@ -27,7 +27,7 @@
     #::c {:id (uuid) :name "SV-23 Dart Pistol"
           :pickup :slot-weapon
           :weapon #::c{:type :semi-automatic :transition :dart-gun
-                       :damage 20 :penetration 20 :offense 2}
+                       :damage 20 :penetration 20}
           :renderable :weapon}))
 
 (defn lead-pipe
@@ -36,4 +36,4 @@
   (conform
     #::c {:id (uuid) :name "Lead Pipe" :pickup :slot-weapon :renderable :weapon
           :weapon #::c{:type :melee :transition :lead-pipe
-                       :damage 15 :penetration 40 :offense 3}}))
+                       :damage 15 :penetration 40}}))

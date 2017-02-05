@@ -269,10 +269,9 @@
 ;;; Related systems: combat
 (s/def ::damage ::pos-int-or-zero)
 (s/def ::penetration ::pos-int-or-zero)
-(s/def ::offense ::pos-int-or-zero)
 (s/def ::transition ::type)
 (s/def ::weapon
-  (s/keys :req [::type ::damage ::penetration ::offense ::transition]))
+  (s/keys :req [::type ::damage ::penetration ::transition]))
 
 ;;; Compound component
 ;;;

@@ -60,7 +60,7 @@
        0))
 
 (defn damage [game attacker {:keys [::c/weapon] :as item} target]
-  (let [{:keys [::c/damage ::c/offense]} weapon
+  (let [{:keys [::c/damage]} weapon
         armor (or (::c/armor target) 0)
         hp (- (target-hp target) damage)
         game (-> game
