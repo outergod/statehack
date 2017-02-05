@@ -17,4 +17,5 @@
                        :main statehack.core}
              :dev {:resource-paths ["dev"]
                    :dependencies [[criterium "0.4.3"]
-                                  [com.taoensso/timbre "4.1.1"]]}})
+                                  [com.taoensso/timbre "4.1.1"]
+                                  [org.clojure/test.check "0.9.0"]]}})
