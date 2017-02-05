@@ -61,7 +61,7 @@
   (let [{:keys [::cm/reference ::cm/index ::cm/frame]} inventory
         player (world/entity game reference)
         max (count (frame-items game player frame))]
-    (world/update-entity-component game id [::cm/inventory ::cm/index]
+    (world/update-in-entity-component game id [::cm/inventory] ::cm/index
       (comp (if (zero? max) (constantly 0) #(mod % max)) f))))
 
 (defn pick-up-or-drop [game {:keys [::cm/inventory] :as menu}]
@@ -112,7 +112,7 @@
 
 (defn- change-frame-common [game menu frame]
   (world/update game [{:keys [::c/id] :as menu} (::c/id menu)]
-    (world/update-entity-component game id [::cm/inventory ::cm/frame] (constantly frame))
+    (world/update-in-entity-component game id [::cm/inventory] ::cm/frame (constantly frame))
     (change-index game menu identity)))
 
 (defmethod change-frame [:pickup :left] [game menu _]

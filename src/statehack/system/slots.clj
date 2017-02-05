@@ -30,13 +30,18 @@
   {:pre [(entity/capable? actor ::c/slots)]}
   ((set/map-invert (::c/slots actor)) (::c/id item)))
 
+(defn- operate-slot
+  "slot/unslot common code"
+  [game actor slot x]
+  (world/update-in-entity-component game (::c/id actor) [::c/slots] slot (constantly x)))
+
 (defn slot [game actor item slot]
   {:pre [((available-slots actor) slot)]}
-  (world/update-entity-component game (::c/id actor) [::c/slots slot] (constantly (::c/id item))))
+  (operate-slot game actor slot (::c/id item)))
 
 (defn unslot [game actor item]
   (if-let [slot (slotted? actor item)]
-    (world/update-entity-component game (::c/id actor) [::c/slots slot] (constantly nil))
+    (operate-slot game actor slot nil)
     game))
 
 (defn slotted-items [actor]

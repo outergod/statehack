@@ -67,7 +67,7 @@
                  (messages/log (cl-format nil "~a attacks ~a with ~a, causing ~d damage" (name/name attacker) (name/name target) (name/name item) damage))
                  (hurt target))]
     (if (pos? hp)
-      (world/update-entity-component game (::c/id target) [::c/vulnerable ::c/hp] - damage)
+      (world/update-in-entity-component game (::c/id target) [::c/vulnerable] ::c/hp - damage)
       (world/update game [target (::c/id target)]
         (messages/log game (cl-format nil "~a dies from ~d overdamage" (name/name target) (Math/abs hp)))
         (die-common game target)))))
