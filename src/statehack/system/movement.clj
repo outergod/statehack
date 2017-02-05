@@ -104,8 +104,9 @@
   [game]
   (let [{:keys [entities receivers]} (world/state game)
         r (receivers/current game)
-        e (unique/unique-entity game :cursor)
-        [x y] (if (entity/capable? r ::c/messages)
-                [(+ (count (first (::c/messages r))) 2) 1]
-                (::c/position r))]
-    (world/update-entity-component game (::c/id e) ::c/position (constantly [x y]))))
+        e (unique/unique-entity game :cursor)]
+    (if-let [[x y] (if (entity/capable? r ::c/messages)
+                     [(+ (count (first (::c/messages r))) 2) 1]
+                     (::c/position r))]
+      (world/update-entity-component game (::c/id e) ::c/position (constantly [x y]))
+      (world/remove-entity-component game (::c/id e) ::c/position))))

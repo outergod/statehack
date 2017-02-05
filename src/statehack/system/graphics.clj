@@ -349,12 +349,10 @@
   (let [player (unique/unique-entity game :player)
         world (canvas-blit (memorized-world game player) (visible-world game player))
         [[x0 y0] [x1 y1]] (canvas-viewport world dimensions viewport)
-        co (center-offset (canvas-dimensions world) dimensions)
-        [x y] (::c/position (unique/unique-entity game :cursor))]
-    (when (entity/capable? (receivers/current game) ::c/position)
+        co (center-offset (canvas-dimensions world) dimensions)]
+    (when-let [[x y] (::c/position (unique/unique-entity game :cursor))]
       (if (and (<= x0 x x1) (<= y0 y y1))
-        (screen/move-cursor screen (util/matrix-add (util/matrix-subtract [x y] [x0 y0])
-                                                    co offset))
+        (screen/move-cursor screen (util/matrix-add (util/matrix-subtract [x y] [x0 y0]) co offset))
         (screen/hide-cursor screen)))
     (fit-in world dimensions [[x0 y0] [x1 y1]] co)))
 

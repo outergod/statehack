@@ -33,7 +33,7 @@
 (defn- operate-slot
   "slot/unslot common code"
   [game actor slot x]
-  (world/update-in-entity-component game (::c/id actor) [::c/slots] slot (constantly x)))
+  (world/update-in-entity-component game (::c/id actor) ::c/slots [slot] (constantly x)))
 
 (defn slot [game actor item slot]
   {:pre [((available-slots actor) slot)]}
