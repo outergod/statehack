@@ -182,7 +182,7 @@
 ;;; Custom color for rendering.
 ;;;
 ;;; Related systems: render
-(s/def ::color ::pos-int-or-zero)
+(s/def ::color (s/or :int ::pos-int-or-zero :keyword keyword?))
 
 ;;; Renderable component
 ;;;
