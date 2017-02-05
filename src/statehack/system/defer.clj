@@ -28,9 +28,9 @@
       (receivers/push-control game e))))
 
 (defn fulfill [game e]
-  (let [{:keys [::c/deferred ::c/mobile]} e
+  (let [{:keys [::c/deferred ::c/selector]} e
         es (:entities (world/state game))
-        t (es (first (:targets mobile)))]
+        t (es (first selector))]
     (world/update game []
       (world/remove-entity game (::c/id e))
       (receivers/pop-control game)

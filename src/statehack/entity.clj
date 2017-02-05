@@ -72,7 +72,7 @@
 (defn cursor
   "Cursor entity"
   []
-  (conform #::c{:id (uuid) :unique :cursor :position [0 0] :mobile #::c{:type :cursor}}))
+  (conform #::c{:id (uuid) :unique :cursor :position [0 0] :mobile :cursor}))
 
 (defn dialog
   "Dialog entity"
@@ -109,7 +109,7 @@
          :memory {}
          :inventory []
          :slots {:melee nil :gun nil}
-         :mobile #::c{:type :bipedal}
+         :mobile :bipedal
          :adaptive #::c{:xp 0 :level 0}
          :vulnerable #::c{:hp hp :max hp}
          :sight #::c{:type :eyes :distance 10}}))
@@ -120,7 +120,7 @@
   Uses deferred `action` on selected target."
   [[x y] action targets]
   (conform #::c{:id (uuid) :position [x y] :input :selector :deferred action
-               :mobile #::c{:type :selector :targets targets}}))
+                :mobile :selector :selector targets}))
 
 (defn serv-bot
   "Serv-Bot entity"
@@ -135,7 +135,7 @@
          :inventory []
          :ai :serv-bot
          :armor 20
-         :mobile #::c{:type :wheels}
+         :mobile :wheels
          :vulnerable #::c{:hp 20 :max 20}
          :sight #::c{:type :sensors :distance 5}
          :skillset {:melee #::c{:id (uuid)

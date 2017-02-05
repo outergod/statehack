@@ -37,7 +37,7 @@
 (defn- available-moves-dispatch
   "Dispatcher for `available-moves`"
   [game e]
-  (get-in e [::c/mobile ::c/type]))
+  (::c/mobile e))
 
 (defmulti available-moves
   "Available moves determines where an entity can move to based on its `mobility`"
@@ -84,11 +84,11 @@
 (defn move-next
   "Move selector entity `sel` to next possible target"
   [game sel]
-  (let [{:keys [::c/targets]} (::c/mobile sel)
-        targets (concat (rest targets) [(first targets)])
-        e (world/entity game (first targets))]
+  (let [{:keys [::c/selector]} sel
+        selector (concat (rest selector) [(first selector)])
+        e (world/entity game (first selector))]
     (world/update game [sel (::c/id sel) e (::c/id e)]
-      (world/update-entity-component game (::c/id sel) ::c/mobile assoc :targets targets)
+      (world/update-entity-component game (::c/id sel) ::c/selector (constantly selector))
       (relocate game sel (::c/position e)))))
 
 (defn unavailable-moves

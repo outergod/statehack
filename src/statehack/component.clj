@@ -159,7 +159,15 @@
 ;;; determines further behavior.
 ;;;
 ;;; Related systems: movement, defer, combat
-(s/def ::mobile (s/keys :req [::type]))
+(s/def ::mobile ::type)
+
+;;; Selector component
+;;;
+;;; Selectors target other entities in a specific order and can be used to cycle
+;;; through them.
+;;;
+;;; Relatd systems: movement
+(s/def ::selector (s/coll-of ::id :into []))
 
 ;;; Floor component
 ;;;
