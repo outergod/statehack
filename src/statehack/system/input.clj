@@ -16,7 +16,8 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.input
-  "statehack input system")
+  "statehack input system"
+  (:require [statehack.component :as c]))
 
 (def receive-hierarchy (make-hierarchy))
 

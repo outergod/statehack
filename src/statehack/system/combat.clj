@@ -17,6 +17,7 @@
 
 (ns statehack.system.combat
   (:require [clojure.pprint :refer [cl-format]]
+            [statehack.component :as c]
             [statehack.entity :as entity]
             [statehack.system.messages :as messages]
             [statehack.system.name :as name]

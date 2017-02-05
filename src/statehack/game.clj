@@ -17,24 +17,23 @@
 
 (ns statehack.game
   "Main game loop"
-  (:require [statehack.system.world :as world]
-            [statehack.system.player :as player]
-            [statehack.system.layout :as layout]
-            [statehack.system.graphics :as graphics]
+  (:require [halo.screen :as screen]
+            [statehack.component :as c]
             [statehack.entity :as entity]
             [statehack.system.ai :as ai]
-            [statehack.system.viewport :as viewport]
-            [statehack.system.unique :as unique]
-            [statehack.system.messages :as messages]
             [statehack.system.combat :as combat]
-            [statehack.system.transition :as transition]
+            [statehack.system.graphics :as graphics]
+            [statehack.system.input.receivers :as receivers]
+            [statehack.system.layout :as layout]
             [statehack.system.levels :as levels]
             [statehack.system.memory :as memory]
+            [statehack.system.messages :as messages]
+            [statehack.system.player :as player]
             [statehack.system.sound :as sound]
-            [statehack.system.input.receivers :as receivers]
+            [statehack.system.transition :as transition]
             [statehack.system.unique :as unique]
-            [statehack.util :as util]
-            [halo.screen :as screen]))
+            [statehack.system.viewport :as viewport]
+            [statehack.util :as util]))
 
 (defn new-game
   "Create new game from scratch"

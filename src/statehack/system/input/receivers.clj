@@ -16,7 +16,8 @@
 ;;;; along with statehack.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns statehack.system.input.receivers
-  (:require [statehack.system.world :as world]))
+  (:require [statehack.component :as c]
+            [statehack.system.world :as world]))
 
 (defn current [game]
   (let [{:keys [entities receivers]} (world/state game)]

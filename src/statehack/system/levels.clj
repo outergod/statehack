@@ -30,12 +30,12 @@
 (defn label
   "Add label component to entity"
   [e label]
-  (merge e {::c/label label}))
+  (entity/conform (merge e {::c/label label})))
 
 (defn position
   "Position entity at floor and coordinates"
   [e [x y] floor]
-  (merge e #::c{:position [x y] :floor floor}))
+  (entity/conform (merge e #::c{:position [x y] :floor floor})))
 
 (def common-tiles
   {\X #(room/wall :lightblue)

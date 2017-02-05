@@ -27,7 +27,7 @@
   (let [{:keys [::c/adaptive ::c/vulnerable]} e
         {:keys [::c/hp ::c/max]} vulnerable
         hp-order (inc (int (Math/log10 max)))]
-    (cl-format nil (str "~a | HP: ~" hp-order "d/~d | XP: ~d | Level: ~d") (name/name e) current max (::c/xp adaptive) (::c/level adaptive))))
+    (cl-format nil (str "~a | HP: ~" hp-order "d/~d | XP: ~d | Level: ~d") (name/name e) hp max (::c/xp adaptive) (::c/level adaptive))))
 
 (defn text [game e]
   (let [p (unique/unique-entity game :player)]
