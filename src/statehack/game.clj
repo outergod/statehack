@@ -45,7 +45,7 @@
               :graphics (screen/text-graphics screen)
               :world [{:entities (util/index-by ::c/id
                                                 (concat
-                                                  [(entity/floor 1 [w h])
+                                                  [(entity/level 1 [w h])
                                                    (entity/status-bar)
                                                    (entity/cursor)
                                                    (entity/log)]

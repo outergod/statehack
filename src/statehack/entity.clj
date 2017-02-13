@@ -32,7 +32,7 @@
     :req [::c/id]
     :opt [::c/unique ::c/name ::c/position ::c/category ::c/vulnerable ::c/armor
           ::c/alive ::c/adaptive ::c/skillset ::c/obstacle ::c/opaque ::c/sight
-          ::c/door ::c/room ::c/input ::c/mobile ::c/floor ::c/foundation
+          ::c/door ::c/room ::c/input ::c/mobile ::c/level ::c/foundation
           ::c/renderable ::c/color ::c/messages ::c/deferred ::c/ai ::c/memory
           ::c/inventory ::c/pickup ::c/music ::c/slots ::c/weapon ::c/compound
           ::c/label]))
@@ -79,10 +79,10 @@
   [& ms]
   (conform #::c{:id (uuid) :unique :dialog :renderable :dialog :input :dialog :messages ms}))
 
-(defn floor
-  "Floor entity"
+(defn level
+  "Level entity"
   [n [w h]]
-  (conform #::c{:id (uuid) :renderable :floor :floor n :foundation [w h]}))
+  (conform #::c{:id (uuid) :renderable :level :level n :foundation [w h]}))
 
 (defn log
   "Log entity"

@@ -261,8 +261,8 @@
 (defn memorized-world
   "Render the memorized world of `e`"
   [game e]
-  (let [{:keys [::c/floor ::c/foundation]} (levels/entity-floor game e)
-        {:keys [entities coordinates]} (memory/entity-floor-memory e floor)
+  (let [{:keys [::c/level ::c/foundation]} (levels/entity-level game e)
+        {:keys [entities coordinates]} (memory/entity-level-memory e level)
         canvas (reduce #(canvas-update %1 %2 (constantly {:tile :empty}))
                        (rect :nihil :black foundation) coordinates)
         es (vals entities)]
@@ -271,9 +271,9 @@
 (defn visible-world
   "Render the visible world of `e`"
   [game e]
-  (let [canvas (space :gray (::c/foundation (levels/entity-floor game e)))
+  (let [canvas (space :gray (::c/foundation (levels/entity-level game e)))
         mask (sight/visible-mask game e)
-        es (entity/filter-capable [::c/position ::c/renderable] (levels/floor-entities game (::c/floor e)))]
+        es (entity/filter-capable [::c/position ::c/renderable] (levels/level-entities game (::c/level e)))]
     (mask-canvas (reduce-entities game canvas es) mask)))
 
 (defn put-canvas

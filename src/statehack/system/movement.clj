@@ -58,7 +58,7 @@
 (defn inbound-moves
   "Set of all possible inbound moves for `e`"
   [game e]
-  (let [{:keys [::c/foundation]} (levels/floor game (::c/floor e))]
+  (let [{:keys [::c/foundation]} (levels/level game (::c/level e))]
     (set (filter #(levels/in-bounds? foundation (util/matrix-add (::c/position e) %))
                  algebra/neighbor-deltas))))
 

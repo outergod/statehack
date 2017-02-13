@@ -189,8 +189,8 @@
 
 ;;; TODO index
 (defn music-system [game]
-  (let [{:keys [::c/position ::c/floor]} (unique/unique-entity game :player)
-        {:keys [::c/music]} (->> (pos/entities-at game floor [position])
+  (let [{:keys [::c/position ::c/level]} (unique/unique-entity game :player)
+        {:keys [::c/music]} (->> (pos/entities-at game level [position])
                               (entity/filter-capable [::c/music]) first)]
     (when (and music (not= @current-track music))
       (dosync (ref-set current-track music))

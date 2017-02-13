@@ -171,18 +171,18 @@
 ;;; Relatd systems: movement
 (s/def ::selector (s/coll-of ::id :into []))
 
-;;; Floor component
+;;; Level component
 ;;;
-;;; Entities with this component exist only on the current floor denoted.
+;;; Entities with this component exist only on the current level denoted.
 ;;; This is complementary to but not dependent on position.
 ;;;
 ;;; Related systems: levels, movement, render, sight, viewport, world
-(s/def ::floor integer?)
+(s/def ::level integer?)
 
 ;;; Foundation component
 ;;;
-;;; This component is specifically made for floors, so each foundation
-;;; must also be on a floor on which it also has to be unique.
+;;; This component is specifically made for levels, so each foundation
+;;; must also be on a level on which it also has to be unique.
 ;;;
 ;;; Related systems: levels, movement, render, viewport
 (s/def ::foundation (s/tuple pos-int? pos-int?))

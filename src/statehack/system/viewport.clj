@@ -35,7 +35,7 @@
 (defn update-viewport [game e f]
   (let [{:keys [layout]} game
         dimensions (get-in (layout/by-id layout) [:world-view :dimensions])
-        {:keys [::c/foundation]} (levels/entity-floor game e)]
+        {:keys [::c/foundation]} (levels/entity-level game e)]
     (update game :viewport #(snap (f %) dimensions foundation))))
 
 (defn center-on [game e]

@@ -39,15 +39,15 @@
   {:pre [(::c/inventory e1) (::c/pickup e2)]}
   (world/update game [{actor-id ::c/id} (::c/id e1) {item-id ::c/id} (::c/id e2)]
     (world/update-entity-component game actor-id ::c/inventory conj item-id)
-    (world/remove-entity-component game item-id ::c/position ::c/floor)))
+    (world/remove-entity-component game item-id ::c/position ::c/level)))
 
 (defn drop-item [game e1 e2]
   {:pre [(in-inventory? e1 e2)]}
-  (world/update game [{actor-id ::c/id :keys [::c/floor ::c/position] :as actor} (::c/id e1)
+  (world/update game [{actor-id ::c/id :keys [::c/level ::c/position] :as actor} (::c/id e1)
                       {item-id ::c/id :as item} (::c/id e2)]
     (slots/unslot game actor item)
     (world/update-entity-component game actor-id ::c/inventory (partial remove #{item-id}))
-    (world/add-entity-component game item-id ::c/position position ::c/floor floor)))
+    (world/add-entity-component game item-id ::c/position position ::c/level level)))
 
 (defn available-pickups [game e]
   (entity/filter-capable [::c/pickup] (pos/entities-at game e)))

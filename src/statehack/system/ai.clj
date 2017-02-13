@@ -62,14 +62,14 @@
       game)))
 
 (defn path-to [game e target limit]
-  (let [{:keys [::c/foundation]} (levels/entity-floor game e)
-        es (vals (dissoc (:entities (memory/entity-floor-memory e)) (::c/id target)))
+  (let [{:keys [::c/foundation]} (levels/entity-level game e)
+        es (vals (dissoc (:entities (memory/entity-level-memory e)) (::c/id target)))
         os (set (map ::c/position es))]
     (next (algebra/a* (::c/position e) (::c/position target) foundation os limit))))
 
 (defn move-towards [game e target limit]
-  (let [{:keys [::c/foundation]} (levels/entity-floor game e)
-        es (vals (dissoc (:entities (memory/entity-floor-memory e)) (::c/id target)))
+  (let [{:keys [::c/foundation]} (levels/entity-level game e)
+        es (vals (dissoc (:entities (memory/entity-level-memory e)) (::c/id target)))
         os (set (map ::c/position es))
         path (algebra/a* (::c/position e) (::c/position target) foundation os limit)]
     (if (> (count path) 1)
@@ -77,8 +77,8 @@
       game)))
 
 (defn move-melee-range [game e target limit]
-  (let [{:keys [::c/foundation]} (levels/entity-floor game e)
-        es (vals (:entities (memory/entity-floor-memory e)))
+  (let [{:keys [::c/foundation]} (levels/entity-level game e)
+        es (vals (:entities (memory/entity-level-memory e)))
         os (set (map ::c/position es))
         paths (sort algebra/PathComparator
                     (remove nil?

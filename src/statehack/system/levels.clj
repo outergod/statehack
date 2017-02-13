@@ -33,9 +33,9 @@
   (entity/conform (merge e {::c/label label})))
 
 (defn position
-  "Position entity at floor and coordinates"
-  [e [x y] floor]
-  (entity/conform (merge e #::c{:position [x y] :floor floor})))
+  "Position entity at level and coordinates"
+  [e [x y] level]
+  (entity/conform (merge e #::c{:position [x y] :level level})))
 
 (def common-tiles
   {\X #(room/wall :lightblue)
@@ -57,11 +57,11 @@
                                         [loot (update (first crate) [::c/inventory] conj (::c/id loot))])))
                             :music :medical}})
 
-(defn extract-room [s tiles [x0 y0] floor]
+(defn extract-room [s tiles [x0 y0] level]
   (for [[y row] (util/enumerate (str/split-lines s))
         [x c] (util/enumerate row)
         :let [f (tiles c)] :when f]
-    (position (f) (util/matrix-add [x0 y0] [x y]) floor)))
+    (position (f) (util/matrix-add [x0 y0] [x y]) level)))
 
 (defn load-room-resource [name]
   (or (io/resource (str "rooms/" name))
@@ -72,25 +72,25 @@
     [(inc (apply max (map first ps)))
      (inc (apply max (map second ps)))]))
 
-(defn load-room [name [x0 y0] floor]
+(defn load-room [name [x0 y0] level]
   (let [{:keys [tiles post music]} (rooms name)
-        room (extract-room (slurp (load-room-resource name)) tiles [x0 y0] floor)
+        room (extract-room (slurp (load-room-resource name)) tiles [x0 y0] level)
         [x1 y1] (util/matrix-add [x0 y0] (dimensions room))
         labeled (group-by ::c/label room)]
     (concat (if post
               (concat (get labeled nil) (post (dissoc labeled nil)))
               room)
       (for [x (range x0 x1) y (range y0 y1)]
-        (position (entity/music music) [x y] floor)))))
+        (position (entity/music music) [x y] level)))))
 
 ;;; TODO index
-(defn floor [game n]
+(defn level [game n]
   (let [es (world/capable-entities game ::c/foundation)]
-    (or (first (filter #(= (::c/floor %) n) es))
+    (or (first (filter #(= (::c/level %) n) es))
         (throw (ex-info (format "No floor for level %d found" n) {:level n})))))
 
-(defn entity-floor [game e]
-  (floor game (::c/floor e)))
+(defn entity-level [game e]
+  (level game (::c/level e)))
 
 (defn in-bounds?
   "Is `[x y]` within the bounds of `foundation`?"
@@ -99,8 +99,8 @@
     (and (>= x 0) (>= y 0)
          (< x w) (< y h))))
 
-(defn on-floor [floor es]
-  (filter #(= (::c/floor %) floor) es))
+(defn on-level [level es]
+  (filter #(= (::c/level %) level) es))
 
-(defn floor-entities [game floor]
-  (on-floor floor (vals (world/entities game))))
+(defn level-entities [game level]
+  (on-level level (vals (world/entities game))))

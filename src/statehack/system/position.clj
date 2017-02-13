@@ -23,24 +23,24 @@
             [statehack.util :as util]))
 
 (defn entities-at
-  "Matching entities at given `floor` and `coords`"
-  ([game floor coords]
+  "Matching entities at given `level` and `coords`"
+  ([game level coords]
    (let [entities (world/entities game)
          coords (set coords)]
-     (filter #(and (= (::c/floor %) floor) (coords (::c/position %)))
+     (filter #(and (= (::c/level %) level) (coords (::c/position %)))
        (vals entities))))
   ([game e]
-   (entities-at game (::c/floor e) [(::c/position e)])))
+   (entities-at game (::c/level e) [(::c/position e)])))
 
 (defn direct-neighbors
-  "Neighbor entities at given `floor` around `coords`"
-  [game coords floor]
-  (entities-at game floor (algebra/neighbors coords)))
+  "Neighbor entities at given `level` around `coords`"
+  [game coords level]
+  (entities-at game level (algebra/neighbors coords)))
 
 (defn entity-neighbors
   "Neighbor entities of `e`"
   [game e]
-  (direct-neighbors game (::c/position e) (::c/floor e)))
+  (direct-neighbors game (::c/position e) (::c/level e)))
 
 (defn entity-delta
   "Calculate delta between `e1` and `e2`"

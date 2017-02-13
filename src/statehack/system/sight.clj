@@ -77,7 +77,7 @@
   [game e]
   (let [[x y] (::c/position e)
         r (-> e ::c/sight ::c/distance)
-        ps (set (map ::c/position (filter-opaques (levels/on-floor (::c/floor e) (entity/filter-capable [::c/position ::c/floor] (vals (world/entities game)))))))]
+        ps (set (map ::c/position (filter-opaques (levels/on-level (::c/level e) (entity/filter-capable [::c/position ::c/level] (vals (world/entities game)))))))]
     (conj (set (mapcat (partial util/take-while-including (complement ps))
                        (algebra/visible-lines [x y] r)))
           [x y])))
@@ -89,15 +89,15 @@
   (visible-mask-common game e))
 
 (defmethod visible-mask :omniscience [game e]
-  (let [{:keys [::c/foundation]} (levels/entity-floor game e)
+  (let [{:keys [::c/foundation]} (levels/entity-level game e)
         [w h] foundation]
     (set (for [x (range w) y (range h)] [x y]))))
 
 (defn visible-entities
-  "Visible entities on `floor` within `mask`"
-  ([game floor mask]
-   (entity/filter-capable [::c/renderable] (pos/entities-at game floor mask)))
+  "Visible entities on `level` within `mask`"
+  ([game level mask]
+   (entity/filter-capable [::c/renderable] (pos/entities-at game level mask)))
   ([game e]
-   (let [{:keys [::c/floor]} (levels/entity-floor game e)
+   (let [{:keys [::c/level]} (levels/entity-level game e)
          mask (visible-mask game e)]
-     (visible-entities game floor mask))))
+     (visible-entities game level mask))))
