@@ -110,7 +110,7 @@
          :inventory []
          :slots {:melee nil :gun nil}
          :mobile :bipedal
-         :adaptive #::c{:xp 0 :level 0}
+         :adaptive #::c{:xp 0}
          :vulnerable #::c{:hp hp :max hp}
          :sight #::c{:type :eyes :distance 10}}))
 

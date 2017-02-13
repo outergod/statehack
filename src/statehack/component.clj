@@ -94,8 +94,10 @@
 ;;;
 ;;; Related systems: status
 (s/def ::xp ::pos-int-or-zero)
-(s/def ::level ::pos-int-or-zero)
-(s/def ::adaptive (s/keys :req [::xp ::level]))
+(comment
+  "TODO Replace me"
+  (s/def ::level ::pos-int-or-zero)) 
+(s/def ::adaptive (s/keys :req [::xp]))
 
 ;;; Skillset component
 ;;;
