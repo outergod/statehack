@@ -21,6 +21,11 @@
             [statehack.component :as c]
             [clojure.spec :as s]))
 
+(defn floor
+  "Floor entity"
+  [color]
+  (conform #::c{:id (uuid) :renderable :floor :color color}))
+
 (defn wall
   "Wall entity"
   [color]

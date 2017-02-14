@@ -38,7 +38,8 @@
   (entity/conform (merge e #::c{:position [x y] :level level})))
 
 (def common-tiles
-  {\X #(room/wall :lightblue)
+  {\· #(room/floor :gray)
+   \X #(room/wall :lightblue)
    \o #(room/door :simple false)
    \O #(room/door :simple true)
    \b #(entity/serv-bot)

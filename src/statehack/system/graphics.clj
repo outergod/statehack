@@ -103,7 +103,7 @@
    :serv-bot "b"
    :corpse "%"
    :nihil " "
-   :empty "·"
+   :floor "·"
    :hwall "─"
    :vwall "│"
    :tlcorner "╭"
@@ -148,7 +148,8 @@
   {:arglists '([game e])}
   #'tile-dispatch :hierarchy #'tile-hierarchy)
 
-(defmethod tile :default [_ x] (::c/renderable x))
+(defmethod tile :default [_ {:keys [::c/renderable ::c/color]}]
+  {:tile renderable :color color})
 
 (defn transform
   "Transform two-dimensional `canvas` from tile/color mapping to
@@ -185,9 +186,9 @@
   (vec (repeat h (vec (repeat w {:tile kind :color c})))))
 
 (defn space
-  "Create empty space rectangle of proportions `[w h]` with color `c`."
+  "Create space rectangle of proportions `[w h]` with color `c`."
   [c [w h]]
-  (rect :empty c [w h]))
+  (rect :nihil c [w h]))
 
 (defn entity-canvas
   "Transform collection of `entities` into a canvas based on their positions."
@@ -243,7 +244,7 @@
   `dimensions`. `offset` leaves a margin on the blitting target."
   [canvas dimensions viewport offset]
   (let [[[x0 y0] [x1 y1]] viewport]
-    (canvas-blit (rect :nihil :black dimensions)
+    (canvas-blit (space :black dimensions)
                  (subvec (mapv #(subvec % x0 x1) canvas) y0 y1)
                  offset)))
 
@@ -262,11 +263,10 @@
   "Render the memorized world of `e`"
   [game e]
   (let [{:keys [::c/level ::c/foundation]} (levels/entity-level game e)
-        {:keys [entities coordinates]} (memory/entity-level-memory e level)
-        canvas (reduce #(canvas-update %1 %2 (constantly {:tile :empty}))
-                       (rect :nihil :black foundation) coordinates)
+        {:keys [entities]} (memory/entity-level-memory e level)
+        canvas (space :black foundation)
         es (vals entities)]
-    (dye (reduce-entities game canvas es) :lightblack)))
+    (dye (reduce-entities game (space :black foundation) (vals entities)) :lightblack)))
 
 (defn visible-world
   "Render the visible world of `e`"
@@ -353,14 +353,14 @@
 
 (defmethod draw :messages [game {:keys [dimensions]} _]
   (let [log (unique/unique-entity game :log)
-        canvas (rect :nihil :black dimensions)]
+        canvas (space :black dimensions)]
     (canvas-blit canvas (map #(tilify-string % :gray) (messages/recent log 5)))))
 
 ;; Status
 
 (defmethod draw :status [game {:keys [dimensions]} _]
   (let [player (unique/unique-entity game :player)
-        canvas (rect :nihil :black dimensions)]
+        canvas (space :black dimensions)]
     (canvas-blit canvas [(tilify-string (status/text game player) :gray)])))
 
 ;; Menu
@@ -442,6 +442,7 @@
    :color (if (door/open? door) :lightblack :white)})
 
 (derive-blit :humanoid :standing)
+(derive-blit :floor :background)
 (derive-blit :door :background)
 (derive-blit :corpse :lying)
 (derive-blit :weapon :lying)
